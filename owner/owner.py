@@ -489,9 +489,6 @@ async def contact(client, message):
             for admin_id in ADMINS:
                 await c_msg.copy(admin_id, caption=final_caption)
 
-        for admin_id in ADMINS:
-            await client.send_message(admin_id, text)
-
         await message.reply_text("✅ Your message has been sent to the admin!")
     except Exception as e:
         await client.send_message(
@@ -643,9 +640,10 @@ async def show_button_menu(client, message, bot_id):
             )
 
         user_id = message.from_user.id
-        is_premium = await db.is_premium(user_id)
+        is_premium1 = await db.is_premium(user_id, required_plan="ultra")
+        is_premium2 = await db.is_premium(user_id, required_plan="vip")
 
-        if is_premium or len(buttons_data) < 3:
+        if is_premium1 or is_premium2 or len(buttons_data) < 3:
             buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")])
@@ -740,9 +738,10 @@ async def show_fsub_menu(client, message, bot_id):
         await db.update_clone(bot_id, {"force_subscribe": new_fsub_data})
 
         user_id = message.from_user.id
-        is_premium = await db.is_premium(user_id)
+        is_premium1 = await db.is_premium(user_id, required_plan="ultra")
+        is_premium2 = await db.is_premium(user_id, required_plan="vip")
 
-        if is_premium or len(fsub_data) < 4:
+        if is_premium1 or is_premium2 or len(fsub_data) < 4:
             buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
