@@ -157,17 +157,10 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
-        if isinstance(msg_to_delete, list):
-            for msg in msg_to_delete:
-                try:
-                    await msg.delete()
-                except Exception as e:
-                    print(f"⚠️ Clone Could not delete message: {e}")
-        else:
-            try:
-                await msg_to_delete.delete()
-            except Exception as e:
-                print(f"⚠️ Clone Could not delete message: {e}")
+        try:
+            await msg_to_delete.delete()
+        except Exception as e:
+            print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
             try:
@@ -181,6 +174,7 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
+
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
