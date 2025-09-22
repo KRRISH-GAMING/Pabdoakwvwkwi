@@ -157,10 +157,17 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
-        try:
-            await msg_to_delete.delete()
-        except Exception as e:
-            print(f"⚠️ Clone Could not delete message: {e}")
+        if isinstance(msg_to_delete, list):
+            for msg in msg_to_delete:
+                try:
+                    await msg.delete()
+                except Exception as e:
+                    print(f"⚠️ Clone Could not delete message: {e}")
+        else:
+            try:
+                await msg_to_delete.delete()
+            except Exception as e:
+                print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
             try:
@@ -174,7 +181,6 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
-
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
@@ -442,6 +448,7 @@ async def start(client, message):
                         if "MESSAGE_NOT_MODIFIED" not in str(e):
                             raise
 
+                notice = None
                 if sent_msg and auto_delete:
                     notice = await sent_msg.reply(
                     auto_delete_msg.format(time=number, unit=unit),
@@ -684,6 +691,9 @@ async def help(client, message):
             return
 
         await message.reply_text(script.HELP_TXT)
+    except UserIsBlocked:
+        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
+        return
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
@@ -1405,6 +1415,9 @@ async def reply(client, message):
             await message.copy(user_id, caption=final_caption)
 
         await message.reply("✅ Reply delivered!")
+    except UserIsBlocked:
+        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
+        return
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
