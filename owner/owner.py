@@ -1,4 +1,4 @@
-import os, logging, asyncio, re, json, base64, requests, time, shutil
+import os, sys, logging, asyncio, re, json, base64, requests, time, shutil
 from datetime import datetime, timedelta
 from validators import domain
 from pyrogram import Client, filters, enums, types
@@ -644,9 +644,9 @@ async def show_button_menu(client, message, bot_id):
 
         if is_premium:
             buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
-
-        if len(buttons_data) < 3:
-            buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
+        else:
+            if len(buttons_data) < 3:
+                buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")])
 
@@ -744,9 +744,9 @@ async def show_fsub_menu(client, message, bot_id):
 
         if is_premium:
             buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
-
-        if len(fsub_data) < 4:
-            buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
+        else:
+            if len(fsub_data) < 4:
+                buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
 
@@ -1305,7 +1305,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
                 start_text = clone.get("wlc", script.START_TXT)
-                await query.answer(f"📝 Current Start Text:\n\n{start_text}", show_alert=True)
+                preview = (start_text[:180] + "...") if len(start_text) > 180 else start_text
+                await query.answer(f"📝 Current Start Text:\n\n{preview}", show_alert=True)
 
             # Default Start Text
             elif action == "default_text":
