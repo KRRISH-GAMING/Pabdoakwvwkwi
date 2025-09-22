@@ -2902,10 +2902,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[░░░░░░░░░░] 0%")
 
-                try:
+                """try:
                     os.execl(sys.executable, sys.executable, *sys.argv)
                 except Exception as e:
-                    print(e)
+                    print(e)"""
 
                 for i in range(1, 11):
                     await asyncio.sleep(0.5)
