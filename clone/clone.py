@@ -256,6 +256,8 @@ async def start(client, message):
 
                     if mode == "request":
                         if message.from_user.id not in users_counted:
+                            if item.get("link"):
+                                buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
                             item["joined"] = joined + 1
                             users_counted.append(message.from_user.id)
                             item["users_counted"] = users_counted
@@ -1538,15 +1540,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             premium_users = clone.get("premium_user", [])
 
-            if not isinstance(premium_users, list):
-                premium_users = []
+            normalized = []
+            for u in premium_users:
+                if isinstance(u, dict):
+                    normalized.append(u)
+                else:
+                    normalized.append({"user_id": int(u), "expiry": 0})
 
-            premium_users = [u for u in premium_users if u.get("user_id") != user_id]
+            normalized = [u for u in normalized if u["user_id"] != user_id]
 
             expiry = datetime.utcnow() + timedelta(days=days)
-            premium_users.append({"user_id": user_id, "expiry": expiry.timestamp()})
+            normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
 
-            await db.update_clone(me.id, {"premium_user": premium_users})
+            await db.update_clone(me.id, {"premium_user": normalized})
 
             await client.send_message(
                 user_id,
