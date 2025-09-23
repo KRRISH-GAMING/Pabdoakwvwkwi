@@ -640,10 +640,13 @@ async def show_button_menu(client, message, bot_id):
             )
 
         user_id = message.from_user.id
-        is_premium_user = await db.is_premium(user_id)
+        is_premium = await db.is_premium(user_id)
 
-        if is_premium_user or len(buttons_data) < 3:
+        if is_premium:
             buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
+        else:
+            if len(buttons_data) < 3:
+                buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")])
 
@@ -737,10 +740,13 @@ async def show_fsub_menu(client, message, bot_id):
         await db.update_clone(bot_id, {"force_subscribe": new_fsub_data})
 
         user_id = message.from_user.id
-        is_premium_user = await db.is_premium(user_id)
+        is_premium = await db.is_premium(user_id)
 
-        if is_premium_user or len(fsub_data) < 4:
+        if is_premium:
             buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
+        else:
+            if len(fsub_data) < 4:
+                buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
 
@@ -1299,9 +1305,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
                 start_text = clone.get("wlc", script.START_TXT)
-                preview = start_text[:180]
-                if len(start_text) > 180:
-                    preview += "..."
+                preview = (start_text[:180] + "...") if len(start_text) > 180 else start_text
                 await query.answer(f"📝 Current Start Text:\n\n{preview}", show_alert=True)
 
             # Default Start Text
@@ -2904,17 +2908,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%")
                 
                 """try:
-                    clone_client = get_client(bot_id)
-                    if not clone_client:
-                        return await query.message.edit_text("❌ Clone client not found in memory!")
-                        
-                    await clone_client.stop()
-                    await asyncio.sleep(2)
-                    await clone_client.start()
+                    os.execl(sys.executable, sys.executable, *sys.argv)
                 except Exception as e:
-                    print(f"⚠️ Error restarting clone {clone['id']}: {e}")
-                    return await query.message.edit_text(f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}")"""
-
+                    print(e)"""
+                
                 await query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!")
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
