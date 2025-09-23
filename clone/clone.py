@@ -1541,23 +1541,23 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 return
 
             premium_users = clone.get("premium_user", [])
-            print(f"🛠 DEBUG: Premium users before update: {premium_users}")
 
             normalized = []
             for u in premium_users:
                 if isinstance(u, dict):
-                    normalized.append(u)
+                    normalized.append({
+                        "user_id": int(u["user_id"]),
+                        "expiry": u.get("expiry", 0)
+                    })
                 else:
                     normalized.append({"user_id": int(u), "expiry": 0})
 
-            normalized = [u for u in normalized if u["user_id"] != user_id]
-            print(f"🛠 DEBUG: Premium users after update: {normalized}")
+            normalized = [u for u in normalized if int(u["user_id"]) != user_id]
 
             expiry = datetime.utcnow() + timedelta(days=days)
             normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
 
             await db.update_clone(me.id, {"premium_user": normalized})
-            print(f"🛠 DEBUG: Updated clone DB for {me.id}")
 
             await client.send_message(
                 user_id,
