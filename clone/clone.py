@@ -1460,7 +1460,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.edit_text(
                 "💎 Choose your Premium Plan to remove ads:",
                 reply_markup=InlineKeyboardMarkup(premium_btns)
-            )hsjhshs
+            )
 
         # User clicked a specific plan
         elif data.startswith("premium_") and not data.startswith("premium_done_"):
