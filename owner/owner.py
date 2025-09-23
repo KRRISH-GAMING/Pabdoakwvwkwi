@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from validators import domain
 from pyrogram import Client, filters, enums, types
 from pyrogram.types import *
-from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid
+from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid, UserDeactivated
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameInvalid, UsernameNotModified
 from plugins.config import *
 from plugins.database import db, JoinReqs
@@ -3667,5 +3667,9 @@ async def restart_bots():
                         auto_post_clone(bot.id, db, auto_post_channel)
                     )
                     print(f"▶️ Auto-post started for @{bot.username}")
+        except UserDeactivated:
+            print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
+            await db.delete_clone(bot_id)
+            continue
         except Exception as e:
             print(f"Error while restarting bot with token {bot.id}: {e}")
