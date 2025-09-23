@@ -3673,7 +3673,7 @@ async def restart_bots():
                     print(f"▶️ Auto-post started for @{bot.username}")"""
         except UserDeactivated:
             print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
-            await db.delete_clone(bot_id)
+            await db.delete_clone_by_id(bot_id)
             continue
         except Exception as e:
             print(f"Error while restarting bot with token {bot.id}: {e}")
