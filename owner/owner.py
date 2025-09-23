@@ -2903,7 +2903,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     bar = '▓' * i + '░' * (10 - i)
                     await query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%")
                 
-                try:
+                """try:
                     clone_client = get_client(bot_id)
                     if not clone_client:
                         return await query.message.edit_text("❌ Clone client not found in memory!")
@@ -2913,7 +2913,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await clone_client.start()
                 except Exception as e:
                     print(f"⚠️ Error restarting clone {clone['id']}: {e}")
-                    return await query.message.edit_text(f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}")
+                    return await query.message.edit_text(f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}")"""
 
                 await query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!")
                 await asyncio.sleep(2)
