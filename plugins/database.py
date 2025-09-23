@@ -224,7 +224,7 @@ class Database:
         await self.bot.delete_one({'bot_id': int(bot_id)})
 
     async def delete_clone_by_id(self, db_id):
-        await self.bot.delete_one({'_id': ObjectId(db_id)}
+        await self.bot.delete_one({'_id': ObjectId(db_id)})
 
     async def get_bot(self, bot_id):
         bot_data = await self.bot.find_one({"bot_id": bot_id})
