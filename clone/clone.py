@@ -256,10 +256,6 @@ async def start(client, message):
 
                     if mode == "request":
                         if message.from_user.id not in users_counted:
-                            if item.get("link"):
-                                buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-
-                        if message.from_user.id not in users_counted:
                             item["joined"] = joined + 1
                             users_counted.append(message.from_user.id)
                             item["users_counted"] = users_counted
@@ -432,12 +428,15 @@ async def start(client, message):
                         protect_content=forward_protect
                     )
                 else:
-                    sent_msg = await message.reply_text(f_caption, protect_content=forward_protect)
+                    sent_msg = await message.reply_text(original_caption, protect_content=forward_protect)
 
                 if buttons_data:
                     buttons = [[InlineKeyboardButton(btn["name"], url=btn["url"])] for btn in buttons_data]
                     try:
-                        await sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                        if sent_msg and sent_msg.caption is not None:
+                            await sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                        else:
+                            await sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons))
                     except Exception as e:
                         if "MESSAGE_NOT_MODIFIED" not in str(e):
                             raise
@@ -540,7 +539,7 @@ async def start(client, message):
                                 protect_content=forward_protect
                             )
                         else:
-                            sent_msg = await message.reply_text(f_caption, protect_content=forward_protect)
+                            sent_msg = await message.reply_text(original_caption, protect_content=forward_protect)
 
                         buttons = []
                         for btn in buttons_data:
@@ -548,10 +547,10 @@ async def start(client, message):
 
                         if buttons:
                             try:
-                                await sent_msg.edit_caption(
-                                    f_caption,
-                                    reply_markup=InlineKeyboardMarkup(buttons)
-                                )
+                                if sent_msg and sent_msg.caption is not None:
+                                    await sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                                else:
+                                    await sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons))
                             except Exception as e:
                                 if "MESSAGE_NOT_MODIFIED" not in str(e):
                                     raise
@@ -566,8 +565,16 @@ async def start(client, message):
                         print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping batch...")
                         return
                     except Exception as e:
-                        print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
-                        continue
+                        if "INPUT_USER_DEACTIVATED" in str(e):
+                            print(f"⚠️ User {message.from_user.id} account is deleted. Skipping batch...")
+                            return
+                        else:
+                            await client.send_message(
+                                LOG_CHANNEL,
+                                f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                            )
+                            print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
+                            continue
 
                 if auto_delete:
                     k = await message.reply(
@@ -843,8 +850,7 @@ async def link(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            await message.reply("❌ You are not authorized to use this bot.")
-            return
+            return await message.reply("❌ You are not authorized to use this bot.")
 
         if message.reply_to_message:
             g_msg = message.reply_to_message
@@ -1079,10 +1085,10 @@ async def shorten_handler(client: Client, message: Message):
 
         owner_id = clone.get("user_id")
         moderators = clone.get("moderators", [])
+        moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            await message.reply("❌ You are not authorized to use this bot.")
-            return
+            return await message.reply("❌ You are not authorized to use this bot.")
 
         user_id = message.from_user.id
         cmd = message.command
@@ -1182,8 +1188,7 @@ async def broadcast(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            await message.reply("❌ You are not authorized to use this bot.")
-            return
+            return await message.reply("❌ You are not authorized to use this bot.")
 
         if message.reply_to_message:
             b_msg = message.reply_to_message
@@ -1290,8 +1295,7 @@ async def stats(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            await message.reply("❌ You are not authorized to use this bot.")
-            return
+            return await message.reply("❌ You are not authorized to use this bot.")
 
         users_count = clone.get("users_count", 0)
         storage_used = clone.get("storage_used", 0)
@@ -1534,19 +1538,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             premium_users = clone.get("premium_user", [])
 
-            normalized = []
-            for u in premium_users:
-                if isinstance(u, dict):
-                    normalized.append(u)
-                else:
-                    normalized.append({"user_id": int(u), "expiry": 0})
+            if not isinstance(premium_users, list):
+                premium_users = []
 
-            normalized = [u for u in normalized if u["user_id"] != user_id]
+            premium_users = [u for u in premium_users if u.get("user_id") != user_id]
 
             expiry = datetime.utcnow() + timedelta(days=days)
-            normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
+            premium_users.append({"user_id": user_id, "expiry": expiry.timestamp()})
 
-            await db.update_clone(me.id, {"premium_user": normalized})
+            await db.update_clone(me.id, {"premium_user": premium_users})
 
             await client.send_message(
                 user_id,
