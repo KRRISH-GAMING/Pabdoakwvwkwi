@@ -2902,7 +2902,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await asyncio.sleep(0.5)
                     bar = '▓' * i + '░' * (10 - i)
                     await query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%")
-                
+
                 try:
                     if not clone_client:
                         return await query.message.edit_text("❌ Clone client not found in memory!")
@@ -2915,7 +2915,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await query.message.edit_text(
                         f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}"
                     )
-                
+
                 await query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!")
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
@@ -3663,17 +3663,17 @@ async def restart_bots():
             set_client(bot.id, xd)
             print(f"✅ Restarted clone bot @{bot.username} ({bot.id})")
 
-            fresh = await db.get_clone_by_id(bot.id)
+            """fresh = await db.get_clone_by_id(bot.id)
             if fresh and fresh.get("auto_post", False):
                 auto_post_channel = fresh.get("auto_post_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot.username}")
+                    print(f"▶️ Auto-post started for @{bot.username}")"""
         except UserDeactivated:
             print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
-            await db.delete_clone(bot.id)
+            await db.delete_clone(bot_id)
             continue
         except Exception as e:
             print(f"Error while restarting bot with token {bot.id}: {e}")
