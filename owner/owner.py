@@ -2904,6 +2904,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%")
 
                 try:
+                    clone_client = get_client(bot_id)
                     if not clone_client:
                         return await query.message.edit_text("❌ Clone client not found in memory!")
 
