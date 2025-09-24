@@ -267,11 +267,30 @@ async def start(client, message):
                         continue
 
                     if mode == "request":
-                        if user_id not in users_counted:
-                            if item.get("link"):
-                                buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                        new_fsub_data.append(item)
-                        continue
+                        try:
+                            member = await clone_client.get_chat_member(ch_id, user_id)
+                            if user_id not in users_counted:
+                                if item.get("link"):
+                                    buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+                            new_fsub_data.append(item)
+                            continue
+                        except UserNotParticipant:
+                            if user_id not in users_counted:
+                                item["joined"] = joined + 1
+                                users_counted.append(user_id)
+                                item["users_counted"] = users_counted
+                                updated = True
+                            new_fsub_data.append(item)
+                            continue
+                        except Exception as e:
+                            print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
+                            if user_id not in users_counted:
+                                item["joined"] = joined + 1
+                                users_counted.append(user_id)
+                                item["users_counted"] = users_counted
+                                updated = True
+                            new_fsub_data.append(item)
+                            continue
 
                     try:
                         member = await clone_client.get_chat_member(ch_id, user_id)
@@ -283,18 +302,9 @@ async def start(client, message):
                         new_fsub_data.append(item)
                         continue
                     except UserNotParticipant:
-                        if mode == "request":
-                            if user_id not in users_counted:
-                                item["joined"] = joined + 1
-                                users_counted.append(user_id)
-                                item["users_counted"] = users_counted
-                                updated = True
-                            new_fsub_data.append(item)
-                            continue
-                        else:
-                            if item.get("link"):
-                                buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                            new_fsub_data.append(item)
+                        if item.get("link"):
+                            buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+                        new_fsub_data.append(item)
                     except Exception as e:
                         print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
                         if item.get("link"):
