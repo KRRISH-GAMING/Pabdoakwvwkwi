@@ -285,12 +285,12 @@ async def start(client, message):
                     except UserNotParticipant:
                         if item.get("link"):
                             buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                         new_fsub_data.append(item)
+                        new_fsub_data.append(item)
                     except Exception as e:
                         print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
                         if item.get("link"):
                             buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                         new_fsub_data.append(item)
+                        new_fsub_data.append(item)
 
                 if updated:
                     await db.update_clone(me.id, {"force_subscribe": new_fsub_data})
