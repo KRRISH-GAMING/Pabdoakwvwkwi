@@ -266,11 +266,8 @@ async def start(client, message):
                             if item.get("link"):
                                 buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
 
-                            if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
+                            new_fsub_data.append(item)
                             continue
-
-                        new_fsub_data.append(item)
-                        continue
 
                         if message.from_user.id not in users_counted:
                             item["joined"] = joined + 1
