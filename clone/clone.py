@@ -49,13 +49,6 @@ async def is_subscribed(client, user_id: int, bot_id: int):
     for item in fsub_data:
         channel_id = int(item["channel"])
         mode = item.get("mode", "normal")
-        users_counted = item.get("users_counted", [])
-
-        if mode == "request":
-            if user_id not in users_counted:
-                return False
-            else:
-                continue
 
         try:
             member = await client.get_chat_member(channel_id, user_id)
@@ -266,22 +259,16 @@ async def start(client, message):
                             if item.get("link"):
                                 buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
 
-                            if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
-                                continue
-
-                            new_fsub_data.append(item)
-                            continue
-                        else:
                             item["joined"] = joined + 1
                             users_counted.append(message.from_user.id)
                             item["users_counted"] = users_counted
                             updated = True
 
-                            if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
-                                continue
-
-                            new_fsub_data.append(item)
+                        if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
                             continue
+
+                        new_fsub_data.append(item)
+                        continue
 
                     try:
                         member = await clone_client.get_chat_member(ch_id, message.from_user.id)
