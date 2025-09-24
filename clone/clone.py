@@ -49,28 +49,27 @@ async def is_subscribed(client, user_id: int, bot_id: int):
     for item in fsub_data:
         channel_id = int(item["channel"])
         mode = item.get("mode", "normal")
+        users_counted = item.get("users_counted", [])
+
+        if mode == "request":
+            if user_id not in users_counted:
+                return False
+            else:
+                continue
 
         try:
             member = await client.get_chat_member(channel_id, user_id)
-
-            if mode == "normal":
-                if member.status in [
-                    enums.ChatMemberStatus.MEMBER,
-                    enums.ChatMemberStatus.ADMINISTRATOR,
-                    enums.ChatMemberStatus.OWNER
-                ]:
-                    continue
-                else:
-                    return False
-
-            elif mode == "request":
-                return True
+            if member.status in [
+                enums.ChatMemberStatus.MEMBER,
+                enums.ChatMemberStatus.ADMINISTRATOR,
+                enums.ChatMemberStatus.OWNER
+            ]:
+                continue
+            else:
+                return False
 
         except UserNotParticipant:
-            if mode == "normal":
-                return False
-            elif mode == "request":
-                return True
+            return False
 
         except Exception as e:
             print(f"⚠️ Clone is_subscribed Error {channel_id}: {e}")
@@ -266,6 +265,12 @@ async def start(client, message):
                         if message.from_user.id not in users_counted:
                             if item.get("link"):
                                 buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+
+                            if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
+                            continue
+
+                        new_fsub_data.append(item)
+                        continue
 
                         if message.from_user.id not in users_counted:
                             item["joined"] = joined + 1
