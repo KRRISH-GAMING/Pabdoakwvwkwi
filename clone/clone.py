@@ -297,7 +297,7 @@ async def start(client, message):
                         new_fsub_data.append(item)
                         continue
                     except UserNotParticipant:
-                        if item.get("link") and message.from_user.id not in users_counted:
+                        if item.get("link"):
                             buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
                     except Exception as e:
                         print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
