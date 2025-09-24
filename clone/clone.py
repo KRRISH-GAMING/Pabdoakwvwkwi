@@ -52,17 +52,25 @@ async def is_subscribed(client, user_id: int, bot_id: int):
 
         try:
             member = await client.get_chat_member(channel_id, user_id)
-            if member.status in [
-                enums.ChatMemberStatus.MEMBER,
-                enums.ChatMemberStatus.ADMINISTRATOR,
-                enums.ChatMemberStatus.OWNER
-            ]:
-                continue
-            else:
-                return False
+
+            if mode == "normal":
+                if member.status in [
+                    enums.ChatMemberStatus.MEMBER,
+                    enums.ChatMemberStatus.ADMINISTRATOR,
+                    enums.ChatMemberStatus.OWNER
+                ]:
+                    continue
+                else:
+                    return False
+
+            elif mode == "request":
+                return True
 
         except UserNotParticipant:
-            return False
+            if mode == "normal":
+                return False
+            elif mode == "request":
+                return True
 
         except Exception as e:
             print(f"⚠️ Clone is_subscribed Error {channel_id}: {e}")
@@ -256,8 +264,6 @@ async def start(client, message):
 
                     if mode == "request":
                         if message.from_user.id not in users_counted:
-                            if item.get("link"):
-                                buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
                             item["joined"] = joined + 1
                             users_counted.append(message.from_user.id)
                             item["users_counted"] = users_counted
@@ -283,7 +289,7 @@ async def start(client, message):
                         new_fsub_data.append(item)
                         continue
                     except UserNotParticipant:
-                        if item.get("link"):
+                        if item.get("link") and message.from_user.id not in users_counted:
                             buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
                     except Exception as e:
                         print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
@@ -1534,9 +1540,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             try:
                 _, user_id_str, days_str = data.split("_")
                 user_id, days = int(user_id_str), int(days_str)
-                print(f"🛠 DEBUG: Approve clicked -> user_id: {user_id}, days: {days}")
             except:
-                print(f"⚠️ DEBUG: Failed to parse approve data: {data} | Error: {e}")
                 await query.answer("⚠️ Invalid approve data.", show_alert=True)
                 return
 
