@@ -188,6 +188,9 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
 
+def random_code(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
 @Client.on_message(filters.command("start") & filters.private & filters.incoming)
 async def start(client, message):
     try:
@@ -254,11 +257,13 @@ async def start(client, message):
 
                     if not item.get("link"):
                         try:
+                            code = random_code()
                             if mode == "request":
-                                invite = await clone_client.create_chat_invite_link(ch_id, creates_join_request=True)
+                                invite = await clone_client.create_chat_invite_link(ch_id, creates_join_request=True, name=f"fsub-{code}")
                             else:
                                 invite = await clone_client.create_chat_invite_link(ch_id)
                             item["link"] = invite.invite_link
+                            item["invite_code"] = code
                             updated = True
                         except Exception as e:
                             print(f"⚠️ Clone Error creating invite for {ch_id}: {e}")
@@ -270,11 +275,6 @@ async def start(client, message):
                         if user_id not in users_counted:
                             if item.get("link"):
                                 buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                        if user_id not in users_counted:
-                            item["joined"] = joined + 1
-                            users_counted.append(user_id)
-                            item["users_counted"] = users_counted
-                            updated = True
                         new_fsub_data.append(item)
                         continue
 
@@ -293,9 +293,6 @@ async def start(client, message):
                         new_fsub_data.append(item)
                     except Exception as e:
                         print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
-                        if item.get("link"):
-                            buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                        new_fsub_data.append(item)
 
                 if updated:
                     await db.update_clone(me.id, {"force_subscribe": new_fsub_data})
@@ -1881,6 +1878,101 @@ async def message_capture(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone message_capture Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
-        print(f"⚠️ Clone Unexpected Error in message_capture: {e}")
+        print(f"⚠️ Clone message_capture Error: {e}")
+
+"""@Client.on_chat_member_updated()
+async def member_updated_handler(client, event):
+    try:
+        chat = event.chat
+        old = event.old_chat_member
+        new = event.new_chat_member
+
+        old_status = getattr(old, "status", None)
+        new_status = getattr(new, "status", None)
+
+        if new_status not in (enums.ChatMemberStatus.MEMBER,):
+            return
+
+        if old_status in (enums.ChatMemberStatus.MEMBER, enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER):
+            return
+
+        user_id = new.user.id
+        chat_id = chat.id
+
+        me = await get_me_safe(client)
+        if not me:
+            return
+
+        clone = await db.get_bot(me.id)
+        if not clone:
+            return
+
+        fsub_data = clone.get("force_subscribe", [])
+        updated = False
+
+        for item in fsub_data:
+            try:
+                if int(item.get("channel")) != chat_id:
+                    continue
+            except Exception:
+                continue
+
+            if item.get("mode", "normal") != "normal":
+                continue
+
+            users_counted = item.get("users_counted", []) or []
+            if user_id not in users_counted:
+                item["joined"] = item.get("joined", 0) + 1
+                users_counted.append(user_id)
+                item["users_counted"] = users_counted
+                updated = True
+
+        if updated:
+            await db.update_clone(me.id, {"force_subscribe": fsub_data})
+
+    except Exception as e:
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ Clone member_updated_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+        )
+        print(f"⚠️ Clone member_updated_handler Error: {e}")"""
+
+@Client.on_chat_join_request()
+async def join_request_handler(client, request):
+    try:
+        me = await get_me_safe(client)
+        if not me:
+            return
+
+        clone = await db.get_bot(me.id)
+        if not clone:
+            return
+
+        fsub_data = clone.get("force_subscribe", [])
+        updated = False
+
+        user_id = request.from_user.id
+        chat_id = request.chat.id
+        link_used = request.invite_link
+
+        for item in fsub_data:
+            if int(item["channel"]) == chat_id:
+                if link_used and item.get("link") and link_used.invite_link == item["link"]:
+                    users_counted = item.get("users_counted", [])
+                    if user_id not in users_counted:
+                        item["joined"] = item.get("joined", 0) + 1
+                        users_counted.append(user_id)
+                        item["users_counted"] = users_counted
+                        updated = True
+
+        if updated:
+            await db.update_clone(client.me.id, {"force_subscribe": fsub_data})
+
+    except Exception as e:
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ Clone join_request_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+        )
+        print(f"⚠️ Clone join_request_handler Error: {e}")
