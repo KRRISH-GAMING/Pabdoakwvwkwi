@@ -49,6 +49,12 @@ async def is_subscribed(client, user_id: int, bot_id: int):
     for item in fsub_data:
         channel_id = int(item["channel"])
         mode = item.get("mode", "normal")
+        users_counted = item.get("users_counted", [])
+
+        if mode == "request":
+            if user_id not in users_counted:
+                return False
+            continue
 
         try:
             member = await client.get_chat_member(channel_id, user_id)
@@ -221,12 +227,14 @@ async def start(client, message):
         unit_map = {"h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
         unit = unit_map.get(unit_char.lower(), "hour(s)")
 
+        user_id = message.from_user.id
+
         # --- Track new users ---
-        if not await clonedb.is_user_exist(me.id, message.from_user.id):
-            await clonedb.add_user(me.id, message.from_user.id)
+        if not await clonedb.is_user_exist(me.id, user_id):
+            await clonedb.add_user(me.id, user_id)
             await db.increment_users_count(me.id)
 
-        if not await is_subscribed(client, message.from_user.id, me.id):
+        if not await is_subscribed(client, user_id, me.id):
             try:
                 new_fsub_data = []
                 buttons = []
@@ -234,12 +242,13 @@ async def start(client, message):
 
                 clone_client = get_client(me.id)
                 if not clone_client:
-                    await client.send_message(message.from_user.id, "⚠️ Clone bot not running. Start it first!")
+                    await client.send_message(user_id, "⚠️ Clone bot not running. Start it first!")
                     return
 
                 for item in fsub_data:
                     ch_id = int(item["channel"])
                     mode = item.get("mode", "normal")
+                    limit = item.get("limit", 0)
                     joined = item.get("joined", 0)
                     users_counted = item.get("users_counted", [])
 
@@ -254,40 +263,34 @@ async def start(client, message):
                         except Exception as e:
                             print(f"⚠️ Clone Error creating invite for {ch_id}: {e}")
 
+                    if limit != 0 and joined >= limit:
+                        continue
+
                     if mode == "request":
-                        if message.from_user.id not in users_counted:
+                        if user_id not in users_counted:
                             if item.get("link"):
                                 buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-
-                            item["joined"] = joined + 1
-                            users_counted.append(message.from_user.id)
-                            item["users_counted"] = users_counted
-                            updated = True
-
-                        if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
-                            continue
-
                         new_fsub_data.append(item)
                         continue
 
                     try:
-                        member = await clone_client.get_chat_member(ch_id, message.from_user.id)
-                        if message.from_user.id not in users_counted:
+                        member = await clone_client.get_chat_member(ch_id, user_id)
+                        if user_id not in users_counted:
                             item["joined"] = joined + 1
-                            users_counted.append(message.from_user.id)
+                            users_counted.append(user_id)
                             item["users_counted"] = users_counted
                             updated = True
-
-                        if item.get("limit", 0) != 0 and item["joined"] >= item["limit"]:
-                            continue
-
                         new_fsub_data.append(item)
                         continue
                     except UserNotParticipant:
                         if item.get("link"):
                             buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+                         new_fsub_data.append(item)
                     except Exception as e:
                         print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
+                        if item.get("link"):
+                            buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+                         new_fsub_data.append(item)
 
                 if updated:
                     await db.update_clone(me.id, {"force_subscribe": new_fsub_data})
@@ -306,14 +309,14 @@ async def start(client, message):
                             ])
 
                     await client.send_message(
-                        message.from_user.id,
+                        user_id,
                         "🚨 You must join the channel(s) first to use this bot.",
                         reply_markup=InlineKeyboardMarkup(buttons),
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
                     return
             except UserIsBlocked:
-                print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
+                print(f"⚠️ User {user_id} blocked the bot. Skipping fsub...")
                 return
             except Exception as e:
                 await client.send_message(
@@ -358,7 +361,7 @@ async def start(client, message):
                 return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
 
             user_id, token = parts[1], parts[2]
-            if str(message.from_user.id) != user_id:
+            if str(user_id) != user_id:
                 return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
 
             if await check_token(client, user_id, token):
@@ -377,8 +380,8 @@ async def start(client, message):
                 decoded = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).decode("ascii")
                 pre, decode_file_id = decoded.split("_", 1)
 
-                if access_token and message.from_user.id != owner_id and message.from_user.id not in moderators and str(message.from_user.id) not in premium and not await check_verification(client, message.from_user.id):
-                    verify_url = await get_token(client, message.from_user.id, f"https://t.me/{me.username}?start=")
+                if access_token and user_id != owner_id and user_id not in moderators and str(user_id) not in premium and not await check_verification(client, user_id):
+                    verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
                     btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
                     if premium_upi:
@@ -425,7 +428,7 @@ async def start(client, message):
                 sent_msg = None
                 if file_id:
                     sent_msg = await client.send_cached_media(
-                        chat_id=message.from_user.id,
+                        chat_id=user_id,
                         file_id=file_id,
                         caption=f_caption,
                         protect_content=forward_protect
@@ -452,7 +455,7 @@ async def start(client, message):
                 )
                 asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
             except UserIsBlocked:
-                print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping single...")
+                print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
             except Exception as e:
                 await client.send_message(
@@ -467,8 +470,8 @@ async def start(client, message):
                 file_id = data.split("-", 1)[1]
                 decode_file_id = base64.urlsafe_b64decode(file_id + "=" * (-len(file_id) % 4)).decode("ascii")
 
-                if access_token and message.from_user.id != owner_id and message.from_user.id not in moderators and str(message.from_user.id) not in premium and not await check_verification(client, message.from_user.id):
-                    verify_url = await get_token(client, message.from_user.id, f"https://t.me/{me.username}?start=")
+                if access_token and user_id != owner_id and user_id not in moderators and str(user_id) not in premium and not await check_verification(client, user_id):
+                    verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
                     btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
                     if premium_upi:
@@ -536,7 +539,7 @@ async def start(client, message):
                         sent_msg = None
                         if file_id:
                             sent_msg = await client.send_cached_media(
-                                chat_id=message.from_user.id,
+                                chat_id=user_id,
                                 file_id=file_id,
                                 caption=f_caption,
                                 protect_content=forward_protect
@@ -565,11 +568,11 @@ async def start(client, message):
                         await asyncio.sleep(e.value)
                         continue
                     except UserIsBlocked:
-                        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping batch...")
+                        print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
                         return
                     except Exception as e:
                         if "INPUT_USER_DEACTIVATED" in str(e):
-                            print(f"⚠️ User {message.from_user.id} account is deleted. Skipping batch...")
+                            print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
                             return
                         else:
                             await client.send_message(
@@ -591,7 +594,7 @@ async def start(client, message):
                 await sts.delete()
             except Exception as e:
                 if isinstance(e, UserIsBlocked):
-                    print(f"⚠️ User {message.from_user.id} blocked the bot. Ignoring.")
+                    print(f"⚠️ User {user_id} blocked the bot. Ignoring.")
                 else:
                     await client.send_message(
                         LOG_CHANNEL,
@@ -605,8 +608,8 @@ async def start(client, message):
             decoded = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).decode("ascii").strip()
             pre, file_id = decoded.split("_", 1)
 
-            if access_token and message.from_user.id != owner_id and message.from_user.id not in moderators and str(message.from_user.id) not in premium and not await check_verification(client, message.from_user.id):
-                verify_url = await get_token(client, message.from_user.id, f"https://t.me/{me.username}?start=")
+            if access_token and user_id != owner_id and user_id not in moderators and str(user_id) not in premium and not await check_verification(client, user_id):
+                verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
                 btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
                 if premium_upi:
@@ -625,7 +628,7 @@ async def start(client, message):
 
             try:
                 msg = await client.send_cached_media(
-                    chat_id=message.from_user.id,
+                    chat_id=user_id,
                     file_id=file_id,
                     protect_content=forward_protect
                 )
@@ -668,7 +671,7 @@ async def start(client, message):
                     asyncio.create_task(auto_delete_message(client, msg, k, auto_delete_time2))
                 return
             except UserIsBlocked:
-                print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping auto post...")
+                print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
                 return
             except Exception as e:
                 await client.send_message(
@@ -677,7 +680,7 @@ async def start(client, message):
                 )
                 print(f"⚠️ Clone Auto Post Handler Error: {e}")
     except UserIsBlocked:
-        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping batch...")
+        print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
         return
     except Exception as e:
         await client.send_message(
