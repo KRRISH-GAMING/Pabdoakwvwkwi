@@ -272,7 +272,23 @@ async def start(client, message):
                         continue
 
                     if user_id not in users_counted:
-                        buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+                        already_member = False
+                        try:
+                            member = await clone_client.get_chat_member(ch_id, user_id)
+                            if member.status in [
+                                enums.ChatMemberStatus.MEMBER,
+                                enums.ChatMemberStatus.ADMINISTRATOR,
+                                enums.ChatMemberStatus.OWNER
+                            ]:
+                                already_member = True
+                        except UserNotParticipant:
+                            already_member = False
+                        except Exception as e:
+                            print(f"⚠️ Error checking member in request mode: {e}")
+                            already_member = False
+
+                        if not already_member and item.get("link"):
+                            buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
                     new_fsub_data.append(item)
                     continue
 
