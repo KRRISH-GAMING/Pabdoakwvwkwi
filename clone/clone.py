@@ -1936,9 +1936,6 @@ async def member_updated_handler(client, event):
                     continue
 
                 users_counted = item.get("users_counted") or []
-                if not isinstance(users_counted, list):
-                    users_counted = []
-
                 if user_id not in users_counted:
                     item["joined"] = item.get("joined", 0) + 1
                     users_counted.append(user_id)
