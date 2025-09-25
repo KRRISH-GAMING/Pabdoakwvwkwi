@@ -1298,8 +1298,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
                 start_text = clone.get("wlc", script.START_TXT)
-                preview = start_text[:180]
-                if len(start_text) > 180:
+                preview = start_text[:150]
+                if len(start_text) > 150:
                     preview += "..."
                 await query.answer(f"📝 Current Start Text:\n\n{preview}", show_alert=True)
 
@@ -1526,7 +1526,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     [InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]
                 ]
                 await query.message.edit_text(
-                    text=script.ST_MSG_TXT,
+                    text=script.CH_MSG_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
