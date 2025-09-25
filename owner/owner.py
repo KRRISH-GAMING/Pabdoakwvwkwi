@@ -626,6 +626,7 @@ async def show_caption_menu(client, message, bot_id):
 async def show_button_menu(client, message, bot_id):
     try:
         clone = await db.get_clone_by_id(bot_id)
+        owner_id = clone.get("user_id")
         buttons_data = clone.get("button", [])
         buttons = []
 
@@ -638,13 +639,7 @@ async def show_button_menu(client, message, bot_id):
                   InlineKeyboardButton("❌", callback_data=f"remove_button_{i}_{bot_id}")]
             )
 
-        user_id = message.from_user.id
-        is_premium_user = await db.is_premium(user_id)
-
-        # Debug logging to check why premium might not be detected
-        print(f"DEBUG - User {user_id}: is_premium={is_premium_user}, buttons_count={len(buttons_data)}")
-        # Optionally log to your LOG_CHANNEL if needed:
-        # await client.send_message(LOG_CHANNEL, f"DEBUG - User {user_id}: is_premium={is_premium_user}, buttons_count={len(buttons_data)}")
+        is_premium_user = await db.is_premium(owner_id)
 
         if is_premium_user or len(buttons_data) < 3:
             buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
@@ -703,6 +698,7 @@ async def show_footer_menu(client, message, bot_id):
 async def show_fsub_menu(client, message, bot_id):
     try:
         clone = await db.get_clone_by_id(bot_id)
+        owner_id = clone.get("user_id")
         fsub_data = clone.get("force_subscribe", [])
 
         buttons = []
@@ -740,8 +736,7 @@ async def show_fsub_menu(client, message, bot_id):
 
         await db.update_clone(bot_id, {"force_subscribe": new_fsub_data})
 
-        user_id = message.from_user.id
-        is_premium_user = await db.is_premium(user_id)
+        is_premium_user = await db.is_premium(owner_id)
 
         if is_premium_user or len(fsub_data) < 4:
             buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
