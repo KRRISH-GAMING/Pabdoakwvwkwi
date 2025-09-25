@@ -48,13 +48,6 @@ async def is_subscribed(client, user_id: int, bot_id: int):
 
     for item in fsub_data:
         channel_id = int(item["channel"])
-        mode = item.get("mode", "normal")
-        users_counted = item.get("users_counted", [])
-
-        if mode == "request":
-            if user_id not in users_counted:
-                return False
-            continue
 
         try:
             member = await client.get_chat_member(channel_id, user_id)
@@ -278,43 +271,10 @@ async def start(client, message):
                     if limit != 0 and joined >= limit:
                         continue
 
-                    if mode == "request":
-                        if user_id not in users_counted:
-                            already_member = False
-                            try:
-                                member = await clone_client.get_chat_member(ch_id, user_id)
-                                if member.status in [
-                                    enums.ChatMemberStatus.MEMBER,
-                                    enums.ChatMemberStatus.ADMINISTRATOR,
-                                    enums.ChatMemberStatus.OWNER
-                                ]:
-                                    already_member = True
-                            except UserNotParticipant:
-                                already_member = False
-                            except Exception as e:
-                                print(f"⚠️ Error checking member in request mode: {e}")
-                                already_member = False
-
-                            if not already_member and item.get("link"):
-                                buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                        new_fsub_data.append(item)
-                        continue
-
-                    try:
-                        member = await clone_client.get_chat_member(ch_id, user_id)
-                        if user_id not in users_counted:
-                            item["joined"] = joined + 1
-                            users_counted.append(user_id)
-                            item["users_counted"] = users_counted
-                            updated = True
-                        new_fsub_data.append(item)
-                        continue
-                    except UserNotParticipant:
-                        if item.get("link"):
-                            buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
-                        new_fsub_data.append(item)
-                    except Exception as e:
-                        print(f"⚠️ Clone Error checking member for {ch_id}: {e}")
+                    if user_id not in users_counted:
+                        buttons.append([InlineKeyboardButton("🔔 Join Channel", url=item["link"])])
+                    new_fsub_data.append(item)
+                    continue
 
                 if updated:
                     await db.update_clone(me.id, {"force_subscribe": new_fsub_data})
@@ -1911,24 +1871,32 @@ async def message_capture(client: Client, message: Message):
         )
         print(f"⚠️ Clone message_capture Error: {e}")
 
-"""@Client.on_chat_member_updated()
+@Client.on_chat_member_updated()
 async def member_updated_handler(client, event):
     try:
-        chat = event.chat
-        old = event.old_chat_member
-        new = event.new_chat_member
+        old_status = getattr(event.old_chat_member, "status", None)
+        new_status = getattr(event.new_chat_member, "status", None)
 
-        old_status = getattr(old, "status", None)
-        new_status = getattr(new, "status", None)
-
-        if new_status not in (enums.ChatMemberStatus.MEMBER,):
+        if new_status not in (
+            enums.ChatMemberStatus.MEMBER,
+            enums.ChatMemberStatus.ADMINISTRATOR,
+            enums.ChatMemberStatus.OWNER
+        ):
             return
 
-        if old_status in (enums.ChatMemberStatus.MEMBER, enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER):
+        if old_status in (
+            enums.ChatMemberStatus.MEMBER,
+            enums.ChatMemberStatus.ADMINISTRATOR,
+            enums.ChatMemberStatus.OWNER
+        ):
             return
 
-        user_id = new.user.id
-        chat_id = chat.id
+        invite_link_used = getattr(event, "invite_link", None)
+        if not invite_link_used:
+            return
+
+        user_id = event.new_chat_member.user.id
+        chat_id = event.chat.id
 
         me = await get_me_safe(client)
         if not me:
@@ -1945,18 +1913,25 @@ async def member_updated_handler(client, event):
             try:
                 if int(item.get("channel")) != chat_id:
                     continue
-            except Exception:
-                continue
+                if item.get("mode", "normal") != "normal":
+                    continue
+                bot_invite = item.get("link")
+                if not bot_invite or bot_invite != invite_link_used.invite_link:
+                    continue
 
-            if item.get("mode", "normal") != "normal":
-                continue
+                users_counted = item.get("users_counted") or []
+                if not isinstance(users_counted, list):
+                    users_counted = []
 
-            users_counted = item.get("users_counted", []) or []
-            if user_id not in users_counted:
-                item["joined"] = item.get("joined", 0) + 1
-                users_counted.append(user_id)
-                item["users_counted"] = users_counted
-                updated = True
+                if user_id not in users_counted:
+                    item["joined"] = item.get("joined", 0) + 1
+                    users_counted.append(user_id)
+                    item["users_counted"] = users_counted
+                    updated = True
+
+            except Exception as e:
+                print(f"⚠️ member_updated_handler inner loop error: {e}")
+                continue
 
         if updated:
             await db.update_clone(me.id, {"force_subscribe": fsub_data})
@@ -1966,7 +1941,7 @@ async def member_updated_handler(client, event):
             LOG_CHANNEL,
             f"⚠️ Clone member_updated_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
-        print(f"⚠️ Clone member_updated_handler Error: {e}")"""
+        print(f"⚠️ Clone member_updated_handler Error: {e}")
 
 @Client.on_chat_join_request()
 async def join_request_handler(client, request):
