@@ -163,10 +163,17 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
-        try:
-            await msg_to_delete.delete()
-        except Exception as e:
-            print(f"⚠️ Clone Could not delete message: {e}")
+        if isinstance(msg_to_delete, list):
+            for m in msg_to_delete:
+                try:
+                    await m.delete()
+                except Exception as e:
+                    print(f"⚠️ Clone Could not delete message: {e}")
+        else:
+            try:
+                await msg_to_delete.delete()
+            except Exception as e:
+                print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
             try:
@@ -180,11 +187,10 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
-
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>"
+            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
 
@@ -237,7 +243,8 @@ async def start(client, message):
             await clonedb.add_user(me.id, user_id)
             await db.increment_users_count(me.id)
 
-        if not await is_subscribed(client, user_id, me.id):
+        # --- Fsub Handler ---
+        if not await is_subscribed(client, user_id, me.id) and user_id != owner_id and user_id not in moderators and str(user_id) not in premium:
             try:
                 new_fsub_data = []
                 buttons = []
@@ -336,12 +343,17 @@ async def start(client, message):
                 print(f"⚠️ User {user_id} blocked the bot. Skipping fsub...")
                 return
             except Exception as e:
-                await client.send_message(
-                    LOG_CHANNEL,
-                    f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
-                )
-                print(f"⚠️ Clone Fsub Handler Error: {e}")
+                if "INPUT_USER_DEACTIVATED" in str(e):
+                    print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
+                    return
+                else:
+                    await client.send_message(
+                        LOG_CHANNEL,
+                        f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                    )
+                    print(f"⚠️ Clone Fsub Handler Error: {e}")
 
+        # --- Start Handler ---
         if len(message.command) == 1:
             buttons = [[
                 InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
@@ -461,7 +473,7 @@ async def start(client, message):
                         else:
                             await sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons))
                     except Exception as e:
-                        if "MESSAGE_NOT_MODIFIED" not in str(e):
+                        if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                             raise
 
                 notice = None
@@ -575,7 +587,7 @@ async def start(client, message):
                                 else:
                                     await sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons))
                             except Exception as e:
-                                if "MESSAGE_NOT_MODIFIED" not in str(e):
+                                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                                     raise
 
                         sent_files.append(sent_msg)
@@ -1650,6 +1662,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
         print(f"⚠️ User {query.from_user.id} blocked the bot. Skipping callback...")
         return
     except Exception as e:
+        if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+            raise
         await client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
