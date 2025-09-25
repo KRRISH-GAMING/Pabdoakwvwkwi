@@ -156,19 +156,10 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
-        if isinstance(msg_to_delete, list):
-            for m in msg_to_delete:
-                if m is None:
-                    continue
-                try:
-                    await m.delete()
-                except Exception as e:
-                    print(f"⚠️ Clone Could not delete message: {e}")
-        else:
-            try:
-                await msg_to_delete.delete()
-            except Exception as e:
-                print(f"⚠️ Clone Could not delete message: {e}")
+        try:
+            await msg_to_delete.delete()
+        except Exception as e:
+            print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
             try:
@@ -589,12 +580,12 @@ async def start(client, message):
                             print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
                             continue
 
-                if auto_delete:
-                    k = await message.reply(
+                if sent_msg and auto_delete:
+                    k = await sent_msg.reply(
                         auto_delete_msg.format(time=number, unit=unit),
                         quote=True
                     )
-                    asyncio.create_task(auto_delete_message(client, sent_files, k, auto_delete_time2))
+                    asyncio.create_task(auto_delete_message(client, sent_msg, k, auto_delete_time2))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
