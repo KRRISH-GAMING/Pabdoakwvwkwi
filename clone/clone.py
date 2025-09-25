@@ -448,10 +448,10 @@ async def start(client, message):
                 notice = None
                 if sent_msg and auto_delete:
                     notice = await sent_msg.reply(
-                    auto_delete_msg.format(time=number, unit=unit),
-                    quote=True
-                )
-                asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
+                        auto_delete_msg.format(time=number, unit=unit),
+                        quote=True
+                    )
+                    asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
@@ -580,12 +580,14 @@ async def start(client, message):
                             print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
                             continue
 
-                if sent_msg and auto_delete:
-                    k = await sent_msg.reply(
-                        auto_delete_msg.format(time=number, unit=unit),
-                        quote=True
-                    )
-                    asyncio.create_task(auto_delete_message(client, sent_msg, k, auto_delete_time2))
+                notice = None
+                if auto_delete:
+                    for sent_msg in sent_files:
+                        notice = await sent_msg.reply(
+                            auto_delete_msg.format(time=number, unit=unit),
+                            quote=True
+                        )
+                        asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
