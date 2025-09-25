@@ -109,6 +109,10 @@ Add up to 3 custom buttons to your media messages."""
 
 ℹ️ The name will be shown on the button, and the URL will open when users click it."""
 
+    CH_MSG_TXT = """<u>**✨ CHANNEL MESSAGE**</u>
+
+Customize the channel message of your clone bot using the options below."""
+
     WORD_FILTER_TXT = """<u>**✨ OFFENSIVE WORD FILTER**</u>
 
 Block or filter offensive words in forwarded or posted messages.
