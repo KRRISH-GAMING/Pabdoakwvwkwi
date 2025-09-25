@@ -126,12 +126,22 @@ async def verify_user(client, userid, token):
     if userid in TOKENS and token in TOKENS[userid]:
         TOKENS[userid][token] = True
 
-    clone = await db.get_bot((await client.get_me()).id)
+    me = await get_me_safe(client)
+    if not me:
+        return
+
+    clone = await db.get_bot(me.id)
     if not clone:
         return
 
     validity_hours = parse_time(clone.get("access_token_validity", "24h"))
     VERIFIED[userid] = datetime.now() + timedelta(seconds=validity_hours)
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    renew_log = clone.get("access_token_renew_log", {})
+    renew_log[today] = renew_log.get(today, 0) + 1
+
+    await db.update_bot(me.id, {"access_token_renew_log": renew_log})
 
 async def check_verification(client, userid):
     userid = int(userid)
