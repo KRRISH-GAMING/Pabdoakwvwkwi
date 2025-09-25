@@ -3647,33 +3647,34 @@ async def message_capture(client: Client, message: Message):
 async def restart_bots():
     bots_cursor = await db.get_all_bots()
     bots = await bots_cursor.to_list(None)
-    for bot in bots:
-        bot_token = bot['token']
-        bot_id = bot['_id']
+
+    async def start_clone(bot_doc):
+        db_id = bot_doc['_id']
+        token = bot_doc['token']
         try:
             xd = Client(
-                name=f"clone_{bot_id}",
+                name=f"clone_{db_id}",
                 api_id=API_ID,
                 api_hash=API_HASH,
-                bot_token=bot_token,
+                bot_token=token,
                 plugins={"root": "clone"},
             )
             await xd.start()
-            bot = await xd.get_me()
-            set_client(bot.id, xd)
-            print(f"✅ Restarted clone bot @{bot.username} ({bot.id})")
+            tg_bot = await xd.get_me()
+            set_client(tg_bot.id, xd)
+            print(f"✅ Restarted clone bot @{tg_bot.username} ({tg_bot.id})")
 
-            fresh = await db.get_clone_by_id(bot.id)
+            fresh = await db.get_clone_by_id(tg_bot.id)
             if fresh and fresh.get("auto_post", False):
-                auto_post_channel = fresh.get("auto_post_channel", None)
-                if auto_post_channel:
-                    asyncio.create_task(
-                        auto_post_clone(bot.id, db, auto_post_channel)
-                    )
-                    print(f"▶️ Auto-post started for @{bot.username}")
+                channel = fresh.get("auto_post_channel")
+                if channel:
+                    asyncio.create_task(auto_post_clone(tg_bot.id, db, channel))
+                    print(f"▶️ Auto-post started for @{tg_bot.username}")
+
         except UserDeactivated:
-            print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
-            await db.delete_clone_by_id(bot_id)
-            continue
+            print(f"⚠️ Bot with token {db_id} is deactivated. Removing from DB...")
+            await db.delete_clone_by_id(db_id)
         except Exception as e:
-            print(f"Error while restarting bot with token {bot.id}: {e}")
+            print(f"❌ Error restarting bot with token {db_id}: {e}")
+
+    await asyncio.gather(*[start_clone(bot) for bot in bots])
