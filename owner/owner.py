@@ -105,7 +105,6 @@ async def start(client, message):
         except:
             pass
 
-        # --- Save user in DB ---
         if not await db.is_user_exist(message.from_user.id):
             await db.add_user(message.from_user.id, message.from_user.first_name)
             await client.send_message(
@@ -642,7 +641,12 @@ async def show_button_menu(client, message, bot_id):
         user_id = message.from_user.id
         is_premium_user = await db.is_premium(user_id)
 
-        if is_premium_user or len(fsub_data) < 4:
+        # Debug logging to check why premium might not be detected
+        print(f"DEBUG - User {user_id}: is_premium={is_premium_user}, buttons_count={len(buttons_data)}")
+        # Optionally log to your LOG_CHANNEL if needed:
+        # await client.send_message(LOG_CHANNEL, f"DEBUG - User {user_id}: is_premium={is_premium_user}, buttons_count={len(buttons_data)}")
+
+        if is_premium_user or len(buttons_data) < 3:
             buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")])
@@ -3664,14 +3668,14 @@ async def restart_bots():
             set_client(bot.id, xd)
             print(f"✅ Restarted clone bot @{bot.username} ({bot.id})")
 
-            fresh = await db.get_clone_by_id(bot.id)
+            """fresh = await db.get_clone_by_id(bot.id)
             if fresh and fresh.get("auto_post", False):
                 auto_post_channel = fresh.get("auto_post_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot.username}")
+                    print(f"▶️ Auto-post started for @{bot.username}")"""
         except UserDeactivated:
             print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
