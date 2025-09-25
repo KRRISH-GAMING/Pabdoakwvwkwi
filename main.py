@@ -202,15 +202,15 @@ async def start():
             sys.modules["owner." + plugin_name] = load
             print("✅ Imported => " + plugin_name)
     
-    tz = pytz.timezone('Asia/Kolkata')
     today = date.today()
+    tz = pytz.timezone('Asia/Kolkata')
     now = datetime.now(tz)
     current_time = now.strftime("%H:%M:%S")
 
-    app = web.AppRunner(await web_server())
+    """app = web.AppRunner(await web_server())
     await app.setup()
     bind_address = "0.0.0.0"
-    await web.TCPSite(app, bind_address, PORT).start()
+    await web.TCPSite(app, bind_address, PORT).start()"""
 
     await StreamBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, current_time))
     await restart_bots()
