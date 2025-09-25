@@ -14,7 +14,7 @@ from aiohttp import web
 from plugins.config import *
 from plugins.script import script
 from owner.owner import restart_bots, set_auto_menu, assistant
-from database import db  # ✅ ensure indexes
+from plugins.database import db  # ✅ ensure indexes
 
 # ---------- Logging ----------
 logging.basicConfig(
