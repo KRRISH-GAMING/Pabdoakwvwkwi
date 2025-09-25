@@ -158,6 +158,8 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
 
         if isinstance(msg_to_delete, list):
             for m in msg_to_delete:
+                if m is None:
+                    continue
                 try:
                     await m.delete()
                 except Exception as e:
