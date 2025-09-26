@@ -3608,4 +3608,8 @@ async def restart_bots():
             print(f"⚠️ Bot with token {bot_id} has invalid/revoked token. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
         except Exception as e:
-            print(f"Error while restarting bot with token {bot_id}: {e}")
+            if "SESSION_REVOKED" in str(e):
+                print(f"⚠️ Token revoked for bot {bot_id}, removing from DB...")
+                await db.delete_clone_by_id(bot_id)
+            else:
+                print(f"Error while restarting bot with token {bot_id}: {e}")
