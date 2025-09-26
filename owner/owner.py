@@ -3606,4 +3606,4 @@ async def restart_bots():
             await db.delete_clone_by_id(bot_id)
             continue
         except Exception as e:
-            print(f"Error while restarting bot with token {bot.id}: {e}")
+            print(f"Error while restarting bot with token {bot_id}: {e}")
