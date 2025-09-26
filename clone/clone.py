@@ -12,9 +12,6 @@ from plugins.script import *
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-CLONE_ME = {}
-TOKENS = {}
-VERIFIED = {}
 SHORTEN_STATE = {}
 
 START_TIME = time.time()
