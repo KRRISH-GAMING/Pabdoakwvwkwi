@@ -283,7 +283,6 @@ async def start(client, message):
                     notice = await client.send_message(
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
-                        quote=True
                     )
                     asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
             except UserIsBlocked:
@@ -419,7 +418,6 @@ async def start(client, message):
                     notice = await client.send_message(
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
-                        quote=True
                     )
                     asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2))
 
@@ -502,7 +500,6 @@ async def start(client, message):
                     notice = await client.send_message(
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
-                        quote=True
                     )
                     asyncio.create_task(auto_delete_message(client, msg, notice, auto_delete_time2))
                 return
