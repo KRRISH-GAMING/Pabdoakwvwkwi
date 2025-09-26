@@ -236,11 +236,17 @@ async def check_verification(client, userid):
         return False
     return True
 
+from pyrogram.errors import FloodWait, UserIsBlocked
+import asyncio
+
 async def auto_delete_message(client, msg_to_delete, notice_msg, delay):
     try:
         await asyncio.sleep(delay)
 
-        targets = msg_to_delete if isinstance(msg_to_delete, (list, tuple)) else [msg_to_delete]
+        if isinstance(msg_to_delete, (list, tuple)):
+            targets = msg_to_delete
+        else:
+            targets = [msg_to_delete]
 
         for m in targets:
             if not m:
@@ -250,15 +256,17 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay):
             except FloodWait as e:
                 print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
                 await asyncio.sleep(e.value)
-                await m.delete()
+                try:
+                    await m.delete()
+                except Exception as e2:
+                    print(f"⚠️ Could not retry delete: {e2}")
             except UserIsBlocked:
                 print("⚠️ User blocked while deleting.")
                 return
             except Exception as e:
                 print(f"⚠️ Could not delete message: {e}")
-            await asyncio.sleep(0.5)  # small delay to avoid hitting floodwait
+            await asyncio.sleep(0.5)
 
-        # Edit or send deletion notice
         if notice_msg:
             try:
                 await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
