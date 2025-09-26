@@ -3604,6 +3604,8 @@ async def restart_bots():
         except UserDeactivated:
             print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
-            continue
+        except AuthKeyUnregistered:
+            print(f"⚠️ Bot with token {bot_id} has invalid/revoked token. Removing from DB...")
+            await db.delete_clone_by_id(bot_id)
         except Exception as e:
             print(f"Error while restarting bot with token {bot_id}: {e}")
