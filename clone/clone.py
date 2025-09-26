@@ -1,15 +1,13 @@
-import os, logging, asyncio, re, json, base64, random, aiohttp, requests, string, time
-from datetime import datetime, timedelta
-from shortzy import Shortzy
-from validators import domain
-from pyrogram import Client, filters, enums
+import logging, asyncio, re, base64, random, string, time
+from datetime import *
+from pyrogram import *
 from pyrogram.types import *
-from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid, ChatAdminRequired
-from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameInvalid, UsernameNotModified
+from pyrogram.errors import *
+from pyrogram.errors.exceptions.bad_request_400 import *
 from plugins.config import *
-from plugins.database import db, clonedb
-from plugins.clone_instance import get_client, parse_time
-from plugins.script import script
+from plugins.database import *
+from plugins.helper import *
+from plugins.script import *
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -20,178 +18,6 @@ VERIFIED = {}
 SHORTEN_STATE = {}
 
 START_TIME = time.time()
-
-async def get_me_safe(client):
-    if client in CLONE_ME and CLONE_ME[client]:
-        return CLONE_ME[client]
-
-    while True:
-        try:
-            me = await client.get_me()
-            CLONE_ME[client] = me
-            return me
-        except FloodWait as e:
-            print(f"⏳ FloodWait: waiting {e.value}s for get_me()...")
-            await asyncio.sleep(e.value)
-        except Exception as ex:
-            print(f"⚠️ get_me() failed: {ex}")
-            return None
-
-async def is_subscribed(client, user_id: int, bot_id: int):
-    clone = await db.get_bot(bot_id)
-    if not clone:
-        return True
-
-    fsub_data = clone.get("force_subscribe", [])
-    if not fsub_data:
-        return True
-
-    for item in fsub_data:
-        channel_id = int(item["channel"])
-
-        try:
-            member = await client.get_chat_member(channel_id, user_id)
-            if member.status in [
-                enums.ChatMemberStatus.MEMBER,
-                enums.ChatMemberStatus.ADMINISTRATOR,
-                enums.ChatMemberStatus.OWNER
-            ]:
-                continue
-            else:
-                return False
-
-        except UserNotParticipant:
-            return False
-
-        except Exception as e:
-            print(f"⚠️ Clone is_subscribed Error {channel_id}: {e}")
-            return False
-
-    return True
-
-async def get_verify_shorted_link(client, link):
-    me = await get_me_safe(client)
-    if not me:
-        return
-
-    clone = await db.get_bot(me.id)
-    if not clone:
-        return link
-
-    shortlink_url = clone.get("shorten_link", None)
-    shortlink_api = clone.get("shorten_api", None)
-
-    if shortlink_url and shortlink_api:
-        url = f"https://{shortlink_url}/api"
-        params = {"api": shortlink_api, "url": link}
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params, ssl=False) as response:
-                    text = await response.text()
-
-                    try:
-                        data = await response.json(content_type=None)
-                    except Exception:
-                        print(f"⚠️ API did not return JSON, got: {text[:200]}")
-                        return link
-
-                    if "shortenedUrl" in data:
-                        return data["shortenedUrl"]
-                    if "shortened" in data:
-                        return data["shortened"]
-
-                    print(f"⚠️ Unexpected JSON response: {data}")
-                    return link
-        except Exception as e:
-            print(f"⚠️ Clone Shortener error: {e}")
-            return link
-
-    return link
-
-async def check_token(client, userid, token):
-    userid = int(userid)
-    if userid in TOKENS:
-        return token in TOKENS[userid] and TOKENS[userid][token] is False
-    return False
-
-async def get_token(client, userid, base_link):
-    user = await client.get_users(userid)
-    token = ''.join(random.choices(string.ascii_letters + string.digits, k=7))
-    TOKENS[user.id] = {token: False}
-    link = f"{base_link}VERIFY-{user.id}-{token}"
-    return await get_verify_shorted_link(client, link)
-
-async def verify_user(client, userid, token):
-    userid = int(userid)
-    if userid in TOKENS and token in TOKENS[userid]:
-        TOKENS[userid][token] = True
-
-    me = await get_me_safe(client)
-    if not me:
-        return
-
-    clone = await db.get_bot(me.id)
-    if not clone:
-        return
-
-    validity_hours = parse_time(clone.get("access_token_validity", "24h"))
-    VERIFIED[userid] = datetime.now() + timedelta(seconds=validity_hours)
-
-    today = datetime.now().strftime("%Y-%m-%d")
-    renew_log = clone.get("access_token_renew_log", {})
-    renew_log[today] = renew_log.get(today, 0) + 1
-
-    await db.update_bot(me.id, {"access_token_renew_log": renew_log})
-
-async def check_verification(client, userid):
-    userid = int(userid)
-    expiry = VERIFIED.get(userid)
-    if not expiry:
-        return False
-    if datetime.now() > expiry:
-        del VERIFIED[userid]
-        return False
-    return True
-
-def get_size(size):
-    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
-    size = float(size)
-    i = 0
-    while size >= 1024.0 and i < len(units):
-        i += 1
-        size /= 1024.0
-    return "%.2f %s" % (size, units[i])
-
-async def auto_delete_message(client, msg_to_delete, notice_msg, time):
-    try:
-        await asyncio.sleep(time)
-
-        try:
-            await msg_to_delete.delete()
-        except Exception as e:
-            print(f"⚠️ Clone Could not delete message: {e}")
-
-        if notice_msg:
-            try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
-            except Exception as e:
-                print(f"⚠️ Clone Could not edit notice_msg: {e}")
-                try:
-                    await client.send_message(
-                        notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!"
-                    )
-                except Exception as e2:
-                    print(f"⚠️ Clone Could not send fallback message: {e2}")
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
-        )
-        print(f"⚠️ Clone Auto Delete Error: {e}")
-
-def random_code(length=8):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 @Client.on_message(filters.command("start") & filters.private & filters.incoming)
 async def start(client, message):
@@ -240,7 +66,7 @@ async def start(client, message):
             await db.increment_users_count(me.id)
 
         # --- Fsub Handler ---
-        if not await is_subscribed(client, user_id, me.id) and user_id != owner_id and user_id not in moderators and str(user_id) not in premium:
+        if not await is_subscribedy(client, user_id, me.id) and user_id != owner_id and user_id not in moderators and str(user_id) not in premium:
             try:
                 new_fsub_data = []
                 buttons = []
@@ -457,7 +283,8 @@ async def start(client, message):
 
                 notice = None
                 if sent_msg and auto_delete:
-                    notice = await sent_msg.reply(
+                    notice = await client.send_message(
+                        user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                         quote=True
                     )
@@ -592,12 +419,12 @@ async def start(client, message):
 
                 notice = None
                 if auto_delete:
-                    for sent_msg in sent_files:
-                        notice = await sent_msg.reply(
-                            auto_delete_msg.format(time=number, unit=unit),
-                            quote=True
-                        )
-                        asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
+                    notice = await client.send_message(
+                        user_id,
+                        auto_delete_msg.format(time=number, unit=unit),
+                        quote=True
+                    )
+                    asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
@@ -673,12 +500,14 @@ async def start(client, message):
                 else:
                     await msg.edit_caption(f_caption)
 
-                if auto_delete:
-                    k = await msg.reply(
+                notice=None
+                if msg and auto_delete:
+                    notice = await client.send_message(
+                        user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                         quote=True
                     )
-                    asyncio.create_task(auto_delete_message(client, msg, k, auto_delete_time2))
+                    asyncio.create_task(auto_delete_message(client, msg, notice, auto_delete_time2))
                 return
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
@@ -851,7 +680,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
         print(f"❌ Clone AutoPost crashed for {bot_id}: {e}")
 
 @Client.on_message(filters.command(['genlink']) & filters.private)
-async def link(client, message):
+async def genlink(client, message):
     try:
         me = await get_me_safe(client)
         if not me:
@@ -919,23 +748,6 @@ async def link(client, message):
             f"⚠️ Clone Generate Link Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Generate Link Error: {e}")
-
-def batch_progress_bar(done, total, length=20):
-    if total == 0:
-        return "[░" * length + "] 0%"
-    
-    percent = int((done / total) * 100)
-    filled = int((done / total) * length)
-    empty = length - filled
-    bar = "▓" * filled + "░" * empty
-
-    percent_str = f"{percent}%"
-    bar_list = list(bar)
-    start_pos = max((length - len(percent_str)) // 2, 0)
-    for i, c in enumerate(percent_str):
-        if start_pos + i < length:
-            bar_list[start_pos + i] = c
-    return f"[{''.join(bar_list)}]"
 
 @Client.on_message(filters.command(['batch']) & filters.private)
 async def batch(client, message):
@@ -1080,14 +892,6 @@ async def batch(client, message):
         )
         print(f"⚠️ Clone Batch Error: {e}")
 
-async def get_short_link(user, link):
-    base_site = user["base_site"]
-    api_key = user["shortener_api"]
-    response = requests.get(f"https://{base_site}/api?api={api_key}&url={link}")
-    data = response.json()
-    if data["status"] == "success" or rget.status_code == 200:
-        return data["shortenedUrl"]
-
 @Client.on_message(filters.command("shortener") & filters.private)
 async def shorten_handler(client: Client, message: Message):
     try:
@@ -1158,36 +962,6 @@ async def shorten_handler(client: Client, message: Message):
         )
         print(f"⚠️ Clone Shorten Error: {e}")
 
-async def broadcast_messages(bot_id, user_id, message):
-    try:
-        await message.copy(chat_id=user_id)
-        return True, "Success"
-    except FloodWait as e:
-        await asyncio.sleep(e.value)
-        return await broadcast_messages(bot_id, user_id, message)
-    except InputUserDeactivated:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Deleted"
-    except UserIsBlocked:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Blocked"
-    except PeerIdInvalid:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Error"
-    except Exception:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Error"
-
-def broadcast_progress_bar(done: int, total: int) -> str:
-    try:
-        progress = done / total if total > 0 else 0
-        filled = int(progress * 20)
-        empty = 20 - filled
-        bar_str = "█" * filled + "░" * empty
-        return f"[{bar_str}] {done}/{total}"
-    except Exception as e:
-        return f"[Error building bar: {e}] {done}/{total}"
-
 @Client.on_message(filters.command("broadcast") & filters.private)
 async def broadcast(client, message):
     try:
@@ -1226,7 +1000,7 @@ async def broadcast(client, message):
 
         async for user in users:
             if 'user_id' in user:
-                pti, sh = await broadcast_messages(me.id, int(user['user_id']), b_msg)
+                pti, sh = await broadcast_messagesy(me.id, int(user['user_id']), b_msg)
                 if pti:
                     success += 1
                 else:
@@ -1239,7 +1013,7 @@ async def broadcast(client, message):
                 done += 1
 
                 if done % 10 == 0 or done == total_users:
-                    progress = broadcast_progress_bar(done, total_users)
+                    progress = broadcast_progress_bary(done, total_users)
                     percent = (done / total_users) * 100
                     elapsed = time.time() - start_time
                     speed = done / elapsed if elapsed > 0 else 0
@@ -1268,7 +1042,7 @@ async def broadcast(client, message):
                 failed += 1
 
         time_taken = timedelta(seconds=int(time.time() - start_time))
-        final_progress = broadcast_progress_bar(total_users, total_users)
+        final_progress = broadcast_progress_bary(total_users, total_users)
         final_text = f"""
 ✅ <b>Broadcast Completed</b> ✅
 
@@ -1457,7 +1231,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         data = query.data
 
         if data.startswith("checksub"):
-            if not await is_subscribed(client, query):
+            if not await is_subscribedy(client, query):
                 await query.answer("Join our channel first.", show_alert=True)
                 return
             
@@ -1651,39 +1425,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
         print(f"⚠️ Clone Callback Handler Error: {e}")
         await query.answer("❌ An error occurred. The admin has been notified.", show_alert=True)
-
-async def is_admin(client, chat_id: int, user_id: int) -> bool:
-    try:
-        member = await client.get_chat_member(chat_id, user_id)
-        return member.status in [
-            enums.ChatMemberStatus.ADMINISTRATOR,
-            enums.ChatMemberStatus.OWNER
-        ]
-    except UserNotParticipant:
-        return False
-    except ChatAdminRequired:
-        print(f"⚠️ Bot is not admin in chat {chat_id}, cannot check admin status.")
-        return False
-    except Exception as e:
-        print(f"⚠️ is_admin() failed for user {user_id} in chat {chat_id}: {e}")
-        return False
-
-def mask_partial(word):
-    if len(word) <= 2:
-        return word[0] + "*"
-    mid = len(word) // 2
-    return word[:1] + "*" + word[2:]
-
-def clean_text(text: str) -> str:
-    cleaned = text
-    for word in script.BAD_WORDS:
-        cleaned = re.sub(
-            re.escape(word), 
-            mask_partial(word), 
-            cleaned, 
-            flags=re.IGNORECASE
-        )
-    return cleaned
 
 @Client.on_message(filters.all)
 async def message_capture(client: Client, message: Message):
