@@ -1,15 +1,14 @@
-import os, sys, logging, asyncio, re, json, base64, requests, time, shutil
-from datetime import datetime, timedelta
-from validators import domain
-from pyrogram import Client, filters, enums, types
+import os, logging, asyncio, re, time, shutil
+from datetime import *
+from pyrogram import *
 from pyrogram.types import *
-from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid, UserDeactivated
-from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameInvalid, UsernameNotModified
+from pyrogram.errors import *
+from pyrogram.errors.exceptions.bad_request_400 import *
 from plugins.config import *
-from plugins.database import db, JoinReqs
-from plugins.clone_instance import set_client, get_client
-from plugins.script import script
-from clone.clone import auto_post_clone
+from plugins.database import *
+from plugins.helper import *
+from plugins.script import *
+from clone.clone import *
         
 logger = logging.getLogger(__name__)
 
@@ -35,6 +34,51 @@ AUTO_DELETE_MESSAGE = {}
 ADD_MODERATOR = {}
 
 START_TIME = time.time()
+
+if SESSION_STRING and len(SESSION_STRING) > 30:
+    assistant = Client(
+        "assistant",
+        api_id=API_ID,
+        api_hash=API_HASH,
+        session_string=SESSION_STRING
+    )
+else:
+    assistant = Client(
+        "assistant",
+        api_id=API_ID,
+        api_hash=API_HASH
+    )
+
+async def promote(bot_username: str):
+    try:
+        if not assistant.is_connected:
+            await assistant.start()
+
+        await assistant.promote_chat_member(
+            LOG_CHANNEL,
+            bot_username,
+            privileges=types.ChatPrivileges(
+                can_post_messages=True,
+                can_edit_messages=True,
+                can_delete_messages=True,
+                can_invite_users=True,
+                can_pin_messages=True,
+                can_manage_chat=True,
+                can_manage_video_chats=True
+            )
+        )
+
+        await assistant.send_message(
+            LOG_CHANNEL,
+            f"✅ Clone bot @{bot_username} promoted as admin"
+        )
+        print(f"✅ Clone bot @{bot_username} promoted as admin")
+    except Exception as e:
+        await assistant.send_message(
+            LOG_CHANNEL,
+            f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+        )
+        print(f"⚠️ Promote Clone Bot @{bot_username} Error: {e}")
 
 async def set_auto_menu(client):
     try:
@@ -66,36 +110,26 @@ async def set_auto_menu(client):
         )
         print(f"⚠️ Set Menu Error: {e}")
 
-async def is_subscribed(client, query):
-    if REQUEST_TO_JOIN_MODE == True and JoinReqs().isActive():
-        try:
-            user = await JoinReqs().get_user(query.from_user.id)
-            if user and user["user_id"] == query.from_user.id:
-                return True
-            else:
-                try:
-                    user_data = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-                except UserNotParticipant:
-                    pass
-                except Exception as e:
-                    logger.exception(e)
-                else:
-                    if user_data.status != enums.ChatMemberStatus.BANNED:
-                        return True
-        except Exception as e:
-            logger.exception(e)
-            return False
-    else:
-        try:
-            user = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-        except UserNotParticipant:
-            pass
-        except Exception as e:
-            logger.exception(e)
-        else:
-            if user.status != enums.ChatMemberStatus.BANNED:
-                return True
-        return False
+async def set_clone_menu(xd):
+    try:
+        clone_cmds = [
+            BotCommand("start", "Check I am alive"),
+            BotCommand("help", "View help menu"),
+            BotCommand("genlink", "Store a single message or file"),
+            BotCommand("batch", "Store multiple messages from a channel"),
+            BotCommand("shortener", "Shorten any shareable links"),
+            BotCommand("broadcast", "Broadcast a message to users"),
+            BotCommand("stats", "View bot statistics"),
+            BotCommand("contact", "Message to admin"),
+        ]
+        await xd.set_bot_commands(clone_cmds, scope=BotCommandScopeDefault())
+        print("✅ Clone Bot Menu Commands Set!")
+    except Exception as e:
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+        )
+        print(f"⚠️ Clone Bot Menu Error: {e}")
 
 @Client.on_message(filters.command("start") & filters.private & filters.incoming)
 async def start(client, message):
@@ -112,9 +146,9 @@ async def start(client, message):
                 script.LOG_TEXT.format(message.from_user.id, message.from_user.mention)
             )
 
-        if AUTH_CHANNEL and not await is_subscribed(client, message):
+        if AUTH_CHANNEL and not await is_subscribedx(client, message):
             await asyncio.sleep(2)
-            if not await is_subscribed(client, message):
+            if not await is_subscribedx(client, message):
                 if REQUEST_TO_JOIN_MODE:
                     invite_link = await client.create_chat_invite_link(chat_id=int(AUTH_CHANNEL), creates_join_request=True)
                 else:
@@ -305,35 +339,6 @@ async def check_premium(client: Client, message: Message):
         )
         print(f"⚠️ Check Premium Error: {e}")
 
-async def broadcast_messages(user_id, message):
-    try:
-        await message.copy(chat_id=user_id)
-        return True, "Success"
-    except FloodWait as e:
-        await asyncio.sleep(e.value)
-        return await broadcast_messages(user_id, message)
-    except InputUserDeactivated:
-        await db.delete_user(int(user_id))
-        return False, "Deleted"
-    except UserIsBlocked:
-        await db.delete_user(int(user_id))
-        return False, "Blocked"
-    except PeerIdInvalid:
-        await db.delete_user(int(user_id))
-        return False, "Error"
-    except Exception as e:
-        return False, f"Error: {str(e)}"
-
-def broadcast_progress_bar(done: int, total: int) -> str:
-    try:
-        progress = done / total if total > 0 else 0
-        filled = int(progress * 20)
-        empty = 20 - filled
-        bar_str = "█" * filled + "░" * empty
-        return f"[{bar_str}] {done}/{total}"
-    except Exception as e:
-        return f"[Error building bar: {e}] {done}/{total}"
-
 @Client.on_message(filters.command("broadcast") & filters.user(ADMINS) & filters.private)
 async def broadcast(client, message):
     try:
@@ -363,7 +368,7 @@ async def broadcast(client, message):
         async for user in users:
             try:
                 if "id" in user:
-                    pti, sh = await broadcast_messages(int(user["id"]), b_msg)
+                    pti, sh = await broadcast_messagesx(int(user["id"]), b_msg)
                     if pti:
                         success += 1
                     else:
@@ -376,7 +381,7 @@ async def broadcast(client, message):
                     done += 1
 
                     if done % 10 == 0 or done == total_users:
-                        progress = broadcast_progress_bar(done, total_users)
+                        progress = broadcast_progress_barx(done, total_users)
                         percent = (done / total_users) * 100
                         elapsed = time.time() - start_time
                         speed = done / elapsed if elapsed > 0 else 0
@@ -410,7 +415,7 @@ async def broadcast(client, message):
 
         time_taken = timedelta(seconds=int(time.time() - start_time))
         #speed = round(done / (time.time()-start_time), 2) if done > 0 else 0
-        final_progress = broadcast_progress_bar(total_users, total_users)
+        final_progress = broadcast_progress_barx(total_users, total_users)
         final_text = f"""
 ✅ <b>Broadcast Completed</b> ✅
 
@@ -1060,15 +1065,6 @@ async def show_moderator_menu(client, message, bot_id):
             f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Moderator Menu Error: {e}")
-
-def get_size(size):
-    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
-    size = float(size)
-    i = 0
-    while size >= 1024.0 and i < len(units):
-        i += 1
-        size /= 1024.0
-    return "%.2f %s" % (size, units[i])
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -3108,72 +3104,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         print(f"⚠️ Callback Handler Error: {e}")
         await query.answer("❌ An error occurred. The admin has been notified.", show_alert=True)
 
-if SESSION_STRING and len(SESSION_STRING) > 30:
-    assistant = Client(
-        "assistant",
-        api_id=API_ID,
-        api_hash=API_HASH,
-        session_string=SESSION_STRING
-    )
-else:
-    assistant = Client(
-        "assistant",
-        api_id=API_ID,
-        api_hash=API_HASH
-    )
-
-async def promote(bot_username: str):
-    try:
-        if not assistant.is_connected:
-            await assistant.start()
-
-        await assistant.promote_chat_member(
-            LOG_CHANNEL,
-            bot_username,
-            privileges=types.ChatPrivileges(
-                can_post_messages=True,
-                can_edit_messages=True,
-                can_delete_messages=True,
-                can_invite_users=True,
-                can_pin_messages=True,
-                can_manage_chat=True,
-                can_manage_video_chats=True
-            )
-        )
-
-        await assistant.send_message(
-            LOG_CHANNEL,
-            f"✅ Clone bot @{bot_username} promoted as admin"
-        )
-        print(f"✅ Clone bot @{bot_username} promoted as admin")
-    except Exception as e:
-        await assistant.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
-        )
-        print(f"⚠️ Promote Clone Bot @{bot_username} Error: {e}")
-
-async def set_clone_menu(xd):
-    try:
-        clone_cmds = [
-            BotCommand("start", "Check I am alive"),
-            BotCommand("help", "View help menu"),
-            BotCommand("genlink", "Store a single message or file"),
-            BotCommand("batch", "Store multiple messages from a channel"),
-            BotCommand("shortener", "Shorten any shareable links"),
-            BotCommand("broadcast", "Broadcast a message to users"),
-            BotCommand("stats", "View bot statistics"),
-            BotCommand("contact", "Message to admin"),
-        ]
-        await xd.set_bot_commands(clone_cmds, scope=BotCommandScopeDefault())
-        print("✅ Clone Bot Menu Commands Set!")
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
-        )
-        print(f"⚠️ Clone Bot Menu Error: {e}")
-
 @Client.on_message(filters.all)
 async def message_capture(client: Client, message: Message):
     try:
@@ -3663,14 +3593,14 @@ async def restart_bots():
             set_client(bot.id, xd)
             print(f"✅ Restarted clone bot @{bot.username} ({bot.id})")
 
-            fresh = await db.get_clone_by_id(bot.id)
+            """fresh = await db.get_clone_by_id(bot.id)
             if fresh and fresh.get("auto_post", False):
                 auto_post_channel = fresh.get("auto_post_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot.username}")
+                    print(f"▶️ Auto-post started for @{bot.username}")"""
         except UserDeactivated:
             print(f"⚠️ Bot with token {bot_id} is deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
