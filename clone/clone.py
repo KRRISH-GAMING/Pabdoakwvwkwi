@@ -284,7 +284,7 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
-                    asyncio.create_task(auto_delete_message(client, sent_msg, notice, auto_delete_time2))
+                    asyncio.create_task(auto_delete_messagex(client, sent_msg, notice, auto_delete_time2))
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
@@ -419,7 +419,7 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
-                    asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2))
+                    asyncio.create_task(auto_delete_messagey(client, sent_files, notice, auto_delete_time2))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
@@ -501,7 +501,7 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
-                    asyncio.create_task(auto_delete_message(client, msg, notice, auto_delete_time2))
+                    asyncio.create_task(auto_delete_messagex(client, msg, notice, auto_delete_time2))
                 return
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
