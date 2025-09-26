@@ -9,6 +9,9 @@ from plugins.database import *
 from plugins.script import *
 
 _clone_clients = {}
+CLONE_ME = {}
+TOKENS = {}
+VERIFIED = {}
 
 def set_client(bot_id: int, client):
     _clone_clients[int(bot_id)] = client
