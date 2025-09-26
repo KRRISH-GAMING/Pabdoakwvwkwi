@@ -236,54 +236,38 @@ async def check_verification(client, userid):
         return False
     return True
 
-from pyrogram.errors import FloodWait, UserIsBlocked
-import asyncio
-
-async def auto_delete_message(client, msg_to_delete, notice_msg, delay):
+async def auto_delete_message(client, msg_to_delete, notice_msg, time):
     try:
-        await asyncio.sleep(delay)
+        await asyncio.sleep(time)
 
-        if isinstance(msg_to_delete, (list, tuple)):
-            targets = msg_to_delete
-        else:
-            targets = [msg_to_delete]
-
-        for m in targets:
-            if not m:
-                continue
-            try:
-                await m.delete()
-            except FloodWait as e:
-                print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
-                await asyncio.sleep(e.value)
-                try:
-                    await m.delete()
-                except Exception as e2:
-                    print(f"⚠️ Could not retry delete: {e2}")
-            except UserIsBlocked:
-                print("⚠️ User blocked while deleting.")
-                return
-            except Exception as e:
-                print(f"⚠️ Could not delete message: {e}")
-            await asyncio.sleep(0.5)
+        try:
+            await msg_to_delete.delete()
+        except FloodWait as e:
+            print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
+            await asyncio.sleep(e.value)
+            await msg_to_delete.delete()
+        except UserIsBlocked:
+            print("⚠️ User blocked while deleting.")
+            return
+        except Exception as e:
+            print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
             try:
                 await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
             except Exception as e:
-                print(f"⚠️ Could not edit notice_msg: {e}")
+                print(f"⚠️ Clone Could not edit notice_msg: {e}")
                 try:
                     await client.send_message(
                         notice_msg.chat.id,
                         "✅ Your File/Video is successfully deleted!"
                     )
                 except Exception as e2:
-                    print(f"⚠️ Could not send fallback message: {e2}")
-
+                    print(f"⚠️ Clone Could not send fallback message: {e2}")
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>"
+            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
 
