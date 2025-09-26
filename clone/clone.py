@@ -413,13 +413,14 @@ async def start(client, message):
                             print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
                             continue
 
-                notice = None
-                if auto_delete:
-                    notice = await client.send_message(
-                        user_id,
-                        auto_delete_msg.format(time=number, unit=unit),
-                    )
-                    asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2))
+                for msg in sent_files
+                    notice = None
+                    if auto_delete:
+                        notice = await client.send_message(
+                            user_id,
+                            auto_delete_msg.format(time=number, unit=unit),
+                        )
+                        asyncio.create_task(auto_delete_message(client, msg, notice, auto_delete_time2))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
