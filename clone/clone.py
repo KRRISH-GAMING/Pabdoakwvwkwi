@@ -413,9 +413,9 @@ async def start(client, message):
                             print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
                             continue
 
-                for msg in sent_files
+                for msg in sent_files:
                     notice = None
-                    if auto_delete:
+                    if msg and auto_delete:
                         notice = await client.send_message(
                             user_id,
                             auto_delete_msg.format(time=number, unit=unit),
