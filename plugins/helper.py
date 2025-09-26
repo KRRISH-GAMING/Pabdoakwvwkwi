@@ -240,17 +240,31 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
-        try:
-            await msg_to_delete.delete()
-        except FloodWait as e:
-            print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
-            await asyncio.sleep(e.value)
-            await msg_to_delete.delete()
-        except UserIsBlocked:
-            print("⚠️ User blocked while deleting.")
-            return
-        except Exception as e:
-            print(f"⚠️ Clone Could not delete message: {e}")
+        for msg in msg_to_delete:
+            if msg:
+                try:
+                    await msg.delete()
+                except FloodWait as e:
+                    print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
+                    await asyncio.sleep(e.value)
+                    await msg.delete()
+                except UserIsBlocked:
+                    print("⚠️ User blocked while deleting.")
+                    return
+                except Exception as e:
+                    print(f"⚠️ Clone Could not delete message: {e}")
+        else:
+            try:
+                await msg_to_delete.delete()
+            except FloodWait as e:
+                print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
+                await asyncio.sleep(e.value)
+                await msg_to_delete.delete()
+            except UserIsBlocked:
+                print("⚠️ User blocked while deleting.")
+                return
+            except Exception as e:
+                print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
             try:
