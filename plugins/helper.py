@@ -161,8 +161,8 @@ async def get_verify_shorted_link(client, link):
     if not clone:
         return link
 
-    shortlink_url = clone.get("at_shorten_link", None)
-    shortlink_api = clone.get("at_shorten_api", None)
+    shortlink_url = clone.get("shorten_link", None)
+    shortlink_api = clone.get("shorten_api", None)
 
     if shortlink_url and shortlink_api:
         url = f"https://{shortlink_url}/api"
@@ -217,14 +217,14 @@ async def verify_user(client, userid, token):
     if not clone:
         return
 
-    validity_hours = parse_time(clone.get("at_validity", "24h"))
+    validity_hours = parse_time(clone.get("access_token_validity", "24h"))
     VERIFIED[userid] = datetime.now() + timedelta(seconds=validity_hours)
 
     today = datetime.now().strftime("%Y-%m-%d")
-    renew_log = clone.get("at_renew_log", {})
+    renew_log = clone.get("access_token_renew_log", {})
     renew_log[today] = renew_log.get(today, 0) + 1
 
-    await db.update_bot(me.id, {"at_renew_log": renew_log})
+    await db.update_bot(me.id, {"access_token_renew_log": renew_log})
 
 async def check_verification(client, userid):
     userid = int(userid)
