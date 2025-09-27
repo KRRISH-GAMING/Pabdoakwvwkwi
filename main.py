@@ -73,8 +73,7 @@ async def log_updates_per_sec():
 
 # ---------- Fast Parallel Restart ----------
 async def restart_bots():
-    cursor = await db.get_all_bots()      # ✅ await first
-    bots = [bot async for bot in cursor]  # ✅ now async iterate
+    cursor = await db.get_all_bots()  # Motor cursor
 
     async def restart_single(bot):
         bot_token = bot.get("token")
@@ -126,8 +125,13 @@ async def restart_bots():
         except Exception as e:
             print(f"❌ Error while restarting clone {bot_id}: {e}")
 
-    # 🚀 Restart all clones in parallel
-    await asyncio.gather(*(restart_single(bot) for bot in bots))
+    # 🚀 Run tasks while iterating the cursor (avoids loop conflict)
+    tasks = []
+    async for bot in cursor:
+        tasks.append(restart_single(bot))
+
+    await asyncio.gather(*tasks)
+
 
 # ---------- Token Parser ----------
 class TokenParser:
