@@ -36,7 +36,7 @@ async def start(client, message):
         fsub_data = clone.get("force_subscribe", [])
         access_token = clone.get("access_token", False)
         tutorial_url = clone.get("access_token_tutorial", None)
-        premium = clone.get("premium_user", [])
+        premium = [int(p) for p in clone.get("premium_user", [])]
         premium_upi = clone.get("premium_upi", None)
         auto_delete = clone.get("auto_delete", False)
         auto_delete_time = str(clone.get("auto_delete_time", "1h"))
@@ -64,7 +64,7 @@ async def start(client, message):
             await db.increment_users_count(me.id)
 
         # --- Fsub Handler ---
-        if not await is_subscribedy(client, user_id, me.id) and user_id != owner_id and user_id not in moderators and str(user_id) not in premium:
+        if not await is_subscribedy(client, user_id, me.id) and user_id != owner_id and user_id not in moderators and user_id not in premium:
             try:
                 new_fsub_data = []
                 buttons = []
@@ -212,7 +212,7 @@ async def start(client, message):
                 decoded = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).decode("ascii")
                 pre, decode_file_id = decoded.split("_", 1)
 
-                if access_token and user_id != owner_id and user_id not in moderators and str(user_id) not in premium and not await check_verification(client, user_id):
+                if access_token and user_id != owner_id and user_id not in moderators and user_id not in premium and not await check_verification(client, user_id):
                     verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
                     btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
@@ -302,7 +302,7 @@ async def start(client, message):
                 file_id = data.split("-", 1)[1]
                 decode_file_id = base64.urlsafe_b64decode(file_id + "=" * (-len(file_id) % 4)).decode("ascii")
 
-                if access_token and user_id != owner_id and user_id not in moderators and str(user_id) not in premium and not await check_verification(client, user_id):
+                if access_token and user_id != owner_id and user_id not in moderators and user_id not in premium and not await check_verification(client, user_id):
                     verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
                     btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
@@ -441,7 +441,7 @@ async def start(client, message):
             decoded = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).decode("ascii").strip()
             pre, file_id = decoded.split("_", 1)
 
-            if access_token and user_id != owner_id and user_id not in moderators and str(user_id) not in premium and not await check_verification(client, user_id):
+            if access_token and user_id != owner_id and user_id not in moderators and user_id not in premium and not await check_verification(client, user_id):
                 verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
                 btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
@@ -1315,38 +1315,34 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # Admin approves
         elif data.startswith("approve_"):
             try:
-                _, user_id_str, days_str = data.split("_")
-                user_id, days = int(user_id_str), int(days_str)
+                _, paying_user_id_str, days_str = data.split("_")
+                paying_user_id, days = int(paying_user_id_str), int(days_str)
             except:
                 await query.answer("⚠️ Invalid approve data.", show_alert=True)
                 return
 
             premium_users = clone.get("premium_user", [])
-
             normalized = []
             for u in premium_users:
                 if isinstance(u, dict):
-                    normalized.append({
-                        "user_id": int(u["user_id"]),
-                        "expiry": u.get("expiry", 0)
-                    })
+                    normalized.append({"user_id": int(u.get("user_id", 0)), "expiry": u.get("expiry", 0)})
                 else:
                     normalized.append({"user_id": int(u), "expiry": 0})
 
-            normalized = [u for u in normalized if int(u["user_id"]) != user_id]
+            normalized = [u for u in normalized if u["user_id"] != paying_user_id]
 
             expiry = datetime.utcnow() + timedelta(days=days)
-            normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
+            normalized.append({"user_id": paying_user_id, "expiry": expiry.timestamp()})
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
             await client.send_message(
-                user_id,
+                paying_user_id,
                 f"✅ Your Premium Plan ({days} days) has been approved!\nEnjoy ad-free experience 🎉"
             )
 
             await query.message.edit_text(
-                f"✅ Approved Premium Plan for user `{user_id}` ({days} days).",
+                f"✅ Approved Premium Plan for user `{paying_user_id}` ({days} days).",
             )
 
         # Admin rejects
