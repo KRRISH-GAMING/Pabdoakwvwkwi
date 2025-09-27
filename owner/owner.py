@@ -976,24 +976,41 @@ async def show_sleep_menu(client, message, bot_id):
 async def show_premium_menu(client, message, bot_id):
     try:
         clone = await db.get_clone_by_id(bot_id)
-        premium_user = clone.get("premium_user", [])
+        if not clone:
+            await message.edit_text("❌ Clone not found.")
+            return
 
+        premium_user = clone.get("premium_user", [])
         pu_list_lines = []
+
         for pu in premium_user:
+            user_id_int = None
+            name = None
+
             if isinstance(pu, dict):
-                user_id_int = pu.get("id")
-                name = pu.get("name", str(user_id_int))
+                user_id_int = pu.get("user_id")
+                name = pu.get("name")
             else:
                 try:
                     user_id_int = int(pu)
                 except ValueError:
                     user_id_int = pu
+
+            if not name:
                 user = await db.col.find_one({"id": user_id_int})
-                name = user.get("name") if user else str(user_id_int)
+                name = user.get("name") if user else None
 
-            pu_list_lines.append(f"👤 {name} (`{user_id_int}`)")
+            if not name:
+                try:
+                    tg_user = await client.get_users(user_id_int)
+                    name = tg_user.first_name
+                except:
+                    name = str(user_id_int)
 
-        pu_list_text = "\n".join(pu_list_lines)
+            if user_id_int:
+                pu_list_lines.append(f"👤 {name} (`{user_id_int}`)")
+
+        pu_list_text = "\n".join(pu_list_lines) if pu_list_lines else "No premium users yet."
 
         buttons = [
             [
@@ -1003,11 +1020,10 @@ async def show_premium_menu(client, message, bot_id):
             [InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")]
         ]
 
-        text = script.PREMIUM_TXT
-        if pu_list_text:
-            text += f"\n\n👥 **Current Premium Users:**\n{pu_list_text}"
+        text = script.PREMIUM_TXT + f"\n\n👥 **Current Premium Users:**\n{pu_list_text}"
 
         await message.edit_text(text=text, reply_markup=InlineKeyboardMarkup(buttons))
+
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
