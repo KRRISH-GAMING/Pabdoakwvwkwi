@@ -1254,8 +1254,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await query.answer("⚠️ Invalid plan.", show_alert=True)
                 return
             days = int(parts[1])
-            price_list = {7: "₹50", 30: "₹150", 180: "₹750", 365: "₹1200"}
+            price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
+            premium_upi = clone.get("premium_upi", None)
             buttons = [
                 [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="remove_ads")]
@@ -1263,8 +1264,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.edit_text(
                 f"💎 Premium Plan Details:\n\n"
                 f"🗓 Duration: {days} days\n"
-                f"💰 Price: {price}\n\n"
-                f"Click below after completing payment.",
+                f"💰 Price: {price}\n"
+                f"📲 UPI ID: {premium_upi}\n\n"
+                f"📝 Steps to complete payment:\n"
+                f"1️⃣ Use the UPI ID above to make the payment\n"
+                f"2️⃣ Make payment of {price}\n"
+                f"3️⃣ Take a screenshot of the payment\n"
+                f"4️⃣ Click '✅ Payment Done' below\n"
+                f"5️⃣ Send a screenshot through contact command\n\n"
+                f"⏳ Once payment is confirmed, your premium access will be activated.",
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -1347,13 +1355,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
+            await query.message.edit_text(
+                f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
+            )
+
             await client.send_message(
                 user_id,
                 f"✅ Your Premium Plan ({days} days) has been approved!\nEnjoy ad-free experience 🎉"
-            )
-
-            await query.message.edit_text(
-                f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
             )
 
         # Admin rejects premium
@@ -1387,13 +1395,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
+            await query.message.edit_text(
+                f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
+            )
+
             await client.send_message(
                 user_id,
                 f"❌ Your Premium Plan ({days} days) payment was *rejected*.\nContact support for help.",
-            )
-
-            await query.message.edit_text(
-                f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
             )
 
         # Start Menu
