@@ -54,7 +54,10 @@ Use the buttons below to get started."""
 2️⃣ Choose a name for your bot.  
 3️⃣ Choose a unique username.  
 4️⃣ BotFather will give you a token.  
-5️⃣ Forward that token message to me.  
+
+✅ You can now either:  
+- **Forward** the BotFather message containing the token, **or**  
+- **Type/paste** the token directly here.  
 
 Then I’ll create a clone bot for you 😌"""
 
@@ -282,11 +285,19 @@ Users must join your required channels before they can use the clone bot.
 
 You can add up to **4 channels**."""
 
-    EDIT_FSUB_TXT = """🔗 Please send me the channel ID or username you want to add for Force Subscribe.
+    EDIT_FSUB_TXT = """🔗 Please send me the channel for Force Subscribe.
 
-✅ Examples:
-`-1001234567890` → private channel ID  
-`@YourChannel` → public channel username
+You can provide it in **any of these ways**:
+
+✅ **Channel ID** (private channels):  
+`-1001234567890`
+
+✅ **Username** (public channels):  
+`@YourChannel`
+
+✅ **Forward a message** from the channel directly to me.  
+
+This makes it easier to add channels without manually copying IDs or usernames.
 
 ⚠️ Note: Make sure I am an **admin** in that channel with permission to invite users."""
 
@@ -316,6 +327,22 @@ You can enable automatic posting to your channel.
 When enabled, the bot will automatically send posts at the configured interval.
 
 Current Status: {status}"""
+
+    AP_STATUS = """🔗 Please send me the channel for Auto Post.
+
+You can provide it in **any of these ways**:
+
+✅ **Channel ID** (private channels):  
+`-1001234567890`
+
+✅ **Username** (public channels):  
+`@YourChannel`
+
+✅ **Forward a message** from the channel directly to me.  
+
+This makes it easier to add channels without manually copying IDs or usernames.
+
+⚠️ Note: Make sure I am an **admin** in that channel with all permission."""
 
     AP_IMG_TXT = """<u>**✨ AUTO POST IMAGE**</u>
 
