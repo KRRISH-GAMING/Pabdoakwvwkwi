@@ -10,6 +10,7 @@ from plugins.database import *
 from plugins.helper import *
 from plugins.script import *
 from owner.owner import *
+from motor.motor_asyncio import AsyncIOMotorClient  # Assuming MongoDB
 
 # ------------------ Logging ------------------
 logging.config.fileConfig('logging.conf')
@@ -21,8 +22,9 @@ logging.getLogger("pyrogram").setLevel(logging.ERROR)
 multi_clients: Dict[int, Client] = {}
 work_loads: Dict[int, int] = {}
 StartTime = datetime.utcnow()
-__version__ = 1.5
+__version__ = 1.6
 routes = web.RouteTableDef()
+db = None  # Will initialize inside event loop
 
 # ------------------ Stream Bot ------------------
 class StreamXBot(Client):
@@ -59,7 +61,7 @@ async def initialize_clients():
         logger.info("No additional clients found, using default client")
         return
 
-    semaphore = asyncio.Semaphore(10)  # Batch startup limit
+    semaphore = asyncio.Semaphore(10)
 
     async def start_client(client_id, token):
         async with semaphore:
@@ -116,11 +118,6 @@ async def dispatch_task(chat_id: int, text: str):
     finally:
         await complete_task(client_id)
 
-async def dispatch_bulk(tasks: list):
-    async def worker(task):
-        await dispatch_task(task["chat_id"], task["text"])
-    await asyncio.gather(*[worker(t) for t in tasks])
-
 # ------------------ Web Server ------------------
 @routes.get("/", allow_head=True)
 async def root(_):
@@ -154,10 +151,11 @@ def load_plugins():
 
 # ------------------ Restart Bots ------------------
 async def restart_bots():
-    bots_cursor = await db.get_all_bots()
+    global db
+    bots_cursor = db.get_all_bots()  # motor cursor is async, safe inside loop
     bots = await bots_cursor.to_list(None)
 
-    semaphore = asyncio.Semaphore(10)  # batch limit
+    semaphore = asyncio.Semaphore(10)
     tasks = []
 
     async def restart_single(bot):
@@ -165,7 +163,7 @@ async def restart_bots():
         bot_id = bot['_id']
         try:
             async with semaphore:
-                xd = Client(
+                async with Client(
                     name=f"clone_{bot_id}",
                     api_id=API_ID,
                     api_hash=API_HASH,
@@ -173,11 +171,10 @@ async def restart_bots():
                     plugins={"root": "clone"},
                     workers=20,
                     in_memory=True
-                )
-                await xd.start()
-                bot_me = await xd.get_me()
-                set_client(bot_me.id, xd)
-                print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
+                ) as xd:
+                    bot_me = await xd.get_me()
+                    set_client(bot_me.id, xd)
+                    print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
@@ -197,6 +194,9 @@ async def restart_bots():
 
 # ------------------ Main Start ------------------
 async def start():
+    global db
+    db = AsyncIOMotorClient(MONGO_URI).your_db_name  # Initialize DB inside loop
+
     logger.info("Initializing Bot...")
     await StreamBot.start()
     bot_info = await StreamBot.get_me()
@@ -214,8 +214,8 @@ async def start():
 
     load_plugins()
     await initialize_clients()
-    #await start_web_server()
-    await restart_bots()  # ✅ Fast concurrent restart
+    await start_web_server()
+    await restart_bots()
 
     # Send restart log
     try:
