@@ -367,16 +367,17 @@ Moderators can manage all clone features and have special access permissions."""
 
     REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"]
 
-    RESTART_TXT = """
-<b>Bot Restarted !
+    RESTART_TXT = """<u>**BOT RESTARTED !**</u>
 
 📅 Date : <code>{}</code>
 ⏰ Time : <code>{}</code>
 🌐 Timezone : <code>Asia/Kolkata</code>
-🛠️ Build Status : <code>v2.7.1 [ Stable ]</code></b>"""
+🛠️ Build Status : <code>v2.7.1 [ Stable ]</code>"""
 
-    LOG_TEXT = """<b>#NewUser
+    LOG_TEXT = """<u>**#NewUser**</u>
     
 Id - <code>{}</code>
 
-Name - {}</b>"""
+Name - {}
+
+Username - {}"""
