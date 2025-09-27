@@ -295,8 +295,9 @@ async def start():
 # ---------- Entrypoint ----------
 if __name__ == "__main__":
     try:
-        asyncio.run(start())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(start())   # ✅ uses existing loop
     except KeyboardInterrupt:
         logging.info("Service Stopped Bye 👋")
-        asyncio.run(assistant.stop())
-        asyncio.run(StreamBot.stop())
+        loop.run_until_complete(assistant.stop())
+        loop.run_until_complete(StreamBot.stop())
