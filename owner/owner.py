@@ -1223,16 +1223,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             chat_id = None
             index = None
 
-            if data.startswith("remove_pu_"):
-                _, _, bot_id, pu_id = data.split("_", 3)
-                action = "remove_pu"
-            elif data.startswith("remove_mod_"):
-                _, _, bot_id, mod_id = data.split("_", 3)
-                action = "remove_mod"
-            elif data.startswith("transfer_mod_"):
-                _, _, bot_id, mod_id = data.split("_", 3)
-                action = "transfer_mod"
-            elif data.startswith("remove_button_"):
+            if data.startswith("remove_button_"):
                 _, _, index, bot_id = data.split("_", 3)
                 action = "remove_button"
                 index = int(index)
@@ -1248,12 +1239,21 @@ async def cb_handler(client: Client, query: CallbackQuery):
             elif data.startswith("ap_mode_"):
                 mode_bot, chat_id_str = data[len("ap_mode_"):].rsplit("_", 1)
                 chat_id = int(chat_id_str)
-
                 parts = mode_bot.split("_")
                 mode = parts[0]
                 bot_id = parts[1]
-
                 action = "ap_mode"
+            elif data.startswith("remove_pu_"):
+                _, _, bot_id_str, pu_id_str = data.split("_", 3)
+                bot_id = int(bot_id_str)
+                pu_id = int(pu_id_str)
+                action = "remove_pu"
+            elif data.startswith("remove_mod_"):
+                _, _, bot_id, mod_id = data.split("_", 3)
+                action = "remove_mod"
+            elif data.startswith("transfer_mod_"):
+                _, _, bot_id, mod_id = data.split("_", 3)
+                action = "transfer_mod"
             else:
                 action, bot_id = data.rsplit("_", 1)
 
