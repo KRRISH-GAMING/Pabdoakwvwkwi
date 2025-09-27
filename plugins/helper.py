@@ -161,8 +161,8 @@ async def get_verify_shorted_link(client, link):
     if not clone:
         return link
 
-    shortlink_url = clone.get("shorten_link", None)
-    shortlink_api = clone.get("shorten_api", None)
+    shortlink_url = clone.get("at_shorten_link", None)
+    shortlink_api = clone.get("at_shorten_api", None)
 
     if shortlink_url and shortlink_api:
         url = f"https://{shortlink_url}/api"
@@ -217,14 +217,14 @@ async def verify_user(client, userid, token):
     if not clone:
         return
 
-    validity_hours = parse_time(clone.get("access_token_validity", "24h"))
+    validity_hours = parse_time(clone.get("at_validity", "24h"))
     VERIFIED[userid] = datetime.now() + timedelta(seconds=validity_hours)
 
     today = datetime.now().strftime("%Y-%m-%d")
-    renew_log = clone.get("access_token_renew_log", {})
+    renew_log = clone.get("at_renew_log", {})
     renew_log[today] = renew_log.get(today, 0) + 1
 
-    await db.update_bot(me.id, {"access_token_renew_log": renew_log})
+    await db.update_bot(me.id, {"at_renew_log": renew_log})
 
 async def check_verification(client, userid):
     userid = int(userid)
@@ -236,7 +236,7 @@ async def check_verification(client, userid):
         return False
     return True
 
-async def auto_delete_messagex(client, msg_to_delete, notice_msg, time):
+async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_url):
     try:
         await asyncio.sleep(time)
 
@@ -253,14 +253,18 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time):
             print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
+            keyboard = InlineKeyboardMarkup(
+                [[InlineKeyboardButton("Get Again", url=reload_url)]]
+            ) if reload_url else None
             try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
+                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
             except Exception as e:
                 print(f"⚠️ Clone Could not edit notice_msg: {e}")
                 try:
                     await client.send_message(
                         notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!"
+                        "✅ Your File/Video is successfully deleted!",
+                        reply_markup=keyboard
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
@@ -271,7 +275,7 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time):
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
 
-async def auto_delete_messagey(client, msg_to_delete, notice_msg, time):
+async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_url):
     try:
         await asyncio.sleep(time)
 
@@ -290,14 +294,18 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time):
                     print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
+            keyboard = InlineKeyboardMarkup(
+                [[InlineKeyboardButton("Get Again", url=reload_url)]]
+            ) if reload_url else None
             try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
+                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
             except Exception as e:
                 print(f"⚠️ Clone Could not edit notice_msg: {e}")
                 try:
                     await client.send_message(
                         notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!"
+                        "✅ Your File/Video is successfully deleted!",
+                        reply_markup=keyboard
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
