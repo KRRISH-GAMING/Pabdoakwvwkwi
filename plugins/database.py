@@ -76,9 +76,17 @@ class Database:
             await self.bot.create_index("user_id", background=True)
             await self.bot.create_index("moderators", background=True)
             await self.bot.create_index("last_active", background=True)
-            await self.media.create_index([("bot_id", 1), ("file_id", 1)], unique=True, background=True)
+
+            # ✅ Partial index prevents duplicate null values
+            await self.media.create_index(
+                [("bot_id", 1), ("file_id", 1)],
+                unique=True,
+                background=True,
+                partialFilterExpression={"file_id": {"$exists": True, "$ne": None}}
+            )
             await self.media.create_index("posted", background=True)
             await self.media.create_index("date", background=True)
+
             await self.batches.create_index("bot_id", background=True)
             logger.info("Indexes ensured.")
         except Exception as e:
