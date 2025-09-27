@@ -3439,14 +3439,6 @@ async def message_capture(client: Client, message: Message):
                 except:
                     pass
 
-                new_text = message.text.strip() if message.text else ""
-                if not new_text:
-                    await orig_msg.edit_text("❌ Empty message. Please send valid text.")
-                    await asyncio.sleep(2)
-                    await show_fsub_menu(client, orig_msg, bot_id)
-                    ADD_FSUB.pop(user_id, None)
-                    return
-
                 # Steps: channel -> target -> mode
                 if step == "channel":
                     channel_id_int = None
@@ -3577,15 +3569,6 @@ async def message_capture(client: Client, message: Message):
                     await message.delete()
                 except:
                     pass
-
-                new_text = message.text.strip() if message.text else ""
-                if not new_text:
-                    await db.update_clone(bot_id, {"auto_post": False})
-                    await orig_msg.edit_text("❌ You sent an empty message. Please send a valid text.")
-                    await asyncio.sleep(2)
-                    await show_post_menu(client, orig_msg, bot_id)
-                    AUTO_POST.pop(user_id, None)
-                    return
 
                 channel_id_int = None
                 if message.forward_from_chat:
