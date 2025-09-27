@@ -1312,47 +1312,80 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     reply_markup=InlineKeyboardMarkup(approval_buttons)
                 )
 
-        # Admin approves
+        # Admin approves premium
         elif data.startswith("approve_"):
             try:
-                _, paying_user_id_str, days_str = data.split("_")
-                paying_user_id, days = int(paying_user_id_str), int(days_str)
-            except:
+                parts = data.split("_")
+                if len(parts) < 3:
+                    await query.answer("⚠️ Invalid approve data.", show_alert=True)
+                    return
+
+                user_id_str, days_str = parts[1], parts[2]
+                user_id = int(user_id_str)
+                days = int(days_str)
+
+            except Exception:
                 await query.answer("⚠️ Invalid approve data.", show_alert=True)
                 return
 
             premium_users = clone.get("premium_user", [])
             normalized = []
-            for u in premium_users:
-                if isinstance(u, dict):
-                    normalized.append({"user_id": int(u.get("user_id", 0)), "expiry": u.get("expiry", 0)})
-                else:
-                    normalized.append({"user_id": int(u), "expiry": 0})
 
-            normalized = [u for u in normalized if u["user_id"] != paying_user_id]
+            for pu in premium_users:
+                if isinstance(pu, dict):
+                    uid = pu.get("user_id")
+                    expiry = pu.get("expiry", 0)
+                    if uid:
+                        normalized.append({"user_id": int(uid), "expiry": expiry})
+                else:
+                    normalized.append({"user_id": int(pu), "expiry": 0})
+
+            normalized = [u for u in normalized if u["user_id"] != user_id]
 
             expiry = datetime.utcnow() + timedelta(days=days)
-            normalized.append({"user_id": paying_user_id, "expiry": expiry.timestamp()})
+            normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
             await client.send_message(
-                paying_user_id,
+                user_id,
                 f"✅ Your Premium Plan ({days} days) has been approved!\nEnjoy ad-free experience 🎉"
             )
 
             await query.message.edit_text(
-                f"✅ Approved Premium Plan for user `{paying_user_id}` ({days} days).",
+                f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
             )
 
-        # Admin rejects
+        # Admin rejects premium
         elif data.startswith("reject_"):
             try:
-                _, user_id_str, days_str = data.split("_")
-                user_id, days = int(user_id_str), int(days_str)
-            except:
+                parts = data.split("_")
+                if len(parts) < 3:
+                    await query.answer("⚠️ Invalid reject data.", show_alert=True)
+                    return
+
+                user_id_str, days_str = parts[1], parts[2]
+                user_id = int(user_id_str)
+                days = int(days_str)
+
+            except Exception:
                 await query.answer("⚠️ Invalid reject data.", show_alert=True)
                 return
+
+            premium_users = clone.get("premium_user", [])
+            normalized = []
+
+            for pu in premium_users:
+                if isinstance(pu, dict):
+                    uid = pu.get("user_id")
+                    expiry = pu.get("expiry", 0)
+                    if uid and int(uid) != user_id:
+                        normalized.append({"user_id": int(uid), "expiry": expiry})
+                else:
+                    if int(pu) != user_id:
+                        normalized.append({"user_id": int(pu), "expiry": 0})
+
+            await db.update_clone(me.id, {"premium_user": normalized})
 
             await client.send_message(
                 user_id,
@@ -1360,7 +1393,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
 
             await query.message.edit_text(
-                f"❌ Rejected Premium Plan for user `{user_id}` ({days} days).",
+                f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
             )
 
         # Start Menu
