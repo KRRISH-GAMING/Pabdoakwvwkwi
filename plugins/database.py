@@ -109,24 +109,26 @@ class Database:
                 'force_subscribe': [],
                 # Access Token
                 'access_token': False,
-                'shorten_link': None,
-                'shorten_api': None,
-                'access_token_validity': '24h',
-                'access_token_renew_log': {},
-                'access_token_tutorial': None,
+                'at_shorten_link': None,
+                'at_shorten_api': None,
+                'at_validity': '24h',
+                'at_renew_log': {},
+                'at_tutorial': None,
+                'at_removeads_upi': None,
+                'at_removeads_user': [],
                 # Auto Post
                 'auto_post': False,
-                'auto_post_channel': None,
-                'auto_post_image': None,
-                'auto_post_sleep': '1h',
-                'auto_post_mode': 'single',
+                'ap_channel': None,
+                'ap_image': None,
+                'ap_sleep': '1h',
+                'ap_mode': 'single',
                 # Premium User
                 'premium_upi': None,
                 'premium_user': [],
                 # Auto Delete
                 'auto_delete': False,
-                'auto_delete_time': '1h',
-                'auto_delete_msg': script.AD_TXT,
+                'ad_time': '1h',
+                'ad_msg': script.AD_TXT,
                 # Forward Protect
                 'forward_protect': False,
                 # Moderators
@@ -159,24 +161,24 @@ class Database:
                 'force_subscribe': [],
                 # Access Token
                 'access_token': False,
-                'shorten_link': None,
-                'shorten_api': None,
-                'access_token_validity': '24h',
-                'access_token_renew_log': {},
-                'access_token_tutorial': None,
+                'at_shorten_link': None,
+                'at_shorten_api': None,
+                'at_validity': '24h',
+                'at_renew_log': {},
+                'at_tutorial': None,
                 # Auto Post
                 'auto_post': False,
-                'auto_post_channel': None,
-                'auto_post_image': None,
-                'auto_post_sleep': '1h',
-                'auto_post_mode': 'single',
+                'ap_channel': None,
+                'ap_image': None,
+                'ap_sleep': '1h',
+                'ap_mode': 'single',
                 # Premium User
                 'premium_upi': None,
                 'premium_user': [],
                 # Auto Delete
                 'auto_delete': False,
-                'auto_delete_time': '1h',
-                'auto_delete_msg': script.AD_TXT,
+                'ad_time': '1h',
+                'ad_msg': script.AD_TXT,
                 # Forward Protect
                 'forward_protect': False,
                 # Moderators
