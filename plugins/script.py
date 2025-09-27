@@ -407,4 +407,4 @@ Id - <code>{}</code>
 
 Name - {}
 
-Username - {}"""
+Username - @{}"""
