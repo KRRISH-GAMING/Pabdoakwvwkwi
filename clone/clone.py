@@ -403,6 +403,8 @@ async def start(client, message):
                         print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
                         return
                     except Exception as e:
+                        if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+                            raise
                         if "INPUT_USER_DEACTIVATED" in str(e):
                             print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
                             return
@@ -426,6 +428,8 @@ async def start(client, message):
                 await asyncio.sleep(5)
                 await sts.delete()
             except Exception as e:
+                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+                    raise
                 if isinstance(e, UserIsBlocked):
                     print(f"⚠️ User {user_id} blocked the bot. Ignoring.")
                 else:
@@ -508,6 +512,8 @@ async def start(client, message):
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
                 return
             except Exception as e:
+                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+                    raise
                 await client.send_message(
                     LOG_CHANNEL,
                     f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
