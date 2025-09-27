@@ -10,6 +10,7 @@ from plugins.database import *
 from plugins.helper import *
 from plugins.script import *
 from owner.owner import *
+from clone.clone import *
 
 # ------------------ Logging ------------------
 logging.config.fileConfig('logging.conf')
