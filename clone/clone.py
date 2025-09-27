@@ -35,13 +35,13 @@ async def start(client, message):
         buttons_data = clone.get("button", [])
         fsub_data = clone.get("force_subscribe", [])
         access_token = clone.get("access_token", False)
-        tutorial_url = clone.get("at_tutorial", None)
+        tutorial_url = clone.get("access_token_tutorial", None)
         premium = [int(p["user_id"]) if isinstance(p, dict) else int(p) for p in clone.get("premium_user", [])]
         premium_upi = clone.get("premium_upi", None)
         auto_delete = clone.get("auto_delete", False)
-        auto_delete_time = str(clone.get("ad_time", "1h"))
-        auto_delete_time2 = parse_time(clone.get("ad_time", "1h"))
-        auto_delete_msg = clone.get('ad_msg', script.AD_TXT)
+        auto_delete_time = str(clone.get("auto_delete_time", "1h"))
+        auto_delete_time2 = parse_time(clone.get("auto_delete_time", "1h"))
+        auto_delete_msg = clone.get('auto_delete_msg', script.AD_TXT)
         forward_protect = clone.get("forward_protect", False)
 
         num_str = "".join(filter(str.isdigit, auto_delete_time)) or "0"
@@ -588,7 +588,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if not await db.is_premium(owner_id):
                     return
 
-                mode = fresh.get("ap_mode", "single")
+                mode = fresh.get("auto_post_mode", "single")
 
                 item = None
                 items = []
@@ -658,7 +658,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 await clone_client.send_photo(
                     chat_id=target_channel,
-                    photo=fresh.get("ap_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
+                    photo=fresh.get("auto_post_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
                     caption=text,
                     parse_mode=enums.ParseMode.HTML
                 )
@@ -669,7 +669,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     for it in items:
                         await db.mark_media_posted(bot_id, it["file_id"])
 
-                sleep_time = parse_time(fresh.get("ap_sleep", "1h"))
+                sleep_time = parse_time(fresh.get("auto_post_sleep", "1h"))
                 await asyncio.sleep(sleep_time)
             except Exception as e:
                 if 'item' in locals() and item:
