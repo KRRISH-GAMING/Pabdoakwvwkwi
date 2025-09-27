@@ -1,4 +1,4 @@
-import os, logging, asyncio, re, time, shutil
+import os, logging, asyncio, re, time, shutil, sys
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -91,6 +91,7 @@ async def set_auto_menu(client):
             BotCommand("check_premium", "Check premium user"),
             BotCommand("broadcast", "Broadcast a message to users"),
             BotCommand("stats", "View bot statistics"),
+            BotCommand("restart", "View bot statistics"),
         ]
         for admin_id in ADMINS:
             await client.set_bot_commands(owner_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
@@ -467,6 +468,25 @@ async def stats(client, message):
             f"⚠️ Stats Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Stats Error: {e}")
+
+@Client.on_message(filters.command('restart') & filters.user(ADMINS) & filters.private)
+async def restart(client, message):
+    msg = await message.reply_text(f"🔄 Restarting the server...\n[░░░░░░░░░░] 0%", quote=True)
+
+    for i in range(1, 11):
+        await asyncio.sleep(0.5)
+        bar = '▓' * i + '░' * (10 - i)
+        await msg.edit_text(f"🔄 Restarting the server...\n[{bar}] {i*10}%")
+
+    await msg.edit_text(f"✅ Server restarted successfully!")
+
+    try:
+        os.execl(sys.executable, sys.executable, *sys.argv)
+    except Exception as e:
+        print(f"⚠️ Error restarting the server: {e}")
+        return await msg.edit_text(
+            f"❌ Failed to restart the server.\n\nError: {e}"
+        )
 
 @Client.on_message(filters.command("contact") & filters.private & filters.incoming)
 async def contact(client, message):
@@ -2147,7 +2167,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 if new_value:
                     AUTO_POST[user_id] = (query.message, bot_id)
-                    status_text = "🔗 Please send your **Target Channel I'd** now."
+                    status_text = script.AP_STATUS
                     text = "❌ Cancel"
                     callback = f"cancel_autopost_{bot_id}"
                 else:
@@ -3156,17 +3176,20 @@ async def message_capture(client: Client, message: Message):
                     CLONE_TOKEN.pop(user_id, None)
                     return
 
-                if not (message.forward_from and message.forward_from.id == 93372553):
-                    await msg.edit_text("❌ Please forward the BotFather message containing your **bot token**.")
-                    await asyncio.sleep(2)
-                    await show_clone_menu(client, msg, user_id)
-                    CLONE_TOKEN.pop(user_id, None)
-                    return
+                token = None
+                if message.forward_from and message.forward_from.id == 93372553:
+                    try:
+                        token = re.findall(r"\b(\d+:[A-Za-z0-9_-]+)\b", message.text or "")[0]
+                    except IndexError:
+                        token = None
+                else:
+                    try:
+                        token = re.findall(r"\b(\d+:[A-Za-z0-9_-]+)\b", message.text or "")[0]
+                    except IndexError:
+                        token = None
 
-                try:
-                    token = re.findall(r"\b(\d+:[A-Za-z0-9_-]+)\b", message.text or "")[0]
-                except IndexError:
-                    await msg.edit_text("❌ Could not detect **bot token**. Forward the correct BotFather message.")
+                if not token:
+                    await msg.edit_text("❌ Could not detect **bot token**. Forward the BotFather message or type the token correctly.")
                     await asyncio.sleep(2)
                     await show_clone_menu(client, msg, user_id)
                     CLONE_TOKEN.pop(user_id, None)
@@ -3388,10 +3411,15 @@ async def message_capture(client: Client, message: Message):
 
                 # Steps: channel -> target -> mode
                 if step == "channel":
-                    try:
-                        channel_id_int = int(new_text)
-                    except ValueError:
-                        channel_id_int = new_text
+                    channel_id_int = None
+                    if message.forward_from_chat:
+                        forward_chat = message.forward_from_chat
+                        channel_id_int = forward_chat.id
+                    else:
+                        try:
+                            channel_id_int = int(new_text)
+                        except ValueError:
+                            channel_id_int = new_text
 
                     clone_client = get_client(bot_id)
                     if not clone_client:
@@ -3521,10 +3549,15 @@ async def message_capture(client: Client, message: Message):
                     AUTO_POST.pop(user_id, None)
                     return
 
-                try:
-                    channel_id_int = int(new_text)
-                except ValueError:
-                    channel_id_int = new_text
+                channel_id_int = None
+                if message.forward_from_chat:
+                    forward_chat = message.forward_from_chat
+                    channel_id_int = forward_chat.id
+                else:
+                    try:
+                        channel_id_int = int(new_text)
+                    except ValueError:
+                        channel_id_int = new_text
 
                 clone_client = get_client(bot_id)
                 if not clone_client:
