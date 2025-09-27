@@ -73,7 +73,8 @@ async def log_updates_per_sec():
 
 # ---------- Fast Parallel Restart ----------
 async def restart_bots():
-    bots = [bot async for bot in db.get_all_bots()]
+    cursor = await db.get_all_bots()      # ✅ await first
+    bots = [bot async for bot in cursor]  # ✅ now async iterate
 
     async def restart_single(bot):
         bot_token = bot.get("token")
@@ -90,7 +91,7 @@ async def restart_bots():
                 api_id=API_ID,
                 api_hash=API_HASH,
                 bot_token=bot_token,
-                workers=8,  # ✅ lighter for clones
+                workers=8,
                 sleep_threshold=60,
                 plugins={"root": "clone"},
                 no_updates=True,
@@ -99,15 +100,13 @@ async def restart_bots():
             await xd.start()
             me = await xd.get_me()
 
-            # ✅ Register in both systems
-            set_client(me.id, xd)           # your global registry
-            multi_clients[me.id] = xd       # my optimization
+            set_client(me.id, xd)
+            multi_clients[me.id] = xd
             work_loads[me.id] = 0
             register_client_for_stats(xd, me.id)
 
             print(f"✅ Restarted clone bot @{me.username} ({me.id})")
 
-            # Auto-post if enabled
             """fresh = await db.get_clone_by_id(me.id)
             if fresh and fresh.get("auto_post"):
                 auto_post_channel = fresh.get("auto_post_channel")
