@@ -792,11 +792,11 @@ async def show_token_menu(client, message, bot_id):
     try:
         clone = await db.get_clone_by_id(bot_id)
         current = clone.get("access_token", False)
-        shorten_link = clone.get("at_shorten_link", None)
-        shorten_api = clone.get("at_shorten_api", None)
-        validity = str(clone.get("at_validity", "24h"))
-        tutorial = clone.get("at_tutorial", None)
-        renew_log = clone.get("at_renew_log", {})
+        shorten_link = clone.get("shorten_link", None)
+        shorten_api = clone.get("shorten_api", None)
+        validity = str(clone.get("access_token_validity", "24h"))
+        tutorial = clone.get("access_token_tutorial", None)
+        renew_log = clone.get("access_token_renew_log", {})
 
         today = datetime.now().strftime("%Y-%m-%d")
         today_count = renew_log.get(today, 0)
@@ -891,9 +891,9 @@ async def show_post_menu(client, message, bot_id):
     try:
         clone = await db.get_clone_by_id(bot_id)
         current = clone.get("auto_post", False)
-        image = clone.get("ap_image", None)
-        sleep = str(clone.get("ap_sleep", "1h"))
-        mode = clone.get("ap_mode", "single")
+        image = clone.get("auto_post_image", None)
+        sleep = str(clone.get("auto_post_sleep", "1h"))
+        mode = clone.get("auto_post_mode", "single")
 
         num_str = "".join(filter(str.isdigit, sleep)) or "0"
         unit_char = "".join(filter(str.isalpha, sleep)) or "h"
@@ -1976,7 +1976,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         "orig_msg": query.message,
                         "bot_id": bot_id,
                         "step": "link",
-                        "at_shorten_link": None
+                        "shorten_link": None
                     }
                     status_text = "🔗 Please send your **Shorten Link** now."
                     text = "❌ Cancel"
@@ -1984,7 +1984,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 else:
                     await db.update_clone(
                         bot_id,
-                        {"access_token": False, "at_shorten_link": None, "at_shorten_api": None}
+                        {"access_token": False, "shorten_link": None, "shorten_api": None}
                     )
                     status_text = "🔴 Access Token has been successfully DISABLED!"
                     text = "⬅️ Back"
@@ -2052,7 +2052,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                at_validity = str(clone.get("at_validity", "24h"))
+                at_validity = str(clone.get("access_token_validity", "24h"))
 
                 num_str = "".join(filter(str.isdigit, at_validity)) or "0"
                 unit_char = "".join(filter(str.isalpha, at_validity)) or "h"
@@ -2075,7 +2075,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await db.update_clone(bot_id, {"at_validity": "24h"})
+                await db.update_clone(bot_id, {"access_token_validity": "24h"})
                 await query.answer(f"🔄 Access token validity reset to default.", show_alert=True)
 
             # Access Token Tutorial
@@ -2122,7 +2122,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                at_tutorial = clone.get("at_tutorial", None)
+                at_tutorial = clone.get("access_token_tutorial", None)
                 if at_tutorial:
                     await query.answer(f"📝 Current Access Token Tutorial:\n\n{at_tutorial}", show_alert=True)
                 else:
@@ -2136,9 +2136,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                at_tutorial = clone.get("at_tutorial", None)
+                at_tutorial = clone.get("access_token_tutorial", None)
                 if at_tutorial:
-                    await db.update_clone(bot_id, {"at_tutorial": None})
+                    await db.update_clone(bot_id, {"access_token_tutorial": None})
                     await query.answer("✨ Successfully deleted your clone access token tutorial link.", show_alert=True)
                 else:
                     await query.answer("❌ No access token tutorial set for this clone.", show_alert=True)
@@ -2187,7 +2187,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     text = "❌ Cancel"
                     callback = f"cancel_autopost_{bot_id}"
                 else:
-                    await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
+                    await db.update_clone(bot_id, {"auto_post": False, "auto_post_channel": None})
                     status_text = "🔴 Auto Post has been successfully DISABLED!"
                     text = "⬅️ Back"
                     callback = f"auto_post_{bot_id}"
@@ -2222,8 +2222,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 try:
                     await db.update_clone(bot_id, {
                         "auto_post": True,
-                        "ap_channel": chat_id,
-                        "ap_mode": mode
+                        "auto_post_channel": chat_id,
+                        "auto_post_mode": mode
                     })
                     asyncio.create_task(auto_post_clone(bot_id, db, chat_id))
                     await query.message.edit_text("✅ Successfully updated **auto post**!")
@@ -2231,7 +2231,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await show_post_menu(client, query.message, bot_id)
                     AUTO_POST.pop(user_id, None)
                 except Exception as e:
-                    await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
+                    await db.update_clone(bot_id, {"auto_post": False, "auto_post_channel": None})
                     await client.send_message(LOG_CHANNEL, f"⚠️ Update Auto Post Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
                     await query.message.edit_text(f"❌ Failed to update **auto post**: {e}")
                     await asyncio.sleep(2)
@@ -2284,7 +2284,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                auto_post_image = clone.get("ap_image", None)
+                auto_post_image = clone.get("auto_post_image", None)
                 if auto_post_image:
                     await client.send_photo(
                         chat_id=query.message.chat.id,
@@ -2302,9 +2302,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                auto_post_image = clone.get("ap_image", None)
+                auto_post_image = clone.get("auto_post_image", None)
                 if auto_post_image:
-                    await db.update_clone(bot_id, {"ap_image": None})
+                    await db.update_clone(bot_id, {"auto_post_image": None})
                     await query.answer("✨ Successfully deleted your clone auto post image.", show_alert=True)
                 else:
                     await query.answer("❌ No auto post image set for this clone.", show_alert=True)
@@ -2353,7 +2353,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ap_sleep = str(clone.get("ap_sleep", "1h"))
+                ap_sleep = str(clone.get("auto_post_sleep", "1h"))
 
                 num_str = "".join(filter(str.isdigit, ap_sleep)) or "0"
                 unit_char = "".join(filter(str.isalpha, ap_sleep)) or "h"
@@ -2376,7 +2376,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await db.update_clone(bot_id, {"ap_sleep": "1h"})
+                await db.update_clone(bot_id, {"auto_post_sleep": "1h"})
                 await query.answer(f"🔄 Auto post sleep reset to default.", show_alert=True)
 
             # Premium User
@@ -2522,8 +2522,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
                 current = clone.get("auto_delete", False)
-                time_set = str(clone.get("ad_time", "1h"))
-                msg_set = clone.get("ad_msg", script.AD_TXT)
+                time_set = str(clone.get("auto_delete_time", "1h"))
+                msg_set = clone.get("auto_delete_msg", script.AD_TXT)
 
                 num_str = "".join(filter(str.isdigit, time_set)) or "0"
                 unit_char = "".join(filter(str.isalpha, time_set)) or "h"
@@ -2628,7 +2628,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ad_time = str(clone.get("ad_time", "1h"))
+                ad_time = str(clone.get("auto_delete_time", "1h"))
 
                 num_str = "".join(filter(str.isdigit, ad_time)) or "0"
                 unit_char = "".join(filter(str.isalpha, ad_time)) or "h"
@@ -2651,7 +2651,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await db.update_clone(bot_id, {"ad_time": "1h"})
+                await db.update_clone(bot_id, {"auto_delete_time": "1h"})
                 await query.answer(f"🔄 Auto delete time reset to default.", show_alert=True)
 
             # Auto Delete Message Menu
@@ -2698,7 +2698,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ad_message = clone.get("ad_msg", script.AD_TXT)
+                ad_message = clone.get("auto_delete_msg", script.AD_TXT)
                 await query.answer(f"📝 Current Auto Delete Message:\n\n{ad_message}", show_alert=True)
 
             # Default Auto Delete Message
@@ -2709,7 +2709,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await db.update_clone(bot_id, {"ad_msg": script.AD_TXT})
+                await db.update_clone(bot_id, {"auto_delete_msg": script.AD_TXT})
                 await query.answer(f"🔄 Auto delete message reset to default.", show_alert=True)
 
             # Forward Protect
@@ -3307,14 +3307,14 @@ async def message_capture(client: Client, message: Message):
                 ("CAPTION_TEXT", CAPTION_TEXT, "text", "caption", "show_caption_menu"),
                 ("HEADER_TEXT", HEADER_TEXT, "text", "header", "show_header_menu"),
                 ("FOOTER_TEXT", FOOTER_TEXT, "text", "footer", "show_footer_menu"),
-                ("ACCESS_TOKEN_VALIDITY", ACCESS_TOKEN_VALIDITY, "text", "at_validity", "show_validity_menu"),
-                ("ACCESS_TOKEN_TUTORIAL", ACCESS_TOKEN_TUTORIAL, "text", "at_tutorial", "show_tutorial_menu"),
-                ("AUTO_POST_IMAGE", AUTO_POST_IMAGE, "photo", "ap_image", "show_image_menu"),
-                ("AUTO_POST_SLEEP", AUTO_POST_SLEEP, "text", "ap_sleep", "show_sleep_menu"),
+                ("ACCESS_TOKEN_VALIDITY", ACCESS_TOKEN_VALIDITY, "text", "access_token_validity", "show_validity_menu"),
+                ("ACCESS_TOKEN_TUTORIAL", ACCESS_TOKEN_TUTORIAL, "text", "access_token_tutorial", "show_tutorial_menu"),
+                ("AUTO_POST_IMAGE", AUTO_POST_IMAGE, "photo", "auto_post_image", "show_image_menu"),
+                ("AUTO_POST_SLEEP", AUTO_POST_SLEEP, "text", "auto_post_sleep", "show_sleep_menu"),
                 ("PREMIUM_UPI", PREMIUM_UPI, "text", "premium_upi", "show_premium_menu"),
                 ("ADD_PREMIUM", ADD_PREMIUM, "text", "premium_user", "show_premium_menu"),
-                ("AUTO_DELETE_TIME", AUTO_DELETE_TIME, "text", "ad_time", "show_time_menu"),
-                ("AUTO_DELETE_MESSAGE", AUTO_DELETE_MESSAGE, "text", "ad_msg", "show_message_menu"),
+                ("AUTO_DELETE_TIME", AUTO_DELETE_TIME, "text", "auto_delete_time", "show_time_menu"),
+                ("AUTO_DELETE_MESSAGE", AUTO_DELETE_MESSAGE, "text", "auto_delete_msg", "show_message_menu"),
                 ("ADD_MODERATOR", ADD_MODERATOR, "text", "moderators", "show_moderator_menu")
             ]
 
@@ -3537,13 +3537,13 @@ async def message_capture(client: Client, message: Message):
 
                 if step == "link":
                     new_text = new_text.removeprefix("https://").removeprefix("http://")
-                    ACCESS_TOKEN[user_id]["at_shorten_link"] = new_text
+                    ACCESS_TOKEN[user_id]["shorten_link"] = new_text
                     ACCESS_TOKEN[user_id]["step"] = "api"
                     await orig_msg.edit_text("✅ Shorten link saved! Now send your API key.")
                 elif step == "api":
                     await orig_msg.edit_text("✏️ Updating **access token**, please wait...")
                     try:
-                        await db.update_clone(bot_id, {"at_shorten_link": data["at_shorten_link"], "at_shorten_api": new_text})
+                        await db.update_clone(bot_id, {"shorten_link": data["shorten_link"], "shorten_api": new_text})
                         await orig_msg.edit_text("✅ Successfully updated **access token**!")
                         await asyncio.sleep(2)
                         await show_token_menu(client, orig_msg, bot_id)
@@ -3551,7 +3551,7 @@ async def message_capture(client: Client, message: Message):
                     except Exception as e:
                         await db.update_clone(
                             bot_id,
-                            {"access_token": False, "at_shorten_link": None, "at_shorten_api": None}
+                            {"access_token": False, "shorten_link": None, "shorten_api": None}
                         )
                         await client.send_message(LOG_CHANNEL, f"⚠️ Update Access Token Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
                         await orig_msg.edit_text(f"❌ Failed to update **access token**: {e}")
@@ -3582,7 +3582,7 @@ async def message_capture(client: Client, message: Message):
 
                 clone_client = get_client(bot_id)
                 if not clone_client:
-                    await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
+                    await db.update_clone(bot_id, {"auto_post": False, "auto_post_channel": None})
                     await orig_msg.edit_text("❌ Clone bot not running, please restart it.")
                     await asyncio.sleep(2)
                     await show_post_menu(client, orig_msg, bot_id)
@@ -3594,7 +3594,7 @@ async def message_capture(client: Client, message: Message):
                     ch_name = chat.title or "Unknown"
                     ch_link = f"https://t.me/{chat.username}" if chat.username else None
                 except Exception as e:
-                    await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
+                    await db.update_clone(bot_id, {"auto_post": False, "auto_post_channel": None})
                     await orig_msg.edit_text(f"❌ Failed to get channel info: {e}")
                     await asyncio.sleep(2)
                     await show_post_menu(client, orig_msg, bot_id)
@@ -3605,14 +3605,14 @@ async def message_capture(client: Client, message: Message):
                     me = await clone_client.get_me()
                     member = await clone_client.get_chat_member(chat.id, me.id)
                     if member.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
-                        await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
+                        await db.update_clone(bot_id, {"auto_post": False, "auto_post_channel": None})
                         await orig_msg.edit_text("❌ The clone bot is NOT an admin in this channel. Add it as admin first.")
                         await asyncio.sleep(2)
                         await show_post_menu(client, orig_msg, bot_id)
                         AUTO_POST.pop(user_id, None)
                         return
                 except Exception as e:
-                    await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
+                    await db.update_clone(bot_id, {"auto_post": False, "auto_post_channel": None})
                     await orig_msg.edit_text(f"❌ Failed to check clone bot in channel: {e}")
                     await asyncio.sleep(2)
                     await show_post_menu(client, orig_msg, bot_id)
