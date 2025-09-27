@@ -3390,7 +3390,12 @@ async def message_capture(client: Client, message: Message):
             if user_id in ADD_BUTTON:
                 data = ADD_BUTTON[user_id]
                 orig_msg, bot_id, step = data["orig_msg"], data["bot_id"], data["step"]
-eeS-es-e-_text = message.text.strip() if message.text else ""
+                try:
+                    await message.delete()
+                except:
+                    pass
+
+                new_text = message.text.strip() if message.text else ""
                 if not new_text:
                     await orig_msg.edit_text("❌ Empty message. Please send valid text.")
                     await asyncio.sleep(2)
