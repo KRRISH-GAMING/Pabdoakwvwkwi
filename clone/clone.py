@@ -35,7 +35,7 @@ async def start(client, message):
         buttons_data = clone.get("button", [])
         fsub_data = clone.get("force_subscribe", [])
         access_token = clone.get("access_token", False)
-        tutorial_url = clone.get("access_token_tutorial", None)
+        tutorial_url = clone.get("at_tutorial", None)
         premium = [int(p["user_id"]) if isinstance(p, dict) else int(p) for p in clone.get("premium_user", [])]
         premium_upi = clone.get("premium_upi", None)
         auto_delete = clone.get("auto_delete", False)
@@ -196,14 +196,26 @@ async def start(client, message):
             if str(user_id) != user_id:
                 return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
 
-            if await check_token(client, user_id, token):
-                await verify_user(client, user_id, token)
+            verify_status = await check_token(client, user_id, token)
+            if not verify_status:
+                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
+
+            created_time = int(verify_status.get("created_time", 0))
+            current_time = int(time.time())
+            elapsed = current_time - created_time
+
+            if elapsed < 120:
                 return await message.reply_text(
-                    f"Hey {mention}, **verification** successful! ✅",
+                    "⚠️ Verification failed!\n\n"
+                    "Suspicious activity detected. Please try again.",
                     protect_content=forward_protect
                 )
-            else:
-                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
+
+            await verify_user(client, user_id, token)
+            return await message.reply_text(
+                f"Hey {mention}, **verification** successful! ✅",
+                protect_content=forward_protect
+            )
 
         # --- Single File Handler ---
         if data.startswith("SINGLE-"):
@@ -285,7 +297,8 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
-                    asyncio.create_task(auto_delete_messagex(client, sent_msg, notice, auto_delete_time2))
+                    reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
+                    asyncio.create_task(auto_delete_messagex(client, sent_msg, notice, auto_delete_time2, reload_url))
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
@@ -422,7 +435,8 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
-                    asyncio.create_task(auto_delete_messagey(client, sent_files, notice, auto_delete_time2))
+                    reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
+                    asyncio.create_task(auto_delete_messagey(client, sent_files, notice, auto_delete_time2, reload_url))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
@@ -506,7 +520,8 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
-                    asyncio.create_task(auto_delete_messagex(client, msg, notice, auto_delete_time2))
+                    reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
+                    asyncio.create_task(auto_delete_messagex(client, msg, notice, auto_delete_time2, reload_url))
                 return
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
@@ -573,7 +588,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if not await db.is_premium(owner_id):
                     return
 
-                mode = fresh.get("auto_post_mode", "single")
+                mode = fresh.get("ap_mode", "single")
 
                 item = None
                 items = []
@@ -643,7 +658,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 await clone_client.send_photo(
                     chat_id=target_channel,
-                    photo=fresh.get("auto_post_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
+                    photo=fresh.get("ap_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
                     caption=text,
                     parse_mode=enums.ParseMode.HTML
                 )
@@ -654,7 +669,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     for it in items:
                         await db.mark_media_posted(bot_id, it["file_id"])
 
-                sleep_time = parse_time(fresh.get("auto_post_sleep", "1h"))
+                sleep_time = parse_time(fresh.get("ap_sleep", "1h"))
                 await asyncio.sleep(sleep_time)
             except Exception as e:
                 if 'item' in locals() and item:
@@ -944,8 +959,19 @@ async def shorten_handler(client: Client, message: Message):
                 "✅ Base site and API reset. Please send your **base site** (e.g., shortnerdomain.com)"
             )
 
+    except Exception as e:
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+        )
+        print(f"⚠️ Clone Shorten Error: {e}")
+
+@Client.on_message(filters.private & filters.text & ~filters.command(["shortener"]))
+async def shorten_flow_handler(client: Client, message: Message):
+    try:
+        user_id = message.from_user.id
         if user_id not in SHORTEN_STATE:
-            SHORTEN_STATE[user_id] = {"step": 1}
+            return
 
         state = SHORTEN_STATE[user_id]
 
@@ -956,12 +982,37 @@ async def shorten_handler(client: Client, message: Message):
             except:
                 pass
             state.pop("help_msg_id", None)
+
+        step = state.get("step", 1)
+
+        if step == 1:
+            base_site = message.text.strip()
+            await clonedb.update_user_info(user_id, {"base_site": base_site})
+            state["step"] = 2
+            return await message.reply("✅ Base site saved. Now send your **Shortener API**:")
+
+        elif step == 2:
+            short_api = message.text.strip()
+            await clonedb.update_user_info(user_id, {"shortener_api": short_api})
+            state["step"] = 3
+            return await message.reply("✅ API saved. Now send the **link** to shorten:")
+
+        elif step == 3:
+            user = await clonedb.get_user(user_id)
+            base_site = user.get("base_site")
+            api = user.get("shortener_api")
+            link = message.text.strip()
+
+            short_url = f"https://{base_site}/api?api={api}&url={link}"
+
+            return await message.reply(f"Here is your shortened link:\n{short_url}")
+
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Shorten Flow Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
-        print(f"⚠️ Clone Shorten Error: {e}")
+        print(f"⚠️ Clone Shorten Flow Error: {e}")
 
 @Client.on_message(filters.command("broadcast") & filters.private)
 async def broadcast(client, message):
@@ -1361,13 +1412,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
-            await query.message.edit_text(
-                f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
-            )
-
             await client.send_message(
                 user_id,
                 f"✅ Your Premium Plan ({days} days) has been approved!\nEnjoy ad-free experience 🎉"
+            )
+
+            await query.message.edit_text(
+                f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
             )
 
         # Admin rejects premium
@@ -1401,13 +1452,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
-            await query.message.edit_text(
-                f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
-            )
-
             await client.send_message(
                 user_id,
                 f"❌ Your Premium Plan ({days} days) payment was *rejected*.\nContact support for help.",
+            )
+
+            await query.message.edit_text(
+                f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
             )
 
         # Start Menu
