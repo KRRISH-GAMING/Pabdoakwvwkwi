@@ -139,11 +139,17 @@ async def start(client, message):
         except:
             pass
 
-        if not await db.is_user_exist(message.from_user.id):
-            await db.add_user(message.from_user.id, message.from_user.first_name)
+        user_id=message.from_user.id
+        first_name=message.from_user.first_name
+        last_name=message.from_user.last_name
+        mention=message.from_user.mention
+        username=message.from_user.username
+
+        if not await db.is_user_exist(user_id):
+            await db.add_user(user_id, first_name)
             await client.send_message(
                 LOG_CHANNEL,
-                script.LOG_TEXT.format(message.from_user.id, message.from_user.mention)
+                script.LOG_TEXT.format(user_id, mention, username)
             )
 
         if AUTH_CHANNEL and not await is_subscribedx(client, message):
@@ -157,7 +163,7 @@ async def start(client, message):
                 btn = [[InlineKeyboardButton("🔔 Join Channel", url=invite_link.invite_link)]]
 
                 return await client.send_message(
-                    message.from_user.id,
+                    user_id,
                     "🚨 You must join the channel first to use this bot.",
                     reply_markup=InlineKeyboardMarkup(btn),
                     parse_mode=enums.ParseMode.MARKDOWN
@@ -3184,9 +3190,14 @@ async def message_capture(client: Client, message: Message):
                         del ACTIVE_CLONES[token]
 
                     xd = Client(
-                        f"{token}", API_ID, API_HASH,
+                        name=f"{token}",
+                        api_id=API_ID,
+                        api_hash=API_HASH,
                         bot_token=token,
-                        plugins={"root": "clone"}
+                        plugins={"root": "clone"},
+                        workers=20,
+                        in_memory=True,
+                        no_updates=True
                     )
 
                     try:
@@ -3209,7 +3220,7 @@ async def message_capture(client: Client, message: Message):
                         f"Bot Id: {bot.id}\n"
                         f"User Id: {user_id}\n"
                         f"Username: @{message.from_user.username}\n"
-                        f"Bot Name: {bot.first_name}\n"
+                        f"Bot Name: {bot.first_name} {bot.last_name}\n"
                         f"Bot Username: @{bot.username}\n"
                         f"Bot Token: <code>{token}</code>"
                     )
