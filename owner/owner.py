@@ -91,7 +91,7 @@ async def set_auto_menu(client):
             BotCommand("check_premium", "Check premium user"),
             BotCommand("broadcast", "Broadcast a message to users"),
             BotCommand("stats", "View bot statistics"),
-            BotCommand("restart", "View bot statistics"),
+            BotCommand("restart", "Restart a server"),
         ]
         for admin_id in ADMINS:
             await client.set_bot_commands(owner_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
