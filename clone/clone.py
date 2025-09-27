@@ -56,6 +56,7 @@ async def start(client, message):
         unit = unit_map.get(unit_char.lower(), "hour(s)")
 
         user_id = message.from_user.id
+        mention=message.from_user.mention
 
         # --- Track new users ---
         if not await clonedb.is_user_exist(me.id, user_id):
@@ -169,12 +170,12 @@ async def start(client, message):
             if start_pic:
                 return await message.reply_photo(
                     photo=start_pic,
-                    caption=start_text.format(user=message.from_user.mention, bot=client.me.mention),
+                    caption=start_text.format(user=mention, bot=client.me.mention),
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
             return await message.reply_text(
-                start_text.format(user=message.from_user.mention, bot=client.me.mention),
+                start_text.format(user=mention, bot=client.me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -198,7 +199,7 @@ async def start(client, message):
             if await check_token(client, user_id, token):
                 await verify_user(client, user_id, token)
                 return await message.reply_text(
-                    f"Hey {message.from_user.mention}, **verification** successful! ✅",
+                    f"Hey {mention}, **verification** successful! ✅",
                     protect_content=forward_protect
                 )
             else:
