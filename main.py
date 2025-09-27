@@ -179,6 +179,15 @@ async def restart_bots():
                 set_client(bot_me.id, xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
+            fresh = await db.get_clone_by_id(bot.id)
+            if fresh and fresh.get("auto_post", False):
+                auto_post_channel = fresh.get("auto_post_channel", None)
+                if auto_post_channel:
+                    asyncio.create_task(
+                        auto_post_clone(bot.id, db, auto_post_channel)
+                    )
+                    print(f"▶️ Auto-post started for @{bot.username}")
+
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
@@ -204,35 +213,29 @@ async def start():
 
     await set_auto_menu(StreamBot)
 
-    # Optional assistant
-    if "assistant" in globals():
-        try:
-            await assistant.start()
-            logger.info(f"Assistant {(await assistant.get_me()).username} started")
-        except Exception:
-            logger.warning("Assistant not started")
+    await assistant.start()
+    logger.info(f"Assistant {(await assistant.get_me()).username} started")
 
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    await restart_bots()  # ✅ Fast concurrent restart
+    await restart_bots()
 
-    # Send restart log
     try:
+        today = date.today()
         tz = pytz.timezone("Asia/Kolkata")
         now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-        await dispatch_task(LOG_CHANNEL, f"Bot Restarted at {now}")
+        await dispatch_task(LOG_CHANNEL, script.RESTART_TXT.format(today, now))
     except Exception:
         logger.warning("Failed to send restart log")
 
     logger.info("Bot fully started. Idle mode...")
     await idle()
 
-# ------------------ Entry ------------------
 if __name__ == "__main__":
     try:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(start())   # ✅ uses existing loop
+        loop.run_until_complete(start())
     except KeyboardInterrupt:
         logging.info("Service Stopped Bye 👋")
         loop.run_until_complete(assistant.stop())
