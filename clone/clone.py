@@ -956,8 +956,19 @@ async def shorten_handler(client: Client, message: Message):
                 "✅ Base site and API reset. Please send your **base site** (e.g., shortnerdomain.com)"
             )
 
+    except Exception as e:
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+        )
+        print(f"⚠️ Clone Shorten Error: {e}")
+
+@Client.on_message(filters.private & filters.text & ~filters.command(["shortener"]))
+async def shorten_flow_handler(client: Client, message: Message):
+    try:
+        user_id = message.from_user.id
         if user_id not in SHORTEN_STATE:
-            SHORTEN_STATE[user_id] = {"step": 1}
+            return
 
         state = SHORTEN_STATE[user_id]
 
@@ -968,12 +979,37 @@ async def shorten_handler(client: Client, message: Message):
             except:
                 pass
             state.pop("help_msg_id", None)
+
+        step = state.get("step", 1)
+
+        if step == 1:
+            base_site = message.text.strip()
+            await clonedb.update_user_info(user_id, {"base_site": base_site})
+            state["step"] = 2
+            return await message.reply("✅ Base site saved. Now send your **Shortener API**:")
+
+        elif step == 2:
+            short_api = message.text.strip()
+            await clonedb.update_user_info(user_id, {"shortener_api": short_api})
+            state["step"] = 3
+            return await message.reply("✅ API saved. Now send the **link** to shorten:")
+
+        elif step == 3:
+            user = await clonedb.get_user(user_id)
+            base_site = user.get("base_site")
+            api = user.get("shortener_api")
+            link = message.text.strip()
+
+            short_url = f"https://{base_site}/api?api={api}&url={link}"
+
+            return await message.reply(f"Here is your shortened link:\n{short_url}")
+
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Shorten Flow Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
-        print(f"⚠️ Clone Shorten Error: {e}")
+        print(f"⚠️ Clone Shorten Flow Error: {e}")
 
 @Client.on_message(filters.command("broadcast") & filters.private)
 async def broadcast(client, message):
