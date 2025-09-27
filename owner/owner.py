@@ -3439,10 +3439,11 @@ async def message_capture(client: Client, message: Message):
                 except:
                     pass
 
+                new_text = message.text.strip() if message.text else ""
+
                 # Steps: channel -> target -> mode
                 if step == "channel":
                     channel_id_int = None
-                    new_text = None
                     if message.forward_from_chat:
                         forward_chat = message.forward_from_chat
                         channel_id_int = forward_chat.id
@@ -3571,8 +3572,9 @@ async def message_capture(client: Client, message: Message):
                 except:
                     pass
 
+                new_text = message.text.strip() if message.text else ""
+
                 channel_id_int = None
-                new_text = None
                 if message.forward_from_chat:
                     forward_chat = message.forward_from_chat
                     channel_id_int = forward_chat.id
