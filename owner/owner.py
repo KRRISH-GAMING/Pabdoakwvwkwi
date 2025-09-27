@@ -2447,7 +2447,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await query.answer("❌ Clone not found!", show_alert=True)
 
                 if not active:
-                    return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
+                    return await query.answer("⚠️ This bot is deactivated. Activate first!", show_alert=True)
 
                 premium_user = clone.get("premium_user", [])
                 if not premium_user:
@@ -2456,18 +2456,31 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 buttons = []
 
                 for pu in premium_user:
+                    user_id_int = None
+                    name = None
+
                     if isinstance(pu, dict):
-                        user_id_int = pu.get("id")
-                        name = pu.get("name", str(user_id_int))
+                        user_id_int = pu.get("user_id")
+                        name = pu.get("name")
                     else:
                         try:
                             user_id_int = int(pu)
                         except ValueError:
                             user_id_int = pu
-                        user = await db.col.find_one({"id": user_id_int})
-                        name = user.get("name") if user else str(user_id_int)
 
-                    buttons.append([InlineKeyboardButton(f"👤 {name}", callback_data=f"remove_pu_{bot_id}_{user_id_int}")])
+                    if not name:
+                        user = await db.col.find_one({"id": user_id_int})
+                        name = user.get("name") if user else None
+
+                    if not name:
+                        try:
+                            tg_user = await client.get_users(user_id_int)
+                            name = tg_user.first_name
+                        except:
+                            name = str(user_id_int)
+
+                    if user_id_int:
+                        buttons.append([InlineKeyboardButton(f"👤 {name}", callback_data=f"remove_pu_{bot_id}_{user_id_int}")])
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"premium_user_{bot_id}")])
                 await query.message.edit_text(
@@ -2475,7 +2488,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
-            # Remove Premium User
+            # Remove Premium User Action
             elif action == "remove_pu":
                 if not clone:
                     return await query.answer("❌ Clone not found!", show_alert=True)
@@ -2487,7 +2500,16 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not premium_user:
                     return await query.answer("❌ No premium user found!", show_alert=True)
 
-                await db.update_clone(bot_id, {"$pull": {"premium_user": pu_id}}, raw=True)
+                new_list = []
+                for pu in premium_user:
+                    if isinstance(pu, dict):
+                        if pu.get("user_id") != pu_id:
+                            new_list.append(pu)
+                    else:
+                        if int(pu) != pu_id:
+                            new_list.append(pu)
+
+                await db.update_clone(bot_id, {"premium_user": new_list})
                 await query.answer("✅ Premium user removed!", show_alert=True)
                 await show_premium_menu(client, query.message, bot_id)
 
