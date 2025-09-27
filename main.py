@@ -1,203 +1,239 @@
-import logging, logging.config, glob, asyncio, importlib, sys, pytz, time
-from pyrogram import Client, types, idle, __version__
-from typing import Union, Dict, Optional, AsyncGenerator
+import logging, logging.config, glob, asyncio, importlib, sys, pytz
+from pyrogram import Client, types, idle
+from typing import Union, Dict, AsyncGenerator
 from os import environ
 from pathlib import Path
-from datetime import date, datetime 
+from datetime import datetime
 from aiohttp import web
 from plugins.config import *
+from plugins.database import *
+from plugins.helper import *
 from plugins.script import *
 from owner.owner import *
 
+# ------------------ Logging ------------------
 logging.config.fileConfig('logging.conf')
-logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
-multi_clients = {}
-work_loads = {}
-
-StartTime = time.time()
-__version__ = 1.1
-
+# ------------------ Globals ------------------
+multi_clients: Dict[int, Client] = {}
+work_loads: Dict[int, int] = {}
+StartTime = datetime.utcnow()
+__version__ = 1.5
 routes = web.RouteTableDef()
 
+# ------------------ Stream Bot ------------------
 class StreamXBot(Client):
-    def __init__(self):
-        super().__init__(
-            name="filetolink",
-            api_id=API_ID,
-            api_hash=API_HASH,
-            bot_token=BOT_TOKEN,
-            workers=50,
-            plugins={"root": "owner"},
-            sleep_threshold=5,
-        )
+    async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
+        async for message in self.get_chat_history(chat_id, limit=limit):
+            yield message
 
-    async def iter_messages(
-        self,
-        chat_id: Union[int, str],
-        limit: int,
-        offset: int = 0,
-    ) -> Optional[AsyncGenerator["types.Message", None]]:
-        current = offset
-        while True:
-            new_diff = min(200, limit - current)
-            if new_diff <= 0:
-                return
-            messages = await self.get_messages(chat_id, list(range(current, current+new_diff+1)))
-            for message in messages:
-                yield message
-                current += 1
-      
-StreamBot = StreamXBot()
+StreamBot = StreamXBot(
+    name="filetolink",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN,
+    workers=20,
+    plugins={"root": "owner"},
+    sleep_threshold=5
+)
 
+# ------------------ Token Parser ------------------
 class TokenParser:
-    def __init__(self, config_file: Optional[str] = None):
-        self.tokens = {}
-        self.config_file = config_file
-
     def parse_from_env(self) -> Dict[int, str]:
-        self.tokens = dict(
-            (c + 1, t)
-            for c, (_, t) in enumerate(
-                filter(
-                    lambda n: n[0].startswith("MULTI_TOKEN"), sorted(environ.items())
-                )
+        return {
+            i+1: t for i, (_, t) in enumerate(
+                filter(lambda x: x[0].startswith("MULTI_TOKEN"), sorted(environ.items()))
             )
-        )
-        return self.tokens
+        }
 
+# ------------------ Multi Client Init ------------------
 async def initialize_clients():
     multi_clients[0] = StreamBot
     work_loads[0] = 0
     all_tokens = TokenParser().parse_from_env()
+
     if not all_tokens:
-        print("No additional clients found, using default client")
+        logger.info("No additional clients found, using default client")
         return
-    
+
+    semaphore = asyncio.Semaphore(10)  # Batch startup limit
+
     async def start_client(client_id, token):
-        try:
-            print(f"Starting - Client {client_id}")
-            if client_id == len(all_tokens):
-                await asyncio.sleep(2)
-                print("This will take some time, please wait...")
-            client = await Client(
-                name=str(client_id),
-                api_id=API_ID,
-                api_hash=API_HASH,
-                bot_token=token,
-                sleep_threshold=60,
-                no_updates=True,
-                in_memory=True
-            ).start()
-            work_loads[client_id] = 0
-            return client_id, client
-        except Exception:
-            logging.error(f"Failed starting Client - {client_id} Error:", exc_info=True)
-    
-    clients = await asyncio.gather(*[start_client(i, token) for i, token in all_tokens.items()])
+        async with semaphore:
+            try:
+                logger.info(f"Starting client {client_id}")
+                client = await Client(
+                    name=f"clone_{client_id}",
+                    api_id=API_ID,
+                    api_hash=API_HASH,
+                    bot_token=token,
+                    workers=20,
+                    in_memory=True,
+                    no_updates=True
+                ).start()
+                work_loads[client_id] = 0
+                return client_id, client
+            except Exception:
+                logger.exception(f"Failed starting Client {client_id}")
+                return None
+
+    clients = await asyncio.gather(*[start_client(i, t) for i, t in all_tokens.items()])
+    clients = [c for c in clients if c]
     multi_clients.update(dict(clients))
-    if len(multi_clients) != 1:
-        print("Multi-Client Mode Enabled")
+
+    if len(multi_clients) > 1:
+        logger.info(f"Multi-Client Mode Enabled: {len(multi_clients)} clients")
     else:
-        print("No additional clients were initialized, using default client")
+        logger.info("Only default client active")
 
-def get_readable_time(seconds: int) -> str:
-    count = 0
-    readable_time = ""
-    time_list = []
-    time_suffix_list = ["s", "m", "h", " days"]
-    while count < 4:
-        count += 1
-        if count < 3:
-            remainder, result = divmod(seconds, 60)
-        else:
-            remainder, result = divmod(seconds, 24)
-        if seconds == 0 and remainder == 0:
-            break
-        time_list.append(int(result))
-        seconds = int(remainder)
-    for x in range(len(time_list)):
-        time_list[x] = str(time_list[x]) + time_suffix_list[x]
-    if len(time_list) == 4:
-        readable_time += time_list.pop() + ", "
-    time_list.reverse()
-    readable_time += ": ".join(time_list)
-    return readable_time
+# ------------------ Utilities ------------------
+def get_readable_time(start: datetime) -> str:
+    delta = datetime.utcnow() - start
+    days, remainder = divmod(delta.total_seconds(), 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{int(days)}d:{int(hours)}h:{int(minutes)}m:{int(seconds)}s"
 
+# ------------------ Load Balancer ------------------
+def get_least_loaded_bot() -> tuple[Client, int]:
+    client_id, _ = min(work_loads.items(), key=lambda x: x[1])
+    work_loads[client_id] += 1
+    return multi_clients[client_id], client_id
+
+async def complete_task(client_id: int):
+    if client_id in work_loads:
+        work_loads[client_id] = max(0, work_loads[client_id] - 1)
+
+async def dispatch_task(chat_id: int, text: str):
+    client, client_id = get_least_loaded_bot()
+    try:
+        await client.send_message(chat_id, text)
+    except Exception as e:
+        logger.warning(f"Failed to send with bot {client_id}: {e}")
+    finally:
+        await complete_task(client_id)
+
+async def dispatch_bulk(tasks: list):
+    async def worker(task):
+        await dispatch_task(task["chat_id"], task["text"])
+    await asyncio.gather(*[worker(t) for t in tasks])
+
+# ------------------ Web Server ------------------
 @routes.get("/", allow_head=True)
-async def root_route_handler(_):
-    return web.json_response(
-        {
-            "server_status": "running",
-            "uptime": get_readable_time(time.time() - StartTime),
-            "telegram_bot": "@" + StreamBot.username,
-            "connected_bots": len(multi_clients),
-            "loads": dict(
-                ("bot" + str(c + 1), l)
-                for c, (_, l) in enumerate(
-                    sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
+async def root(_):
+    return web.json_response({
+        "server_status": "running",
+        "uptime": get_readable_time(StartTime),
+        "telegram_bot": "@" + StreamBot.username,
+        "connected_bots": len(multi_clients),
+        "loads": {f"bot{c}": l for c, l in work_loads.items()},
+        "version": __version__
+    })
+
+async def start_web_server():
+    app = web.Application(client_max_size=30_000_000)
+    app.add_routes(routes)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
+    logger.info(f"Web server running on port {PORT}")
+
+# ------------------ Plugin Loader ------------------
+def load_plugins():
+    for file in glob.glob("owner/*.py"):
+        plugin_name = Path(file).stem
+        spec = importlib.util.spec_from_file_location(f"owner.{plugin_name}", file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[f"owner.{plugin_name}"] = module
+        logger.info(f"✅ Imported plugin: {plugin_name}")
+
+# ------------------ Restart Bots ------------------
+async def restart_bots():
+    bots_cursor = await db.get_all_bots()
+    bots = await bots_cursor.to_list(None)
+
+    semaphore = asyncio.Semaphore(10)  # batch limit
+    tasks = []
+
+    async def restart_single(bot):
+        bot_token = bot['token']
+        bot_id = bot['_id']
+        try:
+            async with semaphore:
+                xd = Client(
+                    name=f"clone_{bot_id}",
+                    api_id=API_ID,
+                    api_hash=API_HASH,
+                    bot_token=bot_token,
+                    plugins={"root": "clone"},
+                    workers=20,
+                    in_memory=True
                 )
-            ),
-            "version": __version__,
-        }
-    )
+                await xd.start()
+                bot_me = await xd.get_me()
+                set_client(bot_me.id, xd)
+                print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-async def web_server():
-    web_app = web.Application(client_max_size=30000000)
-    web_app.add_routes(routes)
-    return web_app
+        except (UserDeactivated, AuthKeyUnregistered):
+            print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
+            await db.delete_clone_by_id(bot_id)
+        except Exception as e:
+            if "SESSION_REVOKED" in str(e):
+                print(f"⚠️ Token revoked for bot {bot_id}, removing from DB...")
+                await db.delete_clone_by_id(bot_id)
+            else:
+                print(f"❌ Error restarting bot {bot_id}: {e}")
 
-ppath = "owner/*.py"
-files = glob.glob(ppath)
-loop = asyncio.get_event_loop()
+    for bot in bots:
+        tasks.append(restart_single(bot))
 
+    await asyncio.gather(*tasks)
+    print("✅ All clone bots processed for restart.")
+
+# ------------------ Main Start ------------------
 async def start():
-    print('\n')
-    print('Initalizing Bot...')
-    
+    logger.info("Initializing Bot...")
     await StreamBot.start()
     bot_info = await StreamBot.get_me()
     StreamBot.username = bot_info.username
 
     await set_auto_menu(StreamBot)
 
-    await assistant.start()
-    print(f"✅ Assistant { (await assistant.get_me()).username } started")
+    # Optional assistant
+    if "assistant" in globals():
+        try:
+            await assistant.start()
+            logger.info(f"Assistant {(await assistant.get_me()).username} started")
+        except Exception:
+            logger.warning("Assistant not started")
 
+    load_plugins()
     await initialize_clients()
+    #await start_web_server()
+    await restart_bots()  # ✅ Fast concurrent restart
 
-    for name in files:
-        with open(name) as a:
-            patt = Path(a.name)
-            plugin_name = patt.stem.replace(".py", "")
-            plugins_dir = Path(f"owner/{plugin_name}.py")
-            import_path = "owner.{}".format(plugin_name)
-            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
-            load = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(load)
-            sys.modules["owner." + plugin_name] = load
-            print("✅ Imported => " + plugin_name)
-    
-    today = date.today()
-    tz = pytz.timezone('Asia/Kolkata')
-    now = datetime.now(tz)
-    current_time = now.strftime("%H:%M:%S")
+    # Send restart log
+    try:
+        tz = pytz.timezone("Asia/Kolkata")
+        now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        await dispatch_task(LOG_CHANNEL, f"Bot Restarted at {now}")
+    except Exception:
+        logger.warning("Failed to send restart log")
 
-    """app = web.AppRunner(await web_server())
-    await app.setup()
-    bind_address = "0.0.0.0"
-    await web.TCPSite(app, bind_address, PORT).start()"""
-
-    await StreamBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, current_time))
-    await restart_bots()
-    print("Bot Started.")
+    logger.info("Bot fully started. Idle mode...")
     await idle()
 
-if __name__ == '__main__':
+# ------------------ Entry ------------------
+if __name__ == "__main__":
     try:
-        loop.run_until_complete(start())
+        asyncio.run(start())
     except KeyboardInterrupt:
-        logging.info('Service Stopped Bye 👋')
-        loop.run_until_complete(assistant.stop())
-        loop.run_until_complete(StreamBot.stop())
+        logger.info("Service Stopped. Shutting down...")
+        if "assistant" in globals():
+            asyncio.run(assistant.stop())
+        asyncio.run(StreamBot.stop())
