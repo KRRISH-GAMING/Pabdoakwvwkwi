@@ -3390,12 +3390,7 @@ async def message_capture(client: Client, message: Message):
             if user_id in ADD_BUTTON:
                 data = ADD_BUTTON[user_id]
                 orig_msg, bot_id, step = data["orig_msg"], data["bot_id"], data["step"]
-                try:
-                    await message.delete()
-                except:
-                    pass
-
-                new_text = message.text.strip() if message.text else ""
+eeS-es-e-_text = message.text.strip() if message.text else ""
                 if not new_text:
                     await orig_msg.edit_text("❌ Empty message. Please send valid text.")
                     await asyncio.sleep(2)
@@ -3442,6 +3437,7 @@ async def message_capture(client: Client, message: Message):
                 # Steps: channel -> target -> mode
                 if step == "channel":
                     channel_id_int = None
+                    new_text = None
                     if message.forward_from_chat:
                         forward_chat = message.forward_from_chat
                         channel_id_int = forward_chat.id
@@ -3571,6 +3567,7 @@ async def message_capture(client: Client, message: Message):
                     pass
 
                 channel_id_int = None
+                new_text = None
                 if message.forward_from_chat:
                     forward_chat = message.forward_from_chat
                     channel_id_int = forward_chat.id
