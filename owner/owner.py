@@ -1976,7 +1976,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         "orig_msg": query.message,
                         "bot_id": bot_id,
                         "step": "link",
-                        "shorten_link": None
+                        "at_shorten_link": None
                     }
                     status_text = "🔗 Please send your **Shorten Link** now."
                     text = "❌ Cancel"
@@ -3537,13 +3537,13 @@ async def message_capture(client: Client, message: Message):
 
                 if step == "link":
                     new_text = new_text.removeprefix("https://").removeprefix("http://")
-                    ACCESS_TOKEN[user_id]["shorten_link"] = new_text
+                    ACCESS_TOKEN[user_id]["at_shorten_link"] = new_text
                     ACCESS_TOKEN[user_id]["step"] = "api"
                     await orig_msg.edit_text("✅ Shorten link saved! Now send your API key.")
                 elif step == "api":
                     await orig_msg.edit_text("✏️ Updating **access token**, please wait...")
                     try:
-                        await db.update_clone(bot_id, {"at_shorten_link": data["shorten_link"], "at_shorten_api": new_text})
+                        await db.update_clone(bot_id, {"at_shorten_link": data["at_shorten_link"], "at_shorten_api": new_text})
                         await orig_msg.edit_text("✅ Successfully updated **access token**!")
                         await asyncio.sleep(2)
                         await show_token_menu(client, orig_msg, bot_id)
