@@ -36,7 +36,7 @@ async def start(client, message):
         fsub_data = clone.get("force_subscribe", [])
         access_token = clone.get("access_token", False)
         tutorial_url = clone.get("access_token_tutorial", None)
-        premium = [int(p) for p in clone.get("premium_user", [])]
+        premium = [int(p["user_id"]) if isinstance(p, dict) else int(p) for p in clone.get("premium_user", [])]
         premium_upi = clone.get("premium_upi", None)
         auto_delete = clone.get("auto_delete", False)
         auto_delete_time = str(clone.get("auto_delete_time", "1h"))
