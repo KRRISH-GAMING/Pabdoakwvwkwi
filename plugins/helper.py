@@ -236,7 +236,7 @@ async def check_verification(client, userid):
         return False
     return True
 
-async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_url):
+async def auto_delete_messagex(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
@@ -253,18 +253,14 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_u
             print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
-            keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Get Again", url=reload_url)]]
-            ) if reload_url else None
             try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
+                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
             except Exception as e:
                 print(f"⚠️ Clone Could not edit notice_msg: {e}")
                 try:
                     await client.send_message(
                         notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!",
-                        reply_markup=keyboard
+                        "✅ Your File/Video is successfully deleted!"
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
@@ -275,7 +271,7 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_u
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
 
-async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_url):
+async def auto_delete_messagey(client, msg_to_delete, notice_msg, time):
     try:
         await asyncio.sleep(time)
 
@@ -294,18 +290,14 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_u
                     print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
-            keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Get Again", url=reload_url)]]
-            ) if reload_url else None
             try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
+                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!")
             except Exception as e:
                 print(f"⚠️ Clone Could not edit notice_msg: {e}")
                 try:
                     await client.send_message(
                         notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!",
-                        reply_markup=keyboard
+                        "✅ Your File/Video is successfully deleted!"
                     )
                 except Exception as e2:
                     print(f"⚠️ Clone Could not send fallback message: {e2}")
