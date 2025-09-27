@@ -39,9 +39,9 @@ async def start(client, message):
         premium = [int(p["user_id"]) if isinstance(p, dict) else int(p) for p in clone.get("premium_user", [])]
         premium_upi = clone.get("premium_upi", None)
         auto_delete = clone.get("auto_delete", False)
-        auto_delete_time = str(clone.get("auto_delete_time", "1h"))
-        auto_delete_time2 = parse_time(clone.get("auto_delete_time", "1h"))
-        auto_delete_msg = clone.get('auto_delete_msg', script.AD_TXT)
+        auto_delete_time = str(clone.get("ad_time", "1h"))
+        auto_delete_time2 = parse_time(clone.get("ad_time", "1h"))
+        auto_delete_msg = clone.get('ad_msg', script.AD_TXT)
         forward_protect = clone.get("forward_protect", False)
 
         num_str = "".join(filter(str.isdigit, auto_delete_time)) or "0"
