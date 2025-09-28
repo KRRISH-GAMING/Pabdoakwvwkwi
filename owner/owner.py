@@ -1185,10 +1185,10 @@ async def verify_payment_screenshot(message, feature_type, client, max_minutes=1
             text = re.sub(r'[^a-z0-9@.]', '', text)
             return text
 
-        message.reply_text(ocr_text)
+        await message.reply_text(ocr_text)
         normalized_ocr = normalize(ocr_text)
         normalized_upi = normalize("krrishmehta@jio")
-        message.reply_text(normalized_ocr)
+        await message.reply_text(normalized_ocr)
 
         # Fuzzy match UPI
         similarity = SequenceMatcher(None, normalized_ocr, normalized_upi).ratio()
