@@ -1,4 +1,4 @@
-import os, logging, asyncio, re, time, shutil, sys, traceback
+import os, logging, asyncio, re, time, shutil, sys, traceback, imaplib, email, uuid
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -1055,7 +1055,7 @@ async def show_premium_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+            f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Premium User Menu Error: {e}")
         print(traceback.format_exc())
@@ -1135,10 +1135,113 @@ async def show_moderator_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+            f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Moderator Menu Error: {e}")
         print(traceback.format_exc())
+
+IMAP_SERVER = "imap.gmail.com"
+EMAIL_USER = "krrishraj237@gmail.com"
+EMAIL_PASS = "ewcz wblx fdgv unpp"
+CHECK_INTERVAL = 15
+
+FAMPAY_KEYWORDS = ["received", "payment", "Fampay", "UPI"]
+UPI_ID = "krishraj237@fam"
+
+async def approve_payment(user_id, feature_type, db, client):
+    expiry_date = datetime.utcnow() + timedelta(days=30)
+    plan_type = feature_type.lower().split()[0]
+    await db.add_premium_user(user_id, 30, plan_type)
+
+    try:
+        await client.send_message(
+            user_id,
+            f"✅ Your **{feature_type}** has been activated!\n"
+            f"Expires on: {expiry_date.strftime('%d-%m-%Y')}\n"
+            "Use /start to continue."
+        )
+    except:
+        pass
+
+async def check_fampay_mails(db, client):
+    while True:
+        try:
+            mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+            mail.login(EMAIL_USER, EMAIL_PASS)
+            mail.select("inbox")
+
+            status, data = mail.search(None, '(UNSEEN)')
+            if status == "OK":
+                for num in data[0].split():
+                    status, msg_data = mail.fetch(num, "(RFC822)")
+                    if status != "OK":
+                        continue
+
+                    raw_msg = msg_data[0][1]
+                    msg = email.message_from_bytes(raw_msg)
+                    subject = msg["subject"] or ""
+                    body = ""
+
+                    if msg.is_multipart():
+                        for part in msg.walk():
+                            if part.get_content_type() == "text/plain":
+                                body += part.get_payload(decode=True).decode()
+                    else:
+                        body = msg.get_payload(decode=True).decode()
+
+                    text = subject + " " + body
+
+                    if any(k.lower() in text.lower() for k in FAMPAY_KEYWORDS) and UPI_ID.lower() in text.lower():
+                        amount_match = re.search(r"₹\s?(\d+)", text)
+                        txn_id = txn_match.group(1) if txn_match else None
+                        if amount_match:
+                            amount = int(amount_match.group(1))
+                            txn_id = txn_match.group(1) if txn_match else None
+
+                            logger.info(f"✅ Payment mail: ₹{amount}, Txn: {txn_id}")
+
+                            pending = await db.find_pending_payment(amount, txn_id=txn_id)
+                            if not pending:
+                                pending = await db.find_pending_payment(amount)  # fallback
+
+                            if pending:
+                                user_id, feature_type = pending["user_id"], pending["feature_type"]
+                                await approve_payment(user_id, feature_type, db, client)
+                                await client.send_message(
+                                    LOG_CHANNEL,
+                                    f"✅ Auto-approved {feature_type} for {user_id} (₹{amount})"
+                                )
+
+            mail.logout()
+        except Exception as e:
+            await client.send_message(
+                LOG_CHANNEL,
+                f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+            )
+            print("⚠️ IMAP Error:", e)
+            print(traceback.format_exc())
+
+        await asyncio.sleep(CHECK_INTERVAL)
+
+async def check_expired_pending(db, client, max_minutes=10):
+    expiry = datetime.utcnow() - timedelta(minutes=max_minutes)
+    cursor = db.col_pending.find({"created": {"$lt": expiry}})
+    async for pending in cursor:
+        user_id = pending["user_id"]
+        feature_type = pending["feature_type"]
+        amount = pending["amount"]
+
+        try:
+            await client.send_message(
+                user_id,
+                f"⚠️ We couldn’t verify your **₹{amount}** payment for **{feature_type} Plan**.\n\n"
+                f"➡️ If the amount was deducted, please wait a bit more.\n"
+                f"➡️ Otherwise, retry payment."
+            )
+        except Exception as e:
+            print(f"❌ Could not notify {user_id}: {e}")
+
+        await db.col_pending.delete_one({"_id": pending["_id"]})
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -1695,6 +1798,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                user_data = await db.is_premium(user_id)
+                if not user_data:
+                    return await query.answer(
+                        "🚫 This feature is for premium users only.\n\n"
+                        "Contact admin to upgrade.",
+                        show_alert=True
+                    )
 
                 current = clone.get("random_caption", False)
                 if current:
@@ -2420,6 +2531,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                user_data = await db.is_premium(user_id)
+                if not user_data:
+                    return await query.answer(
+                        "🚫 This feature is for premium users only.\n\n"
+                        "Contact admin to upgrade.",
+                        show_alert=True
+                    )
+
                 premium_upi = clone.get("premium_upi", None)
                 if premium_upi:
                     await show_premium_menu(client, query.message, bot_id)
@@ -3050,16 +3169,21 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 "💎 **Premium Features** 💎\n\n"
                 "**Normal Plan:**\n"
                 "- Unlimited Button\n"
-                "- Unlimited FSub Channel\n\n"
+                "- Random Caption\n"
+                "- Unlimited FSub Channel\n"
+                "- Premium Users\n\n"
                 "**Ultra Plan:**\n"
                 "- Unlimited Button\n"
+                "- Random Caption\n"
                 "- Unlimited FSub Channel\n"
-                "- Auto Posting\n\n"
+                "- Auto Posting\n"
+                "- Premium Users\n\n"
                 "**Vip Plan:**\n"
                 "- Unlimited Clone Bot\n"
                 "- Unlimited Button\n"
                 "- Unlimited FSub Channel\n"
-                "- Auto Posting\n\n"
+                "- Auto Posting\n"
+                "- Premium Users\n\n"
             )
 
             buttons = [
@@ -3093,13 +3217,34 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f"Amount: {price}\n"
                 "UPI ID: `Krrishmehta@jio`\n"
                 "Send payment to UPI ID\n\n"
-                "After payment, send the **Screenshot** below to confirm."
+                "After payment, click the **Payment Done** button below to confirm."
             )
 
-            PREMIUM_STATE[user_id] = feature_type
+            buttons = [
+                [InlineKeyboardButton("✅ Payment Done", callback_data=f"paid_{feature_type.replace(' ', '_')}")],
+                [InlineKeyboardButton("⬅️ Back", callback_data="premium")]
+            ]
 
             await query.message.edit_text(
                 text=text,
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
+
+        # User clicked Payment Done
+        elif data.startswith("paid_"):
+            feature_type = data.replace("paid_", "").replace("_", " ")
+            amount = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
+
+            txn_id = str(uuid.uuid4())
+            await db.add_pending_payment(user_id, amount, feature_type, txn_id=txn_id)
+
+            await query.message.edit_text(
+                f"✅ Your payment request for **{feature_type}** has been recorded.\n\n"
+                f"💰 Amount: ₹{amount}\n"
+                f"⏳ Waiting for payment confirmation via UPI...\n\n"
+                f"⚡ As soon as we receive your transaction, "
+                f"your plan will be auto-activated.",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
@@ -3152,21 +3297,6 @@ async def message_capture(client: Client, message: Message):
                 or user_id in ADD_MODERATOR
             ):
                 return
-
-            # -------------------- PAYMENT CAPTURE --------------------
-            if user_id in PREMIUM_STATE:
-                feature_type = PREMIUM_STATE.get(user_id)
-
-                if not feature_type:
-                    return
-
-                for admin_id in ADMINS:
-                    try:
-                        await message.copy(admin_id, caption=f"📸 Payment screenshot from `{user_id}` for {feature_type}")
-                    except:
-                        pass
-
-                PREMIUM_STATE.pop(user_id, None)
 
             # -------------------- CREATE CLONE --------------------
             if user_id in CLONE_TOKEN:
