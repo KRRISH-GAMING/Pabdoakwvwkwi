@@ -1163,9 +1163,6 @@ async def approve_payment(user_id, feature_type, db, client):
     except:
         pass
 
-import imaplib, email, re, asyncio, traceback
-from plugins.config import *
-
 def get_email_body(msg):
     body = ""
     if msg.is_multipart():
@@ -1187,56 +1184,62 @@ def get_email_body(msg):
     return body
 
 async def check_fampay_mails(db, client):
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+        mail.login(EMAIL_USER, EMAIL_PASS)
+        mail.select("inbox")
+    except Exception as e:
+        print(f"IMAP login failed: {e}")
+        return
+
     while True:
         try:
-            mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-            mail.login(EMAIL_USER, EMAIL_PASS)
-            mail.select("inbox")
-
             status, data = mail.search(None, '(UNSEEN)')
-            if status == "OK":
-                for num in data[0].split():
+            if status != "OK":
+                await asyncio.sleep(CHECK_INTERVAL)
+                continue
+
+            for num in data[0].split():
+                try:
                     status, msg_data = mail.fetch(num, "(RFC822)")
                     if status != "OK":
                         continue
 
                     raw_msg = msg_data[0][1]
                     msg = email.message_from_bytes(raw_msg)
-                    subject = msg["subject"] or ""
-                    body = get_email_body(msg)
+                    subject = msg.get("subject", "")
+                    body = get_email_body(msg) or ""
                     text = subject + " " + body
 
                     if any(k.lower() in text.lower() for k in FAMPAY_KEYWORDS) and UPI_ID.lower() in text.lower():
-                        # Extract amount
                         amount_match = re.search(r"₹\s?(\d+)", text)
-                        # Extract txn/UTR id
                         txn_match = re.search(r"(?:UTR|Txn\s?ID|Ref(?:erence)?\s?No)[:\s]+(\w+)", text, re.I)
                         txn_id = txn_match.group(1) if txn_match else None
 
                         if amount_match:
                             amount = int(amount_match.group(1))
-                            pending = await db.find_pending_payment(amount, txn_id=txn_id)
-                            if not pending:
-                                pending = await db.find_pending_payment(amount)  # fallback
-
+                            pending = await db.find_pending_payment(amount)  # fallback only
                             if pending:
                                 user_id, feature_type = pending["user_id"], pending["feature_type"]
-                                await approve_payment(user_id, feature_type, db, client)
-                                await client.send_message(
-                                    LOG_CHANNEL,
-                                    f"✅ Auto-approved {feature_type} for {user_id} (₹{amount})"
-                                )
+                                try:
+                                    await approve_payment(user_id, feature_type, db, client)
+                                    await client.send_message(LOG_CHANNEL,
+                                        f"✅ Auto-approved {feature_type} for {user_id} (₹{amount})")
+                                except Exception as e:
+                                    print(f"❌ approve/send_message failed: {e}")
 
-            mail.logout()
+                    # mark email as seen
+                    mail.store(num, '+FLAGS', '\\Seen')
+
+                except Exception as e:
+                    print(f"❌ Email processing error: {e}")
+                    continue
+
+            await asyncio.sleep(CHECK_INTERVAL)
+
         except Exception as e:
-            await client.send_message(
-                LOG_CHANNEL,
-                f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-            )
-            print("⚠️ IMAP Error:", e)
-            print(traceback.format_exc())
-
-        await asyncio.sleep(CHECK_INTERVAL)
+            print(f"⚠️ IMAP loop error: {e}")
+            await asyncio.sleep(CHECK_INTERVAL)
 
 async def check_expired_pending(db, client, max_minutes=10):
     expiry = datetime.utcnow() - timedelta(minutes=max_minutes)
