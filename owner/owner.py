@@ -1179,6 +1179,7 @@ async def verify_payment_screenshot(message, feature_type, client):
         image = Image.open(img_io)
 
         text = pytesseract.image_to_string(image).lower()
+        await message.reply_text(text)
 
         if "paid" in text and "krrishmehta@jio" in text:
             if "₹99" in text and "normal" in feature_type.lower():
