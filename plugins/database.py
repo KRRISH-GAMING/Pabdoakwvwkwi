@@ -15,25 +15,22 @@ class Database:
         self.settings = self.db.bot_settings
         self.media = self.db.media_files
         self.batches = self.db.batches
+        self.col_pending = self.db.pending_payments
 
     # ---------------- USERS ----------------
     def new_user(self, id, name):
-        return dict(
-            id = id,
-            name = name,
-        )
+        return dict(id=id, name=name)
 
     async def add_user(self, id, name):
         user = self.new_user(id, name)
         await self.col.insert_one(user)
 
     async def is_user_exist(self, id):
-        user = await self.col.find_one({'id':int(id)})
+        user = await self.col.find_one({'id': int(id)})
         return bool(user)
 
     async def total_users_count(self):
-        count = await self.col.count_documents({})
-        return count
+        return await self.col.count_documents({})
 
     async def get_all_users(self):
         return self.col.find({})
@@ -77,13 +74,24 @@ class Database:
         return True
 
     async def list_premium_users(self):
-        cursor = self.premium.find({
-            "expiry_time": {"$gt": datetime.utcnow()}
+        cursor = self.premium.find({"expiry_time": {"$gt": datetime.utcnow()}})
+        return [user async for user in cursor]
+
+    # ---------------- PENDING PAYMENTS ----------------
+    async def add_pending_payment(self, user_id, amount, feature_type, txn_id=None):
+        await self.col_pending.insert_one({
+            "user_id": user_id,
+            "amount": amount,
+            "feature_type": feature_type,
+            "txn_id": txn_id,
+            "created": datetime.utcnow()
         })
-        users = []
-        async for user in cursor:
-            users.append(user)
-        return users
+
+    async def find_pending_payment(self, amount, txn_id=None):
+        query = {"amount": amount}
+        if txn_id:
+            query["txn_id"] = txn_id
+        return await self.col_pending.find_one_and_delete(query)
 
     # ---------------- CLONE ----------------
     async def add_clone_bot(self, bot_id, user_id, first_name, username, bot_token):
