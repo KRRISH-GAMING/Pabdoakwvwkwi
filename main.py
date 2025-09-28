@@ -194,14 +194,6 @@ async def restart_bots():
     await asyncio.gather(*tasks)
     print("✅ All clone bots processed for restart.")
 
-async def start_cleanup_loop(db, client):
-    while True:
-        try:
-            await check_expired_pending(db, client, max_minutes=10)
-        except Exception as e:
-            logger.error(f"Expired payment check failed: {e}")
-        await asyncio.sleep(300)  # every 5 minutes
-
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
@@ -218,8 +210,7 @@ async def start():
     #await start_web_server()
     await restart_bots()
 
-    asyncio.create_task(check_fampay_mails(db, StreamBot))
-    #asyncio.create_task(start_cleanup_loop(db, StreamBot))
+    await start_payment_tasks(db, StreamBot)
 
     try:
         today = date.today()
