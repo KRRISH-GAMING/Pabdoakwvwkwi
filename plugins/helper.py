@@ -254,7 +254,7 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_u
 
         if notice_msg:
             keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Get Again", url=reload_url)]]
+                [[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]
             ) if reload_url else None
             try:
                 await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
@@ -295,7 +295,7 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_u
 
         if notice_msg:
             keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Get Again", url=reload_url)]]
+                [[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]
             ) if reload_url else None
             try:
                 await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
