@@ -1,7 +1,6 @@
-import os, logging, asyncio, re, time, shutil, sys
+import os, logging, asyncio, re, time, shutil, sys, io
 from PIL import Image
 import pytesseract
-import io
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -80,7 +79,7 @@ async def promote(bot_username: str):
     except Exception as e:
         await assistant.send_message(
             LOG_CHANNEL,
-            f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Promote Clone Bot @{bot_username} Error: {e}")
         print(traceback.format_exc())
@@ -112,7 +111,7 @@ async def set_auto_menu(client):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Set Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Set Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Set Menu Error: {e}")
         print(traceback.format_exc())
@@ -134,7 +133,7 @@ async def set_clone_menu(xd):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Bot Menu Error: {e}")
         print(traceback.format_exc())
@@ -194,7 +193,7 @@ async def start(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Start Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Start Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Start Handler Error: {e}")
         print(traceback.format_exc())
@@ -206,7 +205,7 @@ async def help(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Help Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Help Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
@@ -249,7 +248,7 @@ async def add_premium(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Add Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Add Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Add Premium Error: {e}")
         print(traceback.format_exc())
@@ -273,7 +272,7 @@ async def remove_premium(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Remove Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Remove Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Remove Premium Error: {e}")
         print(traceback.format_exc())
@@ -315,7 +314,7 @@ async def list_premium(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ List Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ List Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ List Premium Error: {e}")
         print(traceback.format_exc())
@@ -354,7 +353,7 @@ async def check_premium(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Check Premium Error: {e}")
         print(traceback.format_exc())
@@ -458,7 +457,7 @@ async def broadcast(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Broadcast Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Broadcast Error: {e}")
         print(traceback.format_exc())
@@ -479,7 +478,7 @@ async def stats(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Stats Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Stats Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Stats Error: {e}")
         print(traceback.format_exc())
@@ -538,7 +537,7 @@ async def contact(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Contact Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Contact Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Contact Error: {e}")
         print(traceback.format_exc())
@@ -576,7 +575,7 @@ async def reply(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Reply Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Reply Error: {e}")
         print(traceback.format_exc())
@@ -610,7 +609,7 @@ async def show_clone_menu(client, message, user_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Clone Menu Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Show Clone Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Clone Menu Error: {e}")
         print(traceback.format_exc())
@@ -630,7 +629,7 @@ async def show_text_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Text Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Text Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Text Menu Error: {e}")
         print(traceback.format_exc())
@@ -650,7 +649,7 @@ async def show_photo_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Photo Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Photo Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Photo Menu Error: {e}")
         print(traceback.format_exc())
@@ -670,7 +669,7 @@ async def show_caption_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Caption Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Caption Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Caption Menu Error: {e}")
         print(traceback.format_exc())
@@ -705,7 +704,7 @@ async def show_button_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Button Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Button Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Button Menu Error: {e}")
         print(traceback.format_exc())
@@ -725,7 +724,7 @@ async def show_header_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Header Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Header Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Header Menu Error: {e}")
         print(traceback.format_exc())
@@ -745,7 +744,7 @@ async def show_footer_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Footer Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Footer Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Footer Menu Error: {e}")
         print(traceback.format_exc())
@@ -808,7 +807,7 @@ async def show_fsub_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Force Subscribe Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Force Subscribe Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Force Subscribe Menu Error: {e}")
         print(traceback.format_exc())
@@ -870,7 +869,7 @@ async def show_token_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Token Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Token Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Token Menu Error: {e}")
         print(traceback.format_exc())
@@ -890,7 +889,7 @@ async def show_validity_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Validity Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Validity Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Validity Menu Error: {e}")
         print(traceback.format_exc())
@@ -910,7 +909,7 @@ async def show_tutorial_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Tutorial Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Tutorial Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Tutorial Menu Error: {e}")
         print(traceback.format_exc())
@@ -959,7 +958,7 @@ async def show_post_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Post Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Post Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Post Menu Error: {e}")
         print(traceback.format_exc())
@@ -979,7 +978,7 @@ async def show_image_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Image Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Image Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Image Menu Error: {e}")
         print(traceback.format_exc())
@@ -999,7 +998,7 @@ async def show_sleep_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Sleep Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Sleep Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Sleep Menu Error: {e}")
         print(traceback.format_exc())
@@ -1058,7 +1057,7 @@ async def show_premium_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
+            f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Premium User Menu Error: {e}")
         print(traceback.format_exc())
@@ -1078,7 +1077,7 @@ async def show_time_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Time Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Time Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Time Menu Error: {e}")
         print(traceback.format_exc())
@@ -1098,7 +1097,7 @@ async def show_message_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Message Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Show Message Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Message Menu Error: {e}")
         print(traceback.format_exc())
@@ -1138,7 +1137,7 @@ async def show_moderator_menu(client, message, bot_id):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
+            f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Moderator Menu Error: {e}")
         print(traceback.format_exc())
@@ -1175,8 +1174,11 @@ async def verify_payment_screenshot(message, feature_type, client):
         if not message.photo:
             return await message.reply_text("📸 Please upload a **payment screenshot**.")
 
-        img = await message.download(in_memory=True)
-        text = pytesseract.image_to_string(Image.open(io.BytesIO(img))).lower()
+        img_bytes = await message.download(in_memory=True)
+
+        image = Image.open(io.BytesIO(img_bytes))
+
+        text = pytesseract.image_to_string(image).lower()
 
         if "paid" in text and "krrishmehta@jio" in text:
             if "₹99" in text and "normal" in feature_type.lower():
@@ -1193,7 +1195,7 @@ async def verify_payment_screenshot(message, feature_type, client):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ OCR Error:\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ OCR Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>"
         )
         print(f"⚠️ OCR Error: {e}")
         print(traceback.format_exc())
@@ -2001,7 +2003,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 except Exception as e:
                     await client.send_message(
                         LOG_CHANNEL,
-                        f"⚠️ Update Force Subscribe Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+                        f"⚠️ Update Force Subscribe Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
                     print(f"⚠️ Update Force Subscribe Error: {e}")
                     print(traceback.format_exc())
@@ -2323,7 +2325,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     AUTO_POST.pop(user_id, None)
                 except Exception as e:
                     await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
-                    await client.send_message(LOG_CHANNEL, f"⚠️ Update Auto Post Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
+                    await client.send_message(LOG_CHANNEL, f"⚠️ Update Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
                     await query.message.edit_text(f"❌ Failed to update **auto post**: {e}")
                     await asyncio.sleep(2)
                     await show_post_menu(client, query.message, bot_id)
@@ -3168,13 +3170,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
         else:
             await client.send_message(
                 LOG_CHANNEL,
-                f"⚠️ Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nKindly check this message for assistance."
+                f"⚠️ Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
             )
             await query.answer("⚠️ Unknown action.", show_alert=True)
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Callback Handler Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Callback Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Callback Handler Error: {e}")
         print(traceback.format_exc())
@@ -3321,7 +3323,7 @@ async def message_capture(client: Client, message: Message):
                     await show_clone_menu(client, msg, user_id)
                     CLONE_TOKEN.pop(user_id, None)
                 except Exception as e:
-                    await client.send_message(LOG_CHANNEL, f"⚠️ Create Bot Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
+                    await client.send_message(LOG_CHANNEL, f"⚠️ Create Bot Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
                     await msg.edit_text(f"❌ Failed to create **bot**: {e}")
                     await asyncio.sleep(2)
                     await show_clone_menu(client, msg, user_id)
@@ -3407,7 +3409,7 @@ async def message_capture(client: Client, message: Message):
                         await globals()[menu_func](client, orig_msg, bot_id)
                         handler_dict.pop(user_id, None)
                     except Exception as e:
-                        await client.send_message(LOG_CHANNEL, f"⚠️ Error updating {db_field}:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
+                        await client.send_message(LOG_CHANNEL, f"⚠️ Error updating {db_field}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
                         await orig_msg.edit_text(f"❌ Failed to update **{db_field.replace('_', ' ')}**: {e}")
                         await asyncio.sleep(2)
                         await globals()[menu_func](client, orig_msg, bot_id)
@@ -3451,7 +3453,7 @@ async def message_capture(client: Client, message: Message):
                         await show_button_menu(client, orig_msg, bot_id)
                         ADD_BUTTON.pop(user_id, None)
                     except Exception as e:
-                        await client.send_message(LOG_CHANNEL, f"⚠️ Update Start Button Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
+                        await client.send_message(LOG_CHANNEL, f"⚠️ Update Start Button Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
                         await orig_msg.edit_text(f"❌ Failed to update **start button**: {e}")
                         await asyncio.sleep(2)
                         await show_button_menu(client, orig_msg, bot_id)
@@ -3584,7 +3586,7 @@ async def message_capture(client: Client, message: Message):
                             bot_id,
                             {"access_token": False, "at_shorten_link": None, "at_shorten_api": None}
                         )
-                        await client.send_message(LOG_CHANNEL, f"⚠️ Update Access Token Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
+                        await client.send_message(LOG_CHANNEL, f"⚠️ Update Access Token Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
                         await orig_msg.edit_text(f"❌ Failed to update **access token**: {e}")
                         await asyncio.sleep(2)
                         await show_token_menu(client, orig_msg, bot_id)
@@ -3669,6 +3671,6 @@ async def message_capture(client: Client, message: Message):
                 AUTO_POST.pop(user_id, None)
                 return
     except Exception as e:
-        await client.send_message(LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
+        await client.send_message(LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
         print(f"⚠️ Unexpected Error in message_capture: {e}")
         print(traceback.format_exc())
