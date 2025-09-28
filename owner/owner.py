@@ -1142,7 +1142,7 @@ async def show_moderator_menu(client, message, bot_id):
 
 async def fetch_fampay_payments():
     try:
-        IMAP_SERVER = "imap.gmail.com"
+        IMAP_HOST = "imap.gmail.com"
         IMAP_USER = "krrishraj237@gmail.com"
         IMAP_PASS = "ewcz wblx fdgv unpp"
 
