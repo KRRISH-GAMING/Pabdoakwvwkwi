@@ -1163,6 +1163,9 @@ async def approve_payment(user_id, feature_type, db, client):
     except:
         pass
 
+import imaplib, email, re, asyncio, traceback
+from plugins.config import *
+
 def get_email_body(msg):
     body = ""
     if msg.is_multipart():
@@ -1200,21 +1203,18 @@ async def check_fampay_mails(db, client):
                     raw_msg = msg_data[0][1]
                     msg = email.message_from_bytes(raw_msg)
                     subject = msg["subject"] or ""
-                    body = ""
-
                     body = get_email_body(msg)
-
                     text = subject + " " + body
 
                     if any(k.lower() in text.lower() for k in FAMPAY_KEYWORDS) and UPI_ID.lower() in text.lower():
+                        # Extract amount
                         amount_match = re.search(r"₹\s?(\d+)", text)
+                        # Extract txn/UTR id
+                        txn_match = re.search(r"(?:UTR|Txn\s?ID|Ref(?:erence)?\s?No)[:\s]+(\w+)", text, re.I)
                         txn_id = txn_match.group(1) if txn_match else None
+
                         if amount_match:
                             amount = int(amount_match.group(1))
-                            txn_id = txn_match.group(1) if txn_match else None
-
-                            logger.info(f"✅ Payment mail: ₹{amount}, Txn: {txn_id}")
-
                             pending = await db.find_pending_payment(amount, txn_id=txn_id)
                             if not pending:
                                 pending = await db.find_pending_payment(amount)  # fallback
