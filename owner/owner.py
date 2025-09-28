@@ -1,5 +1,7 @@
-import os, logging, asyncio, re, time, shutil, sys, pytesseract, io
+import os, logging, asyncio, re, time, shutil, sys
 from PIL import Image
+import pytesseract
+import io
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
