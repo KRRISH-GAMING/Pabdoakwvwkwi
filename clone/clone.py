@@ -515,7 +515,7 @@ async def start(client, message):
                     )
 
                     reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
-                    asyncio.create_task(schedule_delete(client, db, sent_msg.chat.id, [sent_msg.id], notice.id, auto_delete_time2, reload_url))
+                    asyncio.create_task(schedule_delete(client, db, msg.id, [msg.id], notice.id, auto_delete_time2, reload_url))
                 return
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
