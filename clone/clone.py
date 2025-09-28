@@ -27,8 +27,6 @@ async def start(client, message):
         if not clone:
             return
 
-        print("DEBUG clone type:", type(clone), "value:", clone)
-
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("wlc", script.START_TXT) 
