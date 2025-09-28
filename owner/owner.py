@@ -1,4 +1,4 @@
-import os, logging, asyncio, re, time, shutil, sys, io
+import os, logging, asyncio, re, time, shutil, sys, traceback
 from PIL import Image
 import pytesseract
 from datetime import *
@@ -1174,9 +1174,9 @@ async def verify_payment_screenshot(message, feature_type, client):
         if not message.photo:
             return await message.reply_text("📸 Please upload a **payment screenshot**.")
 
-        img_bytes = await message.download(in_memory=True)
+        img_io = await message.download(in_memory=True)
 
-        image = Image.open(io.BytesIO(img_bytes))
+        image = Image.open(img_io)
 
         text = pytesseract.image_to_string(image).lower()
 
