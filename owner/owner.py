@@ -1,6 +1,6 @@
-import os, logging, asyncio, re, time, shutil, sys, traceback
-from PIL import Image, ImageEnhance, ImageFilter
-import pytesseract, io
+import os, logging, asyncio, re, time, shutil, sys, traceback, pytesseract, io
+from PIL import *
+from difflib import *
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -1169,62 +1169,74 @@ async def grant_premium(user_id, feature_type, client):
     except:
         pass
 
-async def verify_payment_screenshot(message, feature_type, client, max_age_minutes=30):
+import io
+import re
+import pytesseract
+from PIL import Image
+from difflib import SequenceMatcher
+from datetime import datetime, timedelta
+
+async def verify_payment_screenshot(message, feature_type, client, max_minutes=10):
+    """
+    Verifies a payment screenshot for premium activation.
+    max_minutes: Payment must be made within the last X minutes.
+    """
     try:
         if not message.photo:
             return await message.reply_text("📸 Please upload a **payment screenshot**.")
 
-        img_io = await message.download(in_memory=True)
-        img = Image.open(img_io)
+        # Download the image bytes
+        img_bytes = await message.download(in_memory=True)
+        img = Image.open(img_bytes)
 
-        img = img.convert('L')
-        img = img.filter(ImageFilter.SHARPEN)
-        enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(2.0)
+        # OCR extract
+        ocr_text = pytesseract.image_to_string(img).lower()
 
-        text = pytesseract.image_to_string(img).lower()
+        # Normalize OCR text
+        clean_text = re.sub(r'[^a-z0-9@₹.]', '', ocr_text)
+        message.reply_text(clean_text)
 
-        text = text.replace("rs", "₹").replace("r", "₹")
+        # Fuzzy match UPI ID
+        upi_id = "krrishmehta@jio"
+        similarity = SequenceMatcher(None, clean_text, upi_id).ratio()
+        if similarity < 0.6:
+            return await message.reply_text("❌ Could not detect your UPI ID in the screenshot.")
 
-        amounts = re.findall(r'\d+(?:\.\d+)?', text)
-        amounts = [float(a) for a in amounts]
+        # Amount detection
+        plan_matched = None
+        if "normal" in feature_type.lower() and re.search(r'99', clean_text):
+            plan_matched = "Normal Premium"
+        elif "ultra" in feature_type.lower() and re.search(r'249', clean_text):
+            plan_matched = "Ultra Premium"
+        elif "vip" in feature_type.lower() and re.search(r'599', clean_text):
+            plan_matched = "VIP Premium"
 
-        user_upi = "krrishmehta@jio"
-        verified = False
-        await message.reply_text(text)
+        if not plan_matched:
+            return await message.reply_text("❌ Payment amount does not match the selected plan.")
 
-        if user_upi not in text:
-            return await message.reply_text(f"❌ Screenshot does not contain your UPI ID: {user_upi}")
-
-        if "normal" in feature_type.lower() and 99 in [int(a) for a in amounts]:
-            plan_amount = 99
-        elif "ultra" in feature_type.lower() and 249 in [int(a) for a in amounts]:
-            plan_amount = 249
-        elif "vip" in feature_type.lower() and 599 in [int(a) for a in amounts]:
-            plan_amount = 599
-        else:
-            return await message.reply_text("❌ Amount does not match the selected plan.")
-
-        timestamp_match = re.search(
-            r'(\d{1,2}\s+\w+\s+\d{4}),\s*(\d{1,2}:\d{2}\s*(?:am|pm))',
-            text
-        )
-        if timestamp_match:
-            date_str = timestamp_match.group(1)
-            time_str = timestamp_match.group(2)
-            datetime_str = f"{date_str} {time_str}"
+        # --- Timer check ---
+        # Try to extract time from OCR text (e.g., 27 september 2025, 7:40 pm)
+        time_match = re.search(r'(\d{1,2})\s*(\w+)\s*(\d{4})?.*?(\d{1,2}:\d{2})\s*(am|pm)?', ocr_text, re.IGNORECASE)
+        if time_match:
+            day, month_text, year, hm, ampm = time_match.groups()
+            month_text = month_text[:3]  # Use first 3 letters
+            year = year or str(datetime.now().year)
             try:
-                payment_time = datetime.datetime.strptime(datetime_str, "%d %B %Y %I:%M %p")
-                now = datetime.datetime.now()
-                elapsed_minutes = (now - payment_time).total_seconds() / 60
-                if elapsed_minutes > max_age_minutes:
+                payment_time = datetime.strptime(
+                    f"{day}-{month_text}-{year} {hm} {ampm or ''}".strip(), "%d-%b-%Y %I:%M %p"
+                )
+                # Check if payment is within allowed window
+                if datetime.utcnow() - payment_time > timedelta(minutes=max_minutes):
                     return await message.reply_text(
-                        f"❌ Screenshot is older than {max_age_minutes} minutes. Cannot verify."
+                        f"⏳ Payment is older than {max_minutes} minutes. Please make a fresh payment."
                     )
             except:
+                # If parsing fails, ignore timer check
                 pass
 
-        await grant_premium(message.from_user.id, feature_type, client)
+        # ✅ All checks passed, grant premium
+        await grant_premium(message.from_user.id, plan_matched, client)
+
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
