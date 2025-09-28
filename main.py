@@ -3,7 +3,7 @@ from pyrogram import Client, types, idle
 from typing import Union, Dict, AsyncGenerator
 from os import environ
 from pathlib import Path
-from datetime import *
+from datetime import datetime, timezone
 from aiohttp import web
 from plugins.config import *
 from plugins.database import *
