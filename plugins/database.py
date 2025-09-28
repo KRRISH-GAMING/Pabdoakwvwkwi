@@ -15,6 +15,7 @@ class Database:
         self.settings = self.db.bot_settings
         self.media = self.db.media_files
         self.batches = self.db.batches
+        self.scheduled_deletes = self.db.scheduled_deletes
 
     # ---------------- USERS ----------------
     def new_user(self, id, name):
@@ -358,6 +359,23 @@ class Database:
             {"$set": {"is_auto_post": True}}
         )
         return result.modified_count
+
+    # ---------------- SCHEDULED DELETES ----------------
+    async def add_scheduled_delete(self, chat_id, message_ids: list, notice_id, delete_at, reload_url=None):
+        data = {
+            "chat_id": chat_id,
+            "message_ids": message_ids,
+            "notice_id": notice_id,
+            "delete_at": delete_at,
+            "reload_url": reload_url
+        }
+        await self.scheduled_deletes.insert_one(data)
+
+    async def get_all_scheduled_deletes(self):
+        return await self.scheduled_deletes.find().to_list(length=None)
+
+    async def delete_scheduled_deletes(self, message_ids: list):
+        await self.scheduled_deletes.delete_many({"message_ids": {"$in": message_ids}})
 
 db = Database(DB_URI, DB_NAME)
 

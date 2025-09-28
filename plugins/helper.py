@@ -78,7 +78,7 @@ async def broadcast_messagesx(user_id, message):
     except Exception as e:
         return False, f"Error: {str(e)}"
 
-def broadcast_progress_barx(done: int, total: int) -> str:
+def broadcast_progress_bar(done: int, total: int) -> str:
     try:
         progress = done / total if total > 0 else 0
         filled = int(progress * 20)
@@ -237,49 +237,10 @@ async def check_verification(client, userid):
         return False
     return True
 
-async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_url):
+async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, reload_url):
     try:
-        await asyncio.sleep(time)
-
-        try:
-            await msg_to_delete.delete()
-        except FloodWait as e:
-            print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
-            await asyncio.sleep(e.value)
-            await msg_to_delete.delete()
-        except UserIsBlocked:
-            print("⚠️ User blocked while deleting.")
-            return
-        except Exception as e:
-            print(f"⚠️ Clone Could not delete message: {e}")
-
-        if notice_msg:
-            keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]
-            ) if reload_url else None
-            try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
-            except Exception as e:
-                print(f"⚠️ Clone Could not edit notice_msg: {e}")
-                try:
-                    await client.send_message(
-                        notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!",
-                        reply_markup=keyboard
-                    )
-                except Exception as e2:
-                    print(f"⚠️ Clone Could not send fallback message: {e2}")
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Clone Auto Delete Error: {e}")
-        print(traceback.format_exc())
-
-async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_url):
-    try:
-        await asyncio.sleep(time)
+        if delay_time > 0:
+            await asyncio.sleep(delay_time)
 
         for msg in msg_to_delete:
             if msg:
@@ -296,21 +257,16 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_u
                     print(f"⚠️ Clone Could not delete message: {e}")
 
         if notice_msg:
-            keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]
-            ) if reload_url else None
+            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]) if reload_url else None
             try:
                 await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
             except Exception as e:
-                print(f"⚠️ Clone Could not edit notice_msg: {e}")
+                print(f"⚠️ Could not edit notice_msg: {e}")
                 try:
-                    await client.send_message(
-                        notice_msg.chat.id,
-                        "✅ Your File/Video is successfully deleted!",
-                        reply_markup=keyboard
-                    )
+                    await client.send_message(notice_msg.chat.id, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
                 except Exception as e2:
-                    print(f"⚠️ Clone Could not send fallback message: {e2}")
+                    print(f"⚠️ Could not send fallback message: {e2}")
+
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
@@ -318,6 +274,18 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_u
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
         print(traceback.format_exc())
+
+async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id, delay_time, reload_url):
+    delete_at = datetime.now(timezone.utc) + timedelta(seconds=delay_time)
+
+    await db.add_scheduled_delete(chat_id, message_ids, notice_id, delete_at, reload_url)
+
+    msgs_to_delete = await client.get_messages(chat_id, message_ids)
+    notice_msg = await client.get_messages(chat_id, notice_id)
+
+    await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
+
+    await db.delete_scheduled_deletes(message_ids)
 
 def random_code(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -399,13 +367,3 @@ async def broadcast_messagesy(bot_id, user_id, message):
     except Exception:
         await clonedb.delete_user(bot_id, user_id)
         return False, "Error"
-
-def broadcast_progress_bary(done: int, total: int) -> str:
-    try:
-        progress = done / total if total > 0 else 0
-        filled = int(progress * 20)
-        empty = 20 - filled
-        bar_str = "█" * filled + "░" * empty
-        return f"[{bar_str}] {done}/{total}"
-    except Exception as e:
-        return f"[Error building bar: {e}] {done}/{total}"
