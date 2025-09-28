@@ -1225,8 +1225,8 @@ async def check_imap_payments(db, client):
 
                     for source in PAYMENT_SOURCES:
                         if any(k.lower() in text.lower() for k in source["keywords"]) and source["upi_id"].lower() in text.lower():
-                            amount_match = re.search(r"₹\s?(\d+)", text)
-                            txn_match = re.search(r"(?:UTR|Txn\s?ID|Ref(?:erence)?\s?No)[:\s]+(\w+)", text, re.I)
+                            amount_match = re.search(r"₹\s?(\d+(?:\.\d+)?)", text)
+                            txn_match = re.search(r"transaction id[:\s]+(\w+)", text, re.I)
                             txn_id = txn_match.group(1) if txn_match else None
 
                             if amount_match:
