@@ -809,7 +809,7 @@ async def show_token_menu(client, message, bot_id):
         except:
             number = 0
 
-        unit_map = {"h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
+        unit_map = {"d": "day(s)", "h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
         unit = unit_map.get(unit_char.lower(), "hour(s)")
 
         if current:
@@ -903,7 +903,7 @@ async def show_post_menu(client, message, bot_id):
         except:
             number = 0
 
-        unit_map = {"h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
+        unit_map = {"d": "day(s)", "h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
         unit = unit_map.get(unit_char.lower(), "hour(s)")
 
         if current:
@@ -2533,7 +2533,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 except:
                     number = 0
 
-                unit_map = {"h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
+                unit_map = {"d": "day(s)", "h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
                 unit = unit_map.get(unit_char.lower(), "hour(s)")
 
                 try:
@@ -2638,7 +2638,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 except:
                     number = 0
 
-                unit_map = {"h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
+                unit_map = {"d": "day(s)", "h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
                 unit = unit_map.get(unit_char.lower(), "hour(s)")
 
                 await query.answer(f"📝 Current Auto Delete Time:\n\n{number} {unit}", show_alert=True)
