@@ -1191,11 +1191,10 @@ async def verify_payment_screenshot(message, feature_type, client, max_age_minut
 
         user_upi = "krrishmehta@jio"
         verified = False
+        await message.reply_text(text)
 
         if user_upi not in text:
             return await message.reply_text(f"❌ Screenshot does not contain your UPI ID: {user_upi}")
-
-        await message.reply_text(text)
 
         if "normal" in feature_type.lower() and 99 in [int(a) for a in amounts]:
             plan_amount = 99
