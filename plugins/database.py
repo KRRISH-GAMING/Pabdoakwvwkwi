@@ -81,14 +81,14 @@ class Database:
     async def add_pending_payment(self, user_id, amount, feature_type, txn_id=None):
         await self.col_pending.insert_one({
             "user_id": user_id,
-            "amount": amount,
+            "amount": float(amount),
             "feature_type": feature_type,
             "txn_id": txn_id,
             "created": datetime.utcnow()
         })
 
     async def find_pending_payment(self, amount, txn_id=None):
-        query = {"amount": amount}
+        query = {"amount": {"$gte": amount - 0.5, "$lte": amount + 0.5}}
         if txn_id:
             query["txn_id"] = txn_id
         return await self.col_pending.find_one_and_delete(query)
