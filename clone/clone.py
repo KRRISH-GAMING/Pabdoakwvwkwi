@@ -236,7 +236,7 @@ async def start(client, message):
                     return await message.reply("❌ File not found in database.")
 
                 file_id = file.get("file_id")
-                file_name = file.get("file_name") or "Media"
+                file_name = file.get("file_name") or "None"
                 file_size = file.get("file_size")
                 media_type = file.get("media_type", "document")
                 original_caption = file.get("caption") or ""
@@ -349,7 +349,7 @@ async def start(client, message):
                             continue
 
                         file_id = file.get("file_id")
-                        file_name = file.get("file_name") or "Media"
+                        file_name = file.get("file_name") or "None"
                         file_size = file.get("file_size")
                         media_type = file.get("media_type", "document")
                         original_caption = file.get("caption") or ""
@@ -428,7 +428,7 @@ async def start(client, message):
                     )
 
                     reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
-                    asyncio.create_task(schedule_delete(client, db, sent_msgs[0].chat.id, [msg.id for msg in sent_msgs], notice.id, auto_delete_time2, reload_url))
+                    asyncio.create_task(schedule_delete(client, db, sent_files[0].chat.id, [msg.id for msg in sent_files], notice.id, auto_delete_time2, reload_url))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
@@ -479,7 +479,7 @@ async def start(client, message):
 
                 filetype = msg.media
                 file = getattr(msg, filetype.value)
-                file_name = getattr(file, "file_name", None) or "Media"
+                file_name = getattr(file, "file_name", None) or "None"
                 file_size = getattr(file, "file_size", None)
 
                 if file_size and isinstance(file_size, int):
