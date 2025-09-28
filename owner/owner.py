@@ -10,7 +10,7 @@ from plugins.database import *
 from plugins.helper import *
 from plugins.script import *
 from clone.clone import *
-        
+
 logger = logging.getLogger(__name__)
 
 PREMIUM_STATE = {}
@@ -1191,7 +1191,7 @@ async def verify_payment_screenshot(message, feature_type, client):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ OCR Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
+            f"⚠️ OCR Error:\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ OCR Error: {e}")
         print(traceback.format_exc())
@@ -3149,7 +3149,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f"Amount: {price}\n"
                 "UPI ID: `Krrishmehta@jio`\n"
                 "Send payment to UPI ID\n\n"
-                "After payment, click the **Payment Done** button below to confirm."
+                "After payment, send the **Screenshot** below to confirm."
             )
 
             PREMIUM_STATE[user_id] = feature_type
