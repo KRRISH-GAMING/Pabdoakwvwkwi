@@ -1163,6 +1163,26 @@ async def approve_payment(user_id, feature_type, db, client):
     except:
         pass
 
+def get_email_body(msg):
+    body = ""
+    if msg.is_multipart():
+        for part in msg.walk():
+            if part.get_content_type() == "text/plain":
+                payload = part.get_payload(decode=True)
+                if payload:
+                    try:
+                        body += payload.decode("utf-8")
+                    except UnicodeDecodeError:
+                        body += payload.decode("latin-1")  # fallback
+    else:
+        payload = msg.get_payload(decode=True)
+        if payload:
+            try:
+                body += payload.decode("utf-8")
+            except UnicodeDecodeError:
+                body += payload.decode("latin-1")
+    return body
+
 async def check_fampay_mails(db, client):
     while True:
         try:
@@ -1182,12 +1202,7 @@ async def check_fampay_mails(db, client):
                     subject = msg["subject"] or ""
                     body = ""
 
-                    if msg.is_multipart():
-                        for part in msg.walk():
-                            if part.get_content_type() == "text/plain":
-                                body += part.get_payload(decode=True).decode()
-                    else:
-                        body = msg.get_payload(decode=True).decode()
+                    body = get_email_body(msg)
 
                     text = subject + " " + body
 
