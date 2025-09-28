@@ -286,8 +286,9 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
+                    
                     reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
-                    asyncio.create_task(auto_delete_messagex(client, sent_msg, notice, auto_delete_time2, reload_url))
+                    asyncio.create_task(schedule_delete(client, db, sent_msg.chat.id, [sent_msg.id], notice.id, auto_delete_time2, reload_url))
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
@@ -425,8 +426,9 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
+
                     reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
-                    asyncio.create_task(auto_delete_messagey(client, sent_files, notice, auto_delete_time2, reload_url))
+                    asyncio.create_task(schedule_delete(client, db, sent_msgs[0].chat.id, [msg.id for msg in sent_msgs], notice.id, auto_delete_time2, reload_url))
 
                 await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
@@ -511,8 +513,9 @@ async def start(client, message):
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     )
+
                     reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
-                    asyncio.create_task(auto_delete_messagex(client, msg, notice, auto_delete_time2, reload_url))
+                    asyncio.create_task(schedule_delete(client, db, sent_msg.chat.id, [sent_msg.id], notice.id, auto_delete_time2, reload_url))
                 return
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
@@ -1011,7 +1014,7 @@ async def broadcast(client, message):
                 done += 1
 
                 if done % 10 == 0 or done == total_users:
-                    progress = broadcast_progress_bary(done, total_users)
+                    progress = broadcast_progress_bar(done, total_users)
                     percent = (done / total_users) * 100
                     elapsed = time.time() - start_time
                     speed = done / elapsed if elapsed > 0 else 0
@@ -1040,7 +1043,7 @@ async def broadcast(client, message):
                 failed += 1
 
         time_taken = timedelta(seconds=int(time.time() - start_time))
-        final_progress = broadcast_progress_bary(total_users, total_users)
+        final_progress = broadcast_progress_bar(total_users, total_users)
         final_text = f"""
 ✅ <b>Broadcast Completed</b> ✅
 
