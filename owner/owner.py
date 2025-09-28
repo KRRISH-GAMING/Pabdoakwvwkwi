@@ -1163,83 +1163,65 @@ async def approve_payment(user_id, feature_type, db, client):
     except:
         pass
 
-def get_email_body(msg):
-    body = ""
-    if msg.is_multipart():
-        for part in msg.walk():
-            if part.get_content_type() == "text/plain":
-                payload = part.get_payload(decode=True)
-                if payload:
-                    try:
-                        body += payload.decode("utf-8")
-                    except UnicodeDecodeError:
-                        body += payload.decode("latin-1")  # fallback
-    else:
-        payload = msg.get_payload(decode=True)
-        if payload:
-            try:
-                body += payload.decode("utf-8")
-            except UnicodeDecodeError:
-                body += payload.decode("latin-1")
-    return body
-
 async def check_fampay_mails(db, client):
-    try:
-        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-        mail.login(EMAIL_USER, EMAIL_PASS)
-        mail.select("inbox")
-    except Exception as e:
-        print(f"IMAP login failed: {e}")
-        return
-
     while True:
         try:
-            status, data = mail.search(None, '(UNSEEN)')
-            if status != "OK":
-                await asyncio.sleep(CHECK_INTERVAL)
-                continue
+            mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+            mail.login(EMAIL_USER, EMAIL_PASS)
+            mail.select("inbox")
 
-            for num in data[0].split():
-                try:
+            status, data = mail.search(None, '(UNSEEN)')
+            if status == "OK":
+                for num in data[0].split():
                     status, msg_data = mail.fetch(num, "(RFC822)")
                     if status != "OK":
                         continue
 
                     raw_msg = msg_data[0][1]
                     msg = email.message_from_bytes(raw_msg)
-                    subject = msg.get("subject", "")
-                    body = get_email_body(msg) or ""
+                    subject = msg["subject"] or ""
+                    body = ""
+
+                    if msg.is_multipart():
+                        for part in msg.walk():
+                            if part.get_content_type() == "text/plain":
+                                body += part.get_payload(decode=True).decode()
+                    else:
+                        body = msg.get_payload(decode=True).decode()
+
                     text = subject + " " + body
 
                     if any(k.lower() in text.lower() for k in FAMPAY_KEYWORDS) and UPI_ID.lower() in text.lower():
                         amount_match = re.search(r"₹\s?(\d+)", text)
-                        txn_match = re.search(r"(?:UTR|Txn\s?ID|Ref(?:erence)?\s?No)[:\s]+(\w+)", text, re.I)
                         txn_id = txn_match.group(1) if txn_match else None
-
                         if amount_match:
                             amount = int(amount_match.group(1))
-                            pending = await db.find_pending_payment(amount)  # fallback only
+                            txn_id = txn_match.group(1) if txn_match else None
+
+                            logger.info(f"✅ Payment mail: ₹{amount}, Txn: {txn_id}")
+
+                            pending = await db.find_pending_payment(amount, txn_id=txn_id)
+                            if not pending:
+                                pending = await db.find_pending_payment(amount)  # fallback
+
                             if pending:
                                 user_id, feature_type = pending["user_id"], pending["feature_type"]
-                                try:
-                                    await approve_payment(user_id, feature_type, db, client)
-                                    await client.send_message(LOG_CHANNEL,
-                                        f"✅ Auto-approved {feature_type} for {user_id} (₹{amount})")
-                                except Exception as e:
-                                    print(f"❌ approve/send_message failed: {e}")
+                                await approve_payment(user_id, feature_type, db, client)
+                                await client.send_message(
+                                    LOG_CHANNEL,
+                                    f"✅ Auto-approved {feature_type} for {user_id} (₹{amount})"
+                                )
 
-                    # mark email as seen
-                    mail.store(num, '+FLAGS', '\\Seen')
-
-                except Exception as e:
-                    print(f"❌ Email processing error: {e}")
-                    continue
-
-            await asyncio.sleep(CHECK_INTERVAL)
-
+            mail.logout()
         except Exception as e:
-            print(f"⚠️ IMAP loop error: {e}")
-            await asyncio.sleep(CHECK_INTERVAL)
+            await client.send_message(
+                LOG_CHANNEL,
+                f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+            )
+            print("⚠️ IMAP Error:", e)
+            print(traceback.format_exc())
+
+        await asyncio.sleep(CHECK_INTERVAL)
 
 async def check_expired_pending(db, client, max_minutes=10):
     expiry = datetime.utcnow() - timedelta(minutes=max_minutes)
