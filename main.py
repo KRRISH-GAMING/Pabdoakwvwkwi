@@ -1,10 +1,10 @@
 import logging, logging.config, glob, asyncio, importlib, sys, pytz
-from aiohttp import web
-from pyrogram import *
-from typing import *
-from os import *
-from pathlib import *
+from pyrogram import Client, types, idle
+from typing import Union, Dict, AsyncGenerator
+from os import environ
+from pathlib import Path
 from datetime import *
+from aiohttp import web
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
