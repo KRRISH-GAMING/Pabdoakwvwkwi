@@ -398,7 +398,7 @@ async def broadcast(client, message):
                     done += 1
 
                     if done % 10 == 0 or done == total_users:
-                        progress = broadcast_progress_barx(done, total_users)
+                        progress = broadcast_progress_bar(done, total_users)
                         percent = (done / total_users) * 100
                         elapsed = time.time() - start_time
                         speed = done / elapsed if elapsed > 0 else 0
@@ -432,7 +432,7 @@ async def broadcast(client, message):
 
         time_taken = timedelta(seconds=int(time.time() - start_time))
         #speed = round(done / (time.time()-start_time), 2) if done > 0 else 0
-        final_progress = broadcast_progress_barx(total_users, total_users)
+        final_progress = broadcast_progress_bar(total_users, total_users)
         final_text = f"""
 ✅ <b>Broadcast Completed</b> ✅
 
