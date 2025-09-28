@@ -1140,6 +1140,9 @@ async def show_moderator_menu(client, message, bot_id):
         print(f"⚠️ Show Moderator Menu Error: {e}")
         print(traceback.format_exc())
 
+import imaplib, email, re, asyncio, traceback
+from datetime import datetime, timedelta
+
 CHECK_INTERVAL = 15
 CHECK_PENDING_INTERVAL = 300
 
@@ -1223,15 +1226,23 @@ async def check_imap_payments(db, client):
                     body = get_email_body(msg)
                     text = (subject or "") + " " + body
 
+                    # Debugging logs
+                    print("📧 Email subject:", subject)
+                    print("📄 Email body snippet:", body[:200])
+
                     for source in PAYMENT_SOURCES:
                         if any(k.lower() in text.lower() for k in source["keywords"]) and source["upi_id"].lower() in text.lower():
+                            # Extract amount and txn id
                             amount_match = re.search(r"₹\s?(\d+(?:\.\d+)?)", text)
                             txn_match = re.search(r"transaction id[:\s]+(\w+)", text, re.I)
                             txn_id = txn_match.group(1) if txn_match else None
 
                             if amount_match:
-                                amount = int(amount_match.group(1))
-                                pending = await db.find_pending_payment(amount)
+                                amount = float(amount_match.group(1))
+                                pending = await db.find_pending_payment(amount, txn_id=txn_id)
+                                if not pending:
+                                    pending = await db.find_pending_payment(amount)  # fallback
+
                                 if pending:
                                     user_id, feature_type = pending["user_id"], pending["feature_type"]
                                     try:
@@ -1244,6 +1255,7 @@ async def check_imap_payments(db, client):
                                     except Exception as e:
                                         print(f"❌ Approve/send_message failed: {e}")
 
+                    # Mark email as seen
                     mail.store(num, '+FLAGS', '\\Seen')
 
                 except Exception as e:
@@ -1265,17 +1277,15 @@ async def check_expired_pending(db, client, max_minutes=10):
         user_id = pending["user_id"]
         feature_type = pending["feature_type"]
         amount = pending["amount"]
-
         try:
             await client.send_message(
                 user_id,
                 f"⚠️ We couldn’t verify your **₹{amount}** payment for **{feature_type} Plan**.\n\n"
-                f"➡️ If the amount was deducted, please wait a bit more.\n"
-                f"➡️ Otherwise, retry payment."
+                "➡️ If the amount was deducted, please wait a bit more.\n"
+                "➡️ Otherwise, retry payment."
             )
         except Exception as e:
             print(f"❌ Could not notify {user_id}: {e}")
-
         await db.col_pending.delete_one({"_id": pending["_id"]})
 
 async def start_payment_tasks(db, client):
@@ -1290,26 +1300,6 @@ async def start_payment_tasks(db, client):
             await asyncio.sleep(CHECK_PENDING_INTERVAL)
 
     asyncio.create_task(cleanup_loop())
-
-async def check_expired_pending(db, client, max_minutes=10):
-    expiry = datetime.utcnow() - timedelta(minutes=max_minutes)
-    cursor = db.col_pending.find({"created": {"$lt": expiry}})
-    async for pending in cursor:
-        user_id = pending["user_id"]
-        feature_type = pending["feature_type"]
-        amount = pending["amount"]
-
-        try:
-            await client.send_message(
-                user_id,
-                f"⚠️ We couldn’t verify your **₹{amount}** payment for **{feature_type} Plan**.\n\n"
-                f"➡️ If the amount was deducted, please wait a bit more.\n"
-                f"➡️ Otherwise, retry payment."
-            )
-        except Exception as e:
-            print(f"❌ Could not notify {user_id}: {e}")
-
-        await db.col_pending.delete_one({"_id": pending["_id"]})
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
