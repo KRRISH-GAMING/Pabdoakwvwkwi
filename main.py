@@ -194,6 +194,22 @@ async def restart_bots():
     await asyncio.gather(*tasks)
     print("✅ All clone bots processed for restart.")
 
+async def init_auto_deletes(client, db: Database):
+    scheduled = await db.get_all_scheduled_deletes()
+
+    for task in scheduled:
+        chat_id = task["chat_id"]
+        message_ids = task["message_ids"]
+        notice_id = task["notice_id"]
+        delete_at = task["delete_at"]
+        reload_url = task.get("reload_url")
+
+        delay_time = (delete_at - datetime.now(timezone.utc)).total_seconds()
+        if delay_time < 0:
+            delay_time = 0
+
+        asyncio.create_task(schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url))
+
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
@@ -209,6 +225,7 @@ async def start():
     await initialize_clients()
     #await start_web_server()
     await restart_bots()
+    await init_auto_deletes(StreamBot, db)
 
     try:
         today = date.today()
