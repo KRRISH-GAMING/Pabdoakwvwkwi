@@ -1173,49 +1173,40 @@ import re
 import pytesseract
 from PIL import Image
 from datetime import datetime, timedelta
-from difflib import SequenceMatcher
 
 async def verify_payment_screenshot(message, feature_type, client, max_minutes=10):
     try:
         if not message.photo:
             return await message.reply_text("📸 Please upload a **payment screenshot**.")
 
-        # Download image and OCR
+        # Step 1: Download image
         img_bytes = await message.download(in_memory=True)
         img = Image.open(img_bytes)
-        ocr_text = pytesseract.image_to_string(img).lower()
 
-        # Debug: show OCR text
+        # Step 2: OCR
+        ocr_text = pytesseract.image_to_string(img).lower()
         await message.reply_text(f"📝 OCR Text:\n{ocr_text}")
 
-        # Normalize OCR text: remove extra spaces but keep @ and .
-        def normalize(text):
-            return re.sub(r'[^a-z0-9@.]', '', text.lower())
-
-        normalized_ocr = normalize(ocr_text)
-        normalized_upi = normalize("krrishmehta@jio")
-
-        # Fuzzy match UPI
-        similarity = SequenceMatcher(None, normalized_upi, normalized_ocr).ratio()
-        if similarity < 0.6:
+        # Step 3: Check UPI ID
+        if "krrishmehta@jio" not in ocr_text:
             return await message.reply_text(
                 "❌ Could not detect your UPI ID in the screenshot. Make sure the screenshot is clear."
             )
 
-        # Check amount
+        # Step 4: Check amount
         plan_matched = None
-        if "normal" in feature_type.lower() and re.search(r'99', normalized_ocr):
+        if "normal" in feature_type.lower() and "99" in ocr_text:
             plan_matched = "Normal Premium"
-        elif "ultra" in feature_type.lower() and re.search(r'249', normalized_ocr):
+        elif "ultra" in feature_type.lower() and "249" in ocr_text:
             plan_matched = "Ultra Premium"
-        elif "vip" in feature_type.lower() and re.search(r'599', normalized_ocr):
+        elif "vip" in feature_type.lower() and "599" in ocr_text:
             plan_matched = "VIP Premium"
 
         if not plan_matched:
             return await message.reply_text("❌ Payment amount does not match the selected plan.")
 
-        # Timer check (optional)
-        # Look for something like '22 september 2025 08:21 pm'
+        # Step 5: Check payment time (optional)
+        # Looks for something like "22 september 2025 08:21 pm"
         time_match = re.search(r'(\d{1,2})\s*(\w+)\s*(\d{4})?.*?(\d{1,2}:\d{2})\s*(am|pm)?', ocr_text, re.IGNORECASE)
         if time_match:
             day, month_text, year, hm, ampm = time_match.groups()
@@ -1233,7 +1224,7 @@ async def verify_payment_screenshot(message, feature_type, client, max_minutes=1
             except Exception as e:
                 print(f"⚠️ Failed parsing payment time: {e}")
 
-        # Grant premium
+        # Step 6: Grant premium
         await grant_premium(message.from_user.id, plan_matched, client)
         await message.reply_text(f"✅ Payment verified! **{plan_matched}** activated.")
 
