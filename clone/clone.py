@@ -1,4 +1,4 @@
-import logging, asyncio, re, base64, random, string, time
+import logging, asyncio, re, base64, random, string, time, traceback
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -155,6 +155,7 @@ async def start(client, message):
                         f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
                     )
                     print(f"⚠️ Clone Fsub Handler Error: {e}")
+                    print(traceback.format_exc())
 
         # --- Start Handler ---
         if len(message.command) == 1:
@@ -193,29 +194,17 @@ async def start(client, message):
                 return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
 
             user_id, token = parts[1], parts[2]
-            if str(user_id) != user_id:
+            if str(message.from_user.id) != user_id:
                 return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
 
-            verify_status = await check_token(client, user_id, token)
-            if not verify_status:
-                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
-
-            created_time = int(verify_status.get("created_time", 0))
-            current_time = int(time.time())
-            elapsed = current_time - created_time
-
-            if elapsed < 120:
+            if await check_token(client, user_id, token):
+                await verify_user(client, user_id, token)
                 return await message.reply_text(
-                    "⚠️ Verification failed!\n\n"
-                    "Suspicious activity detected. Please try again.",
+                    f"Hey {message.from_user.mention}, **verification** successful! ✅",
                     protect_content=forward_protect
                 )
-
-            await verify_user(client, user_id, token)
-            return await message.reply_text(
-                f"Hey {mention}, **verification** successful! ✅",
-                protect_content=forward_protect
-            )
+            else:
+                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
 
         # --- Single File Handler ---
         if data.startswith("SINGLE-"):
@@ -308,6 +297,7 @@ async def start(client, message):
                     f"⚠️ Clone Single File Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
                 )
                 print(f"⚠️ Clone Single File Handler Error: {e}")
+                print(traceback.format_exc())
 
         # --- Batch File Handler ---
         if data.startswith("BATCH-"):
@@ -452,6 +442,7 @@ async def start(client, message):
                         f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
                     )
                     print(f"⚠️ Clone Batch File Handler Error: {e}")
+                    print(traceback.format_exc())
 
         # --- Auto Post Handler ---
         if data.startswith("AUTO-"):
@@ -534,6 +525,7 @@ async def start(client, message):
                     f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
                 )
                 print(f"⚠️ Clone Auto Post Handler Error: {e}")
+                print(traceback.format_exc())
     except UserIsBlocked:
         print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
         return
@@ -543,7 +535,6 @@ async def start(client, message):
             f"⚠️ Clone Start Bot Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Start Bot Error: {e}")
-        import traceback
         print(traceback.format_exc())
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
@@ -564,6 +555,7 @@ async def help(client, message):
             f"⚠️ Clone Help Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Help Error: {e}")
+        print(traceback.format_exc())
 
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
@@ -766,6 +758,7 @@ async def genlink(client, message):
             f"⚠️ Clone Generate Link Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Generate Link Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command(['batch']) & filters.private)
 async def batch(client, message):
@@ -909,6 +902,7 @@ async def batch(client, message):
             f"⚠️ Clone Batch Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Batch Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("shortener") & filters.private)
 async def shorten_handler(client: Client, message: Message):
@@ -964,6 +958,7 @@ async def shorten_handler(client: Client, message: Message):
             f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Shorten Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("broadcast") & filters.private)
 async def broadcast(client, message):
@@ -1071,6 +1066,7 @@ async def broadcast(client, message):
             f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Broadcast Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("stats") & filters.private & filters.incoming)
 async def stats(client, message):
@@ -1112,6 +1108,7 @@ async def stats(client, message):
             f"⚠️ Clone Stats Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Stats Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("contact") & filters.private & filters.incoming)
 async def contact(client, message):
@@ -1167,6 +1164,7 @@ async def contact(client, message):
             f"⚠️ Clone Contact Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Contact Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.private & filters.reply)
 async def reply(client, message):
@@ -1215,6 +1213,7 @@ async def reply(client, message):
             f"⚠️ Clone Reply Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Reply Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -1464,6 +1463,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Callback Handler Error: {e}")
+        print(traceback.format_exc())
         await query.answer("❌ An error occurred. The admin has been notified.", show_alert=True)
 
 @Client.on_message(filters.all)
@@ -1570,6 +1570,7 @@ async def message_capture(client: Client, message: Message):
                                 print(f"⚠️ Cannot edit message in {chat.id} (no permission). Skipping.")
                             else:
                                 print(f"⚠️ Unexpected edit error: {e}")
+                                print(traceback.format_exc())
 
                         if notify_msg and notify_msg.strip():
                             for mod_id in moderators:
@@ -1680,6 +1681,7 @@ async def message_capture(client: Client, message: Message):
             f"⚠️ Clone message_capture Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone message_capture Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_chat_member_updated()
 async def member_updated_handler(client, event):
@@ -1738,6 +1740,7 @@ async def member_updated_handler(client, event):
 
             except Exception as e:
                 print(f"⚠️ member_updated_handler inner loop error: {e}")
+                print(traceback.format_exc())
                 continue
 
         if updated:
@@ -1749,6 +1752,7 @@ async def member_updated_handler(client, event):
             f"⚠️ Clone member_updated_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone member_updated_handler Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_chat_join_request()
 async def join_request_handler(client, request):
@@ -1787,3 +1791,4 @@ async def join_request_handler(client, request):
             f"⚠️ Clone join_request_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone join_request_handler Error: {e}")
+        print(traceback.format_exc())
