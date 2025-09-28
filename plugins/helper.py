@@ -186,7 +186,8 @@ async def get_verify_shorted_link(client, link):
                     print(f"⚠️ Unexpected JSON response: {data}")
                     return link
         except Exception as e:
-            print(f"⚠️ Clone Shortener error: {e}")
+            print(f"⚠️ Clone Shortener Error: {e}")
+            print(traceback.format_exc())
             return link
 
     return link
@@ -274,6 +275,7 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_u
             f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
+        print(traceback.format_exc())
 
 async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_url):
     try:
@@ -315,6 +317,7 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_u
             f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
+        print(traceback.format_exc())
 
 def random_code(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
