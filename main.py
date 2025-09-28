@@ -210,8 +210,6 @@ async def start():
     #await start_web_server()
     await restart_bots()
 
-    await start_payment_tasks(db, StreamBot)
-
     try:
         today = date.today()
         tz = pytz.timezone("Asia/Kolkata")
