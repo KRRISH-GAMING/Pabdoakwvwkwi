@@ -1169,45 +1169,57 @@ async def grant_premium(user_id, feature_type, client):
     except:
         pass
 
-import re
-import pytesseract
-from PIL import Image
+import re, io, traceback
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
+from PIL import Image
+import pytesseract
 
 async def verify_payment_screenshot(message, feature_type, client, max_minutes=10):
+    """
+    Verify premium payment from screenshot.
+    - feature_type: "Normal Premium", "Ultra Premium", "VIP Premium"
+    - max_minutes: payment must be within this many minutes
+    """
     try:
         if not message.photo:
             return await message.reply_text("📸 Please upload a **payment screenshot**.")
 
-        # Step 1: Download image
+        # Download image and OCR
         img_bytes = await message.download(in_memory=True)
-        img = Image.open(img_bytes)
-
-        # Step 2: OCR
+        if isinstance(img_bytes, io.BytesIO):
+            img_bytes = img_bytes.getvalue()
+        img = Image.open(io.BytesIO(img_bytes))
         ocr_text = pytesseract.image_to_string(img).lower()
-        await message.reply_text(f"📝 OCR Text:\n{ocr_text}")
 
-        # Step 3: Check UPI ID
-        if "krrishmehta@jio" not in ocr_text:
-            return await message.reply_text(
-                "❌ Could not detect your UPI ID in the screenshot. Make sure the screenshot is clear."
-            )
+        # --- Normalize OCR text ---
+        def normalize(text):
+            text = text.replace("₹", "").replace("rs", "").replace(" ", "").replace("\n", "")
+            text = re.sub(r"[^a-z0-9@.]", "", text)  # keep letters, digits, @ and dot
+            return text
 
-        # Step 4: Check amount
+        normalized_ocr = normalize(ocr_text)
+        normalized_upi = normalize("krrishmehta@jio")
+
+        # --- Check UPI ---
+        similarity = SequenceMatcher(None, normalized_ocr, normalized_upi).ratio()
+        if normalized_upi not in normalized_ocr and similarity < 0.6:
+            return await message.reply_text("❌ Could not detect your UPI ID in the screenshot. Make sure it's clear.")
+
+        # --- Check amount ---
         plan_matched = None
-        if "normal" in feature_type.lower() and "99" in ocr_text:
+        if "normal" in feature_type.lower() and re.search(r"\b99\b", normalized_ocr):
             plan_matched = "Normal Premium"
-        elif "ultra" in feature_type.lower() and "249" in ocr_text:
+        elif "ultra" in feature_type.lower() and re.search(r"\b249\b", normalized_ocr):
             plan_matched = "Ultra Premium"
-        elif "vip" in feature_type.lower() and "599" in ocr_text:
+        elif "vip" in feature_type.lower() and re.search(r"\b599\b", normalized_ocr):
             plan_matched = "VIP Premium"
 
         if not plan_matched:
             return await message.reply_text("❌ Payment amount does not match the selected plan.")
 
-        # Step 5: Check payment time (optional)
-        # Looks for something like "22 september 2025 08:21 pm"
-        time_match = re.search(r'(\d{1,2})\s*(\w+)\s*(\d{4})?.*?(\d{1,2}:\d{2})\s*(am|pm)?', ocr_text, re.IGNORECASE)
+        # --- Check payment time ---
+        time_match = re.search(r"(\d{1,2})\s*(\w+)\s*(\d{4})?.*?(\d{1,2}:\d{2})\s*(am|pm)?", ocr_text, re.IGNORECASE)
         if time_match:
             day, month_text, year, hm, ampm = time_match.groups()
             month_text = month_text[:3]
@@ -1218,18 +1230,15 @@ async def verify_payment_screenshot(message, feature_type, client, max_minutes=1
                     "%d-%b-%Y %I:%M %p"
                 )
                 if datetime.utcnow() - payment_time > timedelta(minutes=max_minutes):
-                    return await message.reply_text(
-                        f"⏳ Payment is older than {max_minutes} minutes. Please try again."
-                    )
+                    return await message.reply_text(f"⏳ Payment is older than {max_minutes} minutes. Please try again.")
             except Exception as e:
-                print(f"⚠️ Failed parsing payment time: {e}")
+                print(f"⚠️ Time parse error: {e}")
 
-        # Step 6: Grant premium
+        # --- Grant premium ---
         await grant_premium(message.from_user.id, plan_matched, client)
         await message.reply_text(f"✅ Payment verified! **{plan_matched}** activated.")
 
     except Exception as e:
-        import traceback
         await client.send_message(
             LOG_CHANNEL,
             f"⚠️ OCR Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>"
