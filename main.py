@@ -12,20 +12,17 @@ from plugins.script import *
 from owner.owner import *
 from clone.clone import *
 
-# ------------------ Logging ------------------
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
-# ------------------ Globals ------------------
 multi_clients: Dict[int, Client] = {}
 work_loads: Dict[int, int] = {}
 StartTime = datetime.utcnow()
 __version__ = 1.5
 routes = web.RouteTableDef()
 
-# ------------------ Stream Bot ------------------
 class StreamXBot(Client):
     async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
         async for message in self.get_chat_history(chat_id, limit=limit):
@@ -41,7 +38,6 @@ StreamBot = StreamXBot(
     sleep_threshold=5
 )
 
-# ------------------ Token Parser ------------------
 class TokenParser:
     def parse_from_env(self) -> Dict[int, str]:
         return {
@@ -50,7 +46,6 @@ class TokenParser:
             )
         }
 
-# ------------------ Multi Client Init ------------------
 async def initialize_clients():
     multi_clients[0] = StreamBot
     work_loads[0] = 0
@@ -60,7 +55,7 @@ async def initialize_clients():
         logger.info("No additional clients found, using default client")
         return
 
-    semaphore = asyncio.Semaphore(10)  # Batch startup limit
+    semaphore = asyncio.Semaphore(10)
 
     async def start_client(client_id, token):
         async with semaphore:
@@ -90,7 +85,6 @@ async def initialize_clients():
     else:
         logger.info("Only default client active")
 
-# ------------------ Utilities ------------------
 def get_readable_time(start: datetime) -> str:
     delta = datetime.utcnow() - start
     days, remainder = divmod(delta.total_seconds(), 86400)
@@ -98,7 +92,6 @@ def get_readable_time(start: datetime) -> str:
     minutes, seconds = divmod(remainder, 60)
     return f"{int(days)}d:{int(hours)}h:{int(minutes)}m:{int(seconds)}s"
 
-# ------------------ Load Balancer ------------------
 def get_least_loaded_bot() -> tuple[Client, int]:
     client_id, _ = min(work_loads.items(), key=lambda x: x[1])
     work_loads[client_id] += 1
@@ -122,7 +115,6 @@ async def dispatch_bulk(tasks: list):
         await dispatch_task(task["chat_id"], task["text"])
     await asyncio.gather(*[worker(t) for t in tasks])
 
-# ------------------ Web Server ------------------
 @routes.get("/", allow_head=True)
 async def root(_):
     return web.json_response({
@@ -143,7 +135,6 @@ async def start_web_server():
     await site.start()
     logger.info(f"Web server running on port {PORT}")
 
-# ------------------ Plugin Loader ------------------
 def load_plugins():
     for file in glob.glob("owner/*.py"):
         plugin_name = Path(file).stem
@@ -153,12 +144,11 @@ def load_plugins():
         sys.modules[f"owner.{plugin_name}"] = module
         logger.info(f"✅ Imported plugin: {plugin_name}")
 
-# ------------------ Restart Bots ------------------
 async def restart_bots():
     bots_cursor = await db.get_all_bots()
     bots = await bots_cursor.to_list(None)
 
-    semaphore = asyncio.Semaphore(10)  # batch limit
+    semaphore = asyncio.Semaphore(10)
     tasks = []
 
     async def restart_single(bot):
@@ -205,7 +195,6 @@ async def restart_bots():
     await asyncio.gather(*tasks)
     print("✅ All clone bots processed for restart.")
 
-# ------------------ Main Start ------------------
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
