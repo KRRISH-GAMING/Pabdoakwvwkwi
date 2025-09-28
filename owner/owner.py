@@ -1170,53 +1170,33 @@ async def grant_premium(user_id, feature_type, client):
         pass
 
 async def verify_payment_screenshot(message, feature_type, client, max_age_minutes=30):
-    """
-    Verifies payment screenshot based on OCR text.
-    Checks for:
-      - 'paid' keyword
-      - UPI ID
-      - Correct amount
-      - Recent timestamp (within max_age_minutes)
-    """
-
     try:
         if not message.photo:
             return await message.reply_text("📸 Please upload a **payment screenshot**.")
 
-        # Download image in memory
         img_io = await message.download(in_memory=True)
         img = Image.open(img_io)
 
-        # Preprocess image: grayscale + sharpen + contrast
-        img = img.convert('L')  # Grayscale
+        img = img.convert('L')
         img = img.filter(ImageFilter.SHARPEN)
         enhancer = ImageEnhance.Contrast(img)
-        img = enhancer.enhance(2.0)  # Increase contrast
+        img = enhancer.enhance(2.0)
 
-        # OCR
         text = pytesseract.image_to_string(img).lower()
 
-        # Normalize text
         text = text.replace("rs", "₹").replace("r", "₹")
 
-        # Extract numbers
         amounts = re.findall(r'\d+(?:\.\d+)?', text)
         amounts = [float(a) for a in amounts]
 
         user_upi = "krrishmehta@jio"
         verified = False
 
-        # Check for "paid" keyword
-        if "paid" not in text:
-            return await message.reply_text("❌ Could not verify payment. Please contact admin for help.")
-
-        # Check UPI ID
         if user_upi not in text:
-            return await message.reply_text(f"❌ Could not verify payment. Please contact admin for help.")
+            return await message.reply_text(f"❌ Screenshot does not contain your UPI ID: {user_upi}")
 
         await message.reply_text(text)
 
-        # Check amount and plan
         if "normal" in feature_type.lower() and 99 in [int(a) for a in amounts]:
             plan_amount = 99
         elif "ultra" in feature_type.lower() and 249 in [int(a) for a in amounts]:
@@ -1226,7 +1206,6 @@ async def verify_payment_screenshot(message, feature_type, client, max_age_minut
         else:
             return await message.reply_text("❌ Amount does not match the selected plan.")
 
-        # Optional: check timestamp in text (e.g., dd month yyyy, hh:mm am/pm)
         timestamp_match = re.search(
             r'(\d{1,2}\s+\w+\s+\d{4}),\s*(\d{1,2}:\d{2}\s*(?:am|pm))',
             text
@@ -1244,11 +1223,9 @@ async def verify_payment_screenshot(message, feature_type, client, max_age_minut
                         f"❌ Screenshot is older than {max_age_minutes} minutes. Cannot verify."
                     )
             except:
-                pass  # if parsing fails, ignore timestamp check
+                pass
 
-        # Grant premium if all checks pass
         await grant_premium(message.from_user.id, feature_type, client)
-
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
