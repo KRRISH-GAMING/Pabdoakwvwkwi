@@ -276,24 +276,16 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
         print(traceback.format_exc())
 
 async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id, delay_time, reload_url):
-    try:
-        delete_at = datetime.now(timezone.utc) + timedelta(seconds=delay_time)
+    delete_at = datetime.now(timezone.utc) + timedelta(seconds=delay_time)
 
-        await db.add_scheduled_delete(chat_id, message_ids, notice_id, delete_at, reload_url)
+    await db.add_scheduled_delete(chat_id, message_ids, notice_id, delete_at, reload_url)
 
-        msgs_to_delete = await client.get_messages(chat_id, message_ids)
-        notice_msg = await client.get_messages(chat_id, notice_id)
+    msgs_to_delete = await client.get_messages(chat_id, message_ids)
+    notice_msg = await client.get_messages(chat_id, notice_id)
 
-        await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
+    await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
 
-        await db.delete_scheduled_deletes(message_ids)
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Clone Schedule Delete Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Clone Schedule Delete Error: {e}")
-        print(traceback.format_exc())
+    await db.delete_scheduled_deletes(message_ids)
 
 def random_code(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
