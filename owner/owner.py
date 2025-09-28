@@ -1,6 +1,4 @@
-import os, logging, asyncio, re, time, shutil, sys, traceback, pytesseract, io
-from PIL import *
-from difflib import *
+import os, logging, asyncio, re, time, shutil, sys, traceback
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -1140,110 +1138,6 @@ async def show_moderator_menu(client, message, bot_id):
             f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Moderator Menu Error: {e}")
-        print(traceback.format_exc())
-
-async def grant_premium(user_id, feature_type, client):
-    if "Normal" in feature_type:
-        plan_type = "normal"
-        days = 30
-    elif "Ultra" in feature_type:
-        plan_type = "ultra"
-        days = 30
-    elif "VIP" in feature_type:
-        plan_type = "vip"
-        days = 30
-    else:
-        plan_type = "normal"
-        days = 30
-
-    expiry_date = datetime.utcnow() + timedelta(days=days)
-    await db.add_premium_user(user_id, days, plan_type)
-
-    try:
-        await client.send_message(
-            user_id,
-            f"✅ Your **{feature_type}** has been activated!\n"
-            f"⏳ Expires on: {expiry_date.strftime('%d-%m-%Y')}\n"
-            "Use /start to continue."
-        )
-    except:
-        pass
-
-import re, io, traceback
-from datetime import datetime, timedelta
-from difflib import SequenceMatcher
-from PIL import Image
-import pytesseract
-
-async def verify_payment_screenshot(message, feature_type, client, max_minutes=10):
-    """
-    Verify premium payment from screenshot.
-    - feature_type: "Normal Premium", "Ultra Premium", "VIP Premium"
-    - max_minutes: payment must be within this many minutes
-    """
-    try:
-        if not message.photo:
-            return await message.reply_text("📸 Please upload a **payment screenshot**.")
-
-        # Download image and OCR
-        img_bytes = await message.download(in_memory=True)
-        if isinstance(img_bytes, io.BytesIO):
-            img_bytes = img_bytes.getvalue()
-        img = Image.open(io.BytesIO(img_bytes))
-        ocr_text = pytesseract.image_to_string(img).lower()
-
-        # --- Normalize OCR text ---
-        def normalize(text):
-            text = text.replace("₹", "").replace("rs", "").replace(" ", "").replace("\n", "")
-            text = re.sub(r"[^a-z0-9@.]", "", text)  # keep letters, digits, @ and dot
-            return text
-
-        normalized_ocr = normalize(ocr_text)
-        normalized_upi = normalize("krrishmehta@jio")
-
-        # --- Check UPI ---
-        similarity = SequenceMatcher(None, normalized_ocr, normalized_upi).ratio()
-        if normalized_upi not in normalized_ocr and similarity < 0.6:
-            return await message.reply_text("❌ Could not detect your UPI ID in the screenshot. Make sure it's clear.")
-
-        # --- Check amount ---
-        plan_matched = None
-        if "normal" in feature_type.lower() and re.search(r"\b99\b", normalized_ocr):
-            plan_matched = "Normal Premium"
-        elif "ultra" in feature_type.lower() and re.search(r"\b249\b", normalized_ocr):
-            plan_matched = "Ultra Premium"
-        elif "vip" in feature_type.lower() and re.search(r"\b599\b", normalized_ocr):
-            plan_matched = "VIP Premium"
-
-        if not plan_matched:
-            return await message.reply_text("❌ Payment amount does not match the selected plan.")
-
-        # --- Check payment time ---
-        time_match = re.search(r"(\d{1,2})\s*(\w+)\s*(\d{4})?.*?(\d{1,2}:\d{2})\s*(am|pm)?", ocr_text, re.IGNORECASE)
-        if time_match:
-            day, month_text, year, hm, ampm = time_match.groups()
-            month_text = month_text[:3]
-            year = year or str(datetime.now().year)
-            try:
-                payment_time = datetime.strptime(
-                    f"{day}-{month_text}-{year} {hm} {ampm or ''}".strip(),
-                    "%d-%b-%Y %I:%M %p"
-                )
-                if datetime.utcnow() - payment_time > timedelta(minutes=max_minutes):
-                    return await message.reply_text(f"⏳ Payment is older than {max_minutes} minutes. Please try again.")
-            except Exception as e:
-                print(f"⚠️ Time parse error: {e}")
-
-        # --- Grant premium ---
-        await grant_premium(message.from_user.id, plan_matched, client)
-        await message.reply_text(f"✅ Payment verified! **{plan_matched}** activated.")
-
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ OCR Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>"
-        )
-        print(f"⚠️ OCR Error: {e}")
         print(traceback.format_exc())
 
 @Client.on_callback_query()
@@ -3271,8 +3165,6 @@ async def message_capture(client: Client, message: Message):
                         await message.copy(admin_id, caption=f"📸 Payment screenshot from `{user_id}` for {feature_type}")
                     except:
                         pass
-
-                await verify_payment_screenshot(message, feature_type, client)
 
                 PREMIUM_STATE.pop(user_id, None)
 
