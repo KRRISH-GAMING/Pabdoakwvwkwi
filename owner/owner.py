@@ -1140,28 +1140,25 @@ async def show_moderator_menu(client, message, bot_id):
         print(f"⚠️ Show Moderator Menu Error: {e}")
         print(traceback.format_exc())
 
+CHECK_INTERVAL = 15
+CHECK_PENDING_INTERVAL = 300
+
+PAYMENT_SOURCES = [
+    {
+        "name": "Fampay",
+        "keywords": ["received", "payment", "Fampay", "UPI"],
+        "upi_id": "krishraj237@fam"
+    },
+    {
+        "name": "Paytm",
+        "keywords": ["Paytm", "credited", "UPI"],
+        "upi_id": "yourpaytmupi@paytm"
+    },
+]
+
 IMAP_SERVER = "imap.gmail.com"
 EMAIL_USER = "krrishraj237@gmail.com"
 EMAIL_PASS = "ewcz wblx fdgv unpp"
-CHECK_INTERVAL = 15
-
-FAMPAY_KEYWORDS = ["received", "payment", "Fampay", "UPI"]
-UPI_ID = "krishraj237@fam"
-
-async def approve_payment(user_id, feature_type, db, client):
-    expiry_date = datetime.utcnow() + timedelta(days=30)
-    plan_type = feature_type.lower().split()[0]
-    await db.add_premium_user(user_id, 30, plan_type)
-
-    try:
-        await client.send_message(
-            user_id,
-            f"✅ Your **{feature_type}** has been activated!\n"
-            f"Expires on: {expiry_date.strftime('%d-%m-%Y')}\n"
-            "Use /start to continue."
-        )
-    except:
-        pass
 
 def get_email_body(msg):
     body = ""
@@ -1173,7 +1170,7 @@ def get_email_body(msg):
                     try:
                         body += payload.decode("utf-8")
                     except UnicodeDecodeError:
-                        body += payload.decode("latin-1")  # fallback
+                        body += payload.decode("latin-1")
     else:
         payload = msg.get_payload(decode=True)
         if payload:
@@ -1183,60 +1180,116 @@ def get_email_body(msg):
                 body += payload.decode("latin-1")
     return body
 
-async def check_fampay_mails(db, client):
+async def approve_payment(user_id, feature_type, db, client, days=30):
+    expiry_date = datetime.utcnow() + timedelta(days=days)
+    plan_type = feature_type.lower().split()[0]
+    await db.add_premium_user(user_id, days, plan_type)
+    try:
+        await client.send_message(
+            user_id,
+            f"✅ Your **{feature_type}** has been activated!\n"
+            f"Expires on: {expiry_date.strftime('%d-%m-%Y')}\n"
+            "Use /start to continue."
+        )
+    except:
+        pass
+
+async def check_imap_payments(db, client):
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+        mail.login(EMAIL_USER, EMAIL_PASS)
+        mail.select("inbox")
+        print("✅ Connected to IMAP server")
+    except Exception as e:
+        print(f"❌ IMAP login failed: {e}")
+        return
+
     while True:
         try:
-            mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-            mail.login(EMAIL_USER, EMAIL_PASS)
-            mail.select("inbox")
-
             status, data = mail.search(None, '(UNSEEN)')
-            if status == "OK":
-                for num in data[0].split():
+            if status != "OK":
+                await asyncio.sleep(CHECK_INTERVAL)
+                continue
+
+            for num in data[0].split():
+                try:
                     status, msg_data = mail.fetch(num, "(RFC822)")
                     if status != "OK":
                         continue
 
                     raw_msg = msg_data[0][1]
                     msg = email.message_from_bytes(raw_msg)
-                    subject = msg["subject"] or ""
-                    body = ""
-
+                    subject = msg.get("subject", "")
                     body = get_email_body(msg)
+                    text = (subject or "") + " " + body
 
-                    text = subject + " " + body
-
-                    if any(k.lower() in text.lower() for k in FAMPAY_KEYWORDS) and UPI_ID.lower() in text.lower():
-                        amount_match = re.search(r"₹\s?(\d+)", text)
-                        txn_id = txn_match.group(1) if txn_match else None
-                        if amount_match:
-                            amount = int(amount_match.group(1))
+                    for source in PAYMENT_SOURCES:
+                        if any(k.lower() in text.lower() for k in source["keywords"]) and source["upi_id"].lower() in text.lower():
+                            amount_match = re.search(r"₹\s?(\d+)", text)
+                            txn_match = re.search(r"(?:UTR|Txn\s?ID|Ref(?:erence)?\s?No)[:\s]+(\w+)", text, re.I)
                             txn_id = txn_match.group(1) if txn_match else None
 
-                            logger.info(f"✅ Payment mail: ₹{amount}, Txn: {txn_id}")
+                            if amount_match:
+                                amount = int(amount_match.group(1))
+                                pending = await db.find_pending_payment(amount)
+                                if pending:
+                                    user_id, feature_type = pending["user_id"], pending["feature_type"]
+                                    try:
+                                        await approve_payment(user_id, feature_type, db, client)
+                                        await client.send_message(
+                                            LOG_CHANNEL,
+                                            f"✅ Auto-approved {feature_type} for {user_id} (₹{amount}) via {source['name']}"
+                                        )
+                                        print(f"✅ Auto-approved {feature_type} for {user_id} (₹{amount}) via {source['name']}")
+                                    except Exception as e:
+                                        print(f"❌ Approve/send_message failed: {e}")
 
-                            pending = await db.find_pending_payment(amount, txn_id=txn_id)
-                            if not pending:
-                                pending = await db.find_pending_payment(amount)  # fallback
+                    mail.store(num, '+FLAGS', '\\Seen')
 
-                            if pending:
-                                user_id, feature_type = pending["user_id"], pending["feature_type"]
-                                await approve_payment(user_id, feature_type, db, client)
-                                await client.send_message(
-                                    LOG_CHANNEL,
-                                    f"✅ Auto-approved {feature_type} for {user_id} (₹{amount})"
-                                )
+                except Exception as e:
+                    print(f"❌ Email processing error: {e}")
+                    traceback.print_exc()
+                    continue
 
-            mail.logout()
+            await asyncio.sleep(CHECK_INTERVAL)
+
         except Exception as e:
-            await client.send_message(
-                LOG_CHANNEL,
-                f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-            )
-            print("⚠️ IMAP Error:", e)
-            print(traceback.format_exc())
+            print(f"⚠️ IMAP loop error: {e}")
+            traceback.print_exc()
+            await asyncio.sleep(CHECK_INTERVAL)
 
-        await asyncio.sleep(CHECK_INTERVAL)
+async def check_expired_pending(db, client, max_minutes=10):
+    expiry = datetime.utcnow() - timedelta(minutes=max_minutes)
+    cursor = db.col_pending.find({"created": {"$lt": expiry}})
+    async for pending in cursor:
+        user_id = pending["user_id"]
+        feature_type = pending["feature_type"]
+        amount = pending["amount"]
+
+        try:
+            await client.send_message(
+                user_id,
+                f"⚠️ We couldn’t verify your **₹{amount}** payment for **{feature_type} Plan**.\n\n"
+                f"➡️ If the amount was deducted, please wait a bit more.\n"
+                f"➡️ Otherwise, retry payment."
+            )
+        except Exception as e:
+            print(f"❌ Could not notify {user_id}: {e}")
+
+        await db.col_pending.delete_one({"_id": pending["_id"]})
+
+async def start_payment_tasks(db, client):
+    asyncio.create_task(check_imap_payments(db, client))
+
+    async def cleanup_loop():
+        while True:
+            try:
+                await check_expired_pending(db, client, max_minutes=10)
+            except Exception as e:
+                print(f"❌ Expired payment check failed: {e}")
+            await asyncio.sleep(CHECK_PENDING_INTERVAL)
+
+    asyncio.create_task(cleanup_loop())
 
 async def check_expired_pending(db, client, max_minutes=10):
     expiry = datetime.utcnow() - timedelta(minutes=max_minutes)
