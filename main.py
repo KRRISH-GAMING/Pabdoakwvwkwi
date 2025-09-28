@@ -219,7 +219,7 @@ async def start():
     await restart_bots()
 
     asyncio.create_task(check_fampay_mails(db, StreamBot))
-    asyncio.create_task(start_cleanup_loop(db, StreamBot))
+    #asyncio.create_task(start_cleanup_loop(db, StreamBot))
 
     try:
         today = date.today()
