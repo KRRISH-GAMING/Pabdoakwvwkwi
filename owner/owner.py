@@ -1201,11 +1201,17 @@ async def fetch_fampay_payments():
                 "txn_id": txn_id
             })
 
+        print("Fetched payments:", transactions)
         mail.logout()
         return transactions
 
     except Exception as e:
-        print(f"❌ IMAP Error: {e}")
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ IMAP Error: {e}")
+        print(traceback.format_exc())
         return []
 
 @Client.on_callback_query()
