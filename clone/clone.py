@@ -27,6 +27,8 @@ async def start(client, message):
         if not clone:
             return
 
+        print("DEBUG clone type:", type(clone), "value:", clone)
+
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("wlc", script.START_TXT) 
@@ -52,7 +54,7 @@ async def start(client, message):
         except:
             number = 0
 
-        unit_map = {"h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
+        unit_map = {"d": "day(s)", "h": "hour(s)", "m": "minute(s)", "s": "second(s)"}
         unit = unit_map.get(unit_char.lower(), "hour(s)")
 
         user_id = message.from_user.id
@@ -543,6 +545,8 @@ async def start(client, message):
             f"⚠️ Clone Start Bot Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Clone Start Bot Error: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(client, message):
@@ -755,7 +759,7 @@ async def genlink(client, message):
         )
 
         await message.reply(
-            f"Here is your link:\n{share_link}",
+            f"🔗 Here is your link:\n{share_link}",
             reply_markup=reply_markup
         )
     except Exception as e:
@@ -894,7 +898,7 @@ async def batch(client, message):
         )
 
         await sts.edit(
-            f"Here is your link:\n{share_link}",
+            f"🔗 Here is your link:\n{share_link}",
             reply_markup=reply_markup
         )
     except ChannelInvalid:
@@ -954,23 +958,8 @@ async def shorten_handler(client: Client, message: Message):
 
         if len(cmd) == 2 and cmd[1].lower() == "none":
             await clonedb.update_user_info(user_id, {"base_site": None, "shortener_api": None})
-            SHORTEN_STATE[user_id] = {"step": 1}
-            return await message.reply(
-                "✅ Base site and API reset. Please send your **base site** (e.g., shortnerdomain.com)"
-            )
-
-        if user_id not in SHORTEN_STATE:
-            SHORTEN_STATE[user_id] = {"step": 1}
-
-        state = SHORTEN_STATE[user_id]
-
-        help_msg_id = state.get("help_msg_id")
-        if help_msg_id:
-            try:
-                await client.delete_messages(chat_id=message.chat.id, message_ids=help_msg_id)
-            except:
-                pass
-            state.pop("help_msg_id", None)
+            SHORTEN_STATE.pop(user_id, None)
+            return await message.reply("✅ Base site and API have been reset successfully.")
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
@@ -1286,7 +1275,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f"💎 Premium Plan Details:\n\n"
                 f"🗓 Duration: {days} days\n"
                 f"💰 Price: {price}\n"
-                f"📲 UPI ID: {premium_upi}\n\n"
+                f"📲 UPI ID: `{premium_upi}`\n\n"
                 f"📝 Steps to complete payment:\n"
                 f"1️⃣ Use the UPI ID above to make the payment\n"
                 f"2️⃣ Make payment of {price}\n"
@@ -1494,6 +1483,14 @@ async def message_capture(client: Client, message: Message):
 
             state = SHORTEN_STATE[user_id]
 
+            help_msg_id = state.get("help_msg_id")
+            if help_msg_id:
+                try:
+                    await client.delete_messages(chat_id=message.chat.id, message_ids=help_msg_id)
+                except:
+                    pass
+                state.pop("help_msg_id", None)
+
             if state["step"] == 1:
                 base_site = message.text.strip()
                 new_text = base_site.removeprefix("https://").removeprefix("http://")
@@ -1528,7 +1525,7 @@ async def message_capture(client: Client, message: Message):
                 )
 
                 await message.reply(
-                    f"🔗 Shortened link:\n{short_link}",
+                    f"🔗 Here is your shortened link:\n{short_link}",
                     reply_markup=reply_markup
                 )
                 
