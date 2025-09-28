@@ -204,11 +204,16 @@ async def init_auto_deletes(client, db: Database):
         delete_at = task["delete_at"]
         reload_url = task.get("reload_url")
 
+        if delete_at.tzinfo is None:
+            delete_at = delete_at.replace(tzinfo=timezone.utc)
+
         delay_time = (delete_at - datetime.now(timezone.utc)).total_seconds()
         if delay_time < 0:
             delay_time = 0
 
-        asyncio.create_task(schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url))
+        asyncio.create_task(
+            schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
+        )
 
 async def start():
     logger.info("Initializing Bot...")
