@@ -272,7 +272,7 @@ async def auto_delete_messagex(client, msg_to_delete, notice_msg, time, reload_u
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
         print(traceback.format_exc())
@@ -314,7 +314,7 @@ async def auto_delete_messagey(client, msg_to_delete, notice_msg, time, reload_u
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Auto Delete Error: {e}")
         print(traceback.format_exc())
