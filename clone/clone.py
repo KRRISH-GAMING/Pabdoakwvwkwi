@@ -152,7 +152,7 @@ async def start(client, message):
                 else:
                     await client.send_message(
                         LOG_CHANNEL,
-                        f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                        f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
                     print(f"⚠️ Clone Fsub Handler Error: {e}")
                     print(traceback.format_exc())
@@ -294,7 +294,7 @@ async def start(client, message):
             except Exception as e:
                 await client.send_message(
                     LOG_CHANNEL,
-                    f"⚠️ Clone Single File Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                    f"⚠️ Clone Single File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                 )
                 print(f"⚠️ Clone Single File Handler Error: {e}")
                 print(traceback.format_exc())
@@ -414,7 +414,7 @@ async def start(client, message):
                         else:
                             await client.send_message(
                                 LOG_CHANNEL,
-                                f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                                f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                             )
                             print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
                             continue
@@ -439,7 +439,7 @@ async def start(client, message):
                 else:
                     await client.send_message(
                         LOG_CHANNEL,
-                        f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                        f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
                     print(f"⚠️ Clone Batch File Handler Error: {e}")
                     print(traceback.format_exc())
@@ -522,7 +522,7 @@ async def start(client, message):
                     raise
                 await client.send_message(
                     LOG_CHANNEL,
-                    f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                    f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                 )
                 print(f"⚠️ Clone Auto Post Handler Error: {e}")
                 print(traceback.format_exc())
@@ -532,7 +532,7 @@ async def start(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Start Bot Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone Start Bot Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Start Bot Error: {e}")
         print(traceback.format_exc())
@@ -552,7 +552,7 @@ async def help(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Help Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone Help Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
@@ -677,7 +677,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 try:
                     await clone_client.send_message(
                         LOG_CHANNEL,
-                        f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+                        f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
                 except:
                     pass
@@ -685,7 +685,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"❌ Clone AutoPost crashed for {bot_id}:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"❌ Clone AutoPost crashed for {bot_id}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"❌ Clone AutoPost crashed for {bot_id}: {e}")
 
@@ -755,7 +755,7 @@ async def genlink(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Generate Link Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Generate Link Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Generate Link Error: {e}")
         print(traceback.format_exc())
@@ -899,7 +899,7 @@ async def batch(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Batch Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Batch Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Batch Error: {e}")
         print(traceback.format_exc())
@@ -955,7 +955,7 @@ async def shorten_handler(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Shorten Error: {e}")
         print(traceback.format_exc())
@@ -1063,7 +1063,7 @@ async def broadcast(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Broadcast Error: {e}")
         print(traceback.format_exc())
@@ -1105,7 +1105,7 @@ async def stats(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Stats Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Stats Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Stats Error: {e}")
         print(traceback.format_exc())
@@ -1161,7 +1161,7 @@ async def contact(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Contact Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Contact Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Contact Error: {e}")
         print(traceback.format_exc())
@@ -1210,7 +1210,7 @@ async def reply(client, message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Reply Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Reply Error: {e}")
         print(traceback.format_exc())
@@ -1449,7 +1449,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         else:
             await client.send_message(
                 LOG_CHANNEL,
-                f"⚠️ Clone Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nKindly check this message for assistance."
+                f"⚠️ Clone Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
             )
             await query.answer("⚠️ Unknown action.", show_alert=True)
     except UserIsBlocked:
@@ -1460,7 +1460,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             raise
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
+            f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone Callback Handler Error: {e}")
         print(traceback.format_exc())
@@ -1678,7 +1678,7 @@ async def message_capture(client: Client, message: Message):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone message_capture Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone message_capture Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone message_capture Error: {e}")
         print(traceback.format_exc())
@@ -1749,7 +1749,7 @@ async def member_updated_handler(client, event):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone member_updated_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone member_updated_handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone member_updated_handler Error: {e}")
         print(traceback.format_exc())
@@ -1788,7 +1788,7 @@ async def join_request_handler(client, request):
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
-            f"⚠️ Clone join_request_handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
+            f"⚠️ Clone join_request_handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Clone join_request_handler Error: {e}")
         print(traceback.format_exc())
