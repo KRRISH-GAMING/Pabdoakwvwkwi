@@ -1,4 +1,5 @@
-import os, logging, asyncio, re, time, shutil, sys
+import os, logging, asyncio, re, time, shutil, sys, pytesseract, io
+from PIL import Image
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -12,6 +13,7 @@ from clone.clone import *
         
 logger = logging.getLogger(__name__)
 
+PREMIUM_STATE = {}
 CLONE_TOKEN = {}
 ACTIVE_CLONES = {}
 START_TEXT = {}
@@ -79,6 +81,7 @@ async def promote(bot_username: str):
             f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Promote Clone Bot @{bot_username} Error: {e}")
+        print(traceback.format_exc())
 
 async def set_auto_menu(client):
     try:
@@ -110,6 +113,7 @@ async def set_auto_menu(client):
             f"⚠️ Set Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Set Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def set_clone_menu(xd):
     try:
@@ -131,6 +135,7 @@ async def set_clone_menu(xd):
             f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Clone Bot Menu Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("start") & filters.private & filters.incoming)
 async def start(client, message):
@@ -190,6 +195,7 @@ async def start(client, message):
             f"⚠️ Start Handler Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Start Handler Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(client, message):
@@ -201,6 +207,7 @@ async def help(client, message):
             f"⚠️ Help Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Help Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("add_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def add_premium(client: Client, message: Message):
@@ -243,6 +250,7 @@ async def add_premium(client: Client, message: Message):
             f"⚠️ Add Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Add Premium Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("remove_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def remove_premium(client: Client, message: Message):
@@ -266,6 +274,7 @@ async def remove_premium(client: Client, message: Message):
             f"⚠️ Remove Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Remove Premium Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("list_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def list_premium(client: Client, message: Message):
@@ -307,6 +316,7 @@ async def list_premium(client: Client, message: Message):
             f"⚠️ List Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ List Premium Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("check_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def check_premium(client: Client, message: Message):
@@ -345,6 +355,7 @@ async def check_premium(client: Client, message: Message):
             f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Check Premium Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("broadcast") & filters.user(ADMINS) & filters.private)
 async def broadcast(client, message):
@@ -448,6 +459,7 @@ async def broadcast(client, message):
             f"⚠️ Broadcast Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Broadcast Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("stats") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def stats(client, message):
@@ -468,6 +480,7 @@ async def stats(client, message):
             f"⚠️ Stats Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Stats Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command('restart') & filters.user(ADMINS) & filters.private)
 async def restart(client, message):
@@ -526,6 +539,7 @@ async def contact(client, message):
             f"⚠️ Contact Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Contact Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_message(filters.private & filters.reply)
 async def reply(client, message):
@@ -563,6 +577,7 @@ async def reply(client, message):
             f"⚠️ Reply Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Reply Error: {e}")
+        print(traceback.format_exc())
 
 async def show_clone_menu(client, message, user_id):
     try:
@@ -596,6 +611,7 @@ async def show_clone_menu(client, message, user_id):
             f"⚠️ Show Clone Menu Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Show Clone Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_text_menu(client, message, bot_id):
     try:
@@ -615,6 +631,7 @@ async def show_text_menu(client, message, bot_id):
             f"⚠️ Show Text Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Text Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_photo_menu(client, message, bot_id):
     try:
@@ -634,6 +651,7 @@ async def show_photo_menu(client, message, bot_id):
             f"⚠️ Show Photo Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Photo Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_caption_menu(client, message, bot_id):
     try:
@@ -653,6 +671,7 @@ async def show_caption_menu(client, message, bot_id):
             f"⚠️ Show Caption Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Caption Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_button_menu(client, message, bot_id):
     try:
@@ -687,6 +706,7 @@ async def show_button_menu(client, message, bot_id):
             f"⚠️ Show Button Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Button Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_header_menu(client, message, bot_id):
     try:
@@ -706,6 +726,7 @@ async def show_header_menu(client, message, bot_id):
             f"⚠️ Show Header Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Header Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_footer_menu(client, message, bot_id):
     try:
@@ -725,6 +746,7 @@ async def show_footer_menu(client, message, bot_id):
             f"⚠️ Show Footer Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Footer Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_fsub_menu(client, message, bot_id):
     try:
@@ -787,6 +809,7 @@ async def show_fsub_menu(client, message, bot_id):
             f"⚠️ Show Force Subscribe Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Force Subscribe Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_token_menu(client, message, bot_id):
     try:
@@ -848,6 +871,7 @@ async def show_token_menu(client, message, bot_id):
             f"⚠️ Show Token Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Token Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_validity_menu(client, message, bot_id):
     try:
@@ -867,6 +891,7 @@ async def show_validity_menu(client, message, bot_id):
             f"⚠️ Show Validity Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Validity Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_tutorial_menu(client, message, bot_id):
     try:
@@ -886,6 +911,7 @@ async def show_tutorial_menu(client, message, bot_id):
             f"⚠️ Show Tutorial Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Tutorial Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_post_menu(client, message, bot_id):
     try:
@@ -934,6 +960,7 @@ async def show_post_menu(client, message, bot_id):
             f"⚠️ Show Post Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Post Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_image_menu(client, message, bot_id):
     try:
@@ -953,6 +980,7 @@ async def show_image_menu(client, message, bot_id):
             f"⚠️ Show Image Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Image Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_sleep_menu(client, message, bot_id):
     try:
@@ -972,6 +1000,7 @@ async def show_sleep_menu(client, message, bot_id):
             f"⚠️ Show Sleep Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Sleep Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_premium_menu(client, message, bot_id):
     try:
@@ -1030,6 +1059,7 @@ async def show_premium_menu(client, message, bot_id):
             f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Premium User Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_time_menu(client, message, bot_id):
     try:
@@ -1049,6 +1079,7 @@ async def show_time_menu(client, message, bot_id):
             f"⚠️ Show Time Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Time Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_message_menu(client, message, bot_id):
     try:
@@ -1068,6 +1099,7 @@ async def show_message_menu(client, message, bot_id):
             f"⚠️ Show Message Menu Error:\n\n<code>{e}</code>\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Message Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def show_moderator_menu(client, message, bot_id):
     try:
@@ -1107,6 +1139,62 @@ async def show_moderator_menu(client, message, bot_id):
             f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
         )
         print(f"⚠️ Show Moderator Menu Error: {e}")
+        print(traceback.format_exc())
+
+async def grant_premium(user_id, feature_type, client):
+    if "Normal" in feature_type:
+        plan_type = "normal"
+        days = 30
+    elif "Ultra" in feature_type:
+        plan_type = "ultra"
+        days = 30
+    elif "VIP" in feature_type:
+        plan_type = "vip"
+        days = 30
+    else:
+        plan_type = "normal"
+        days = 30
+
+    expiry_date = datetime.utcnow() + timedelta(days=days)
+    await db.add_premium_user(user_id, days, plan_type)
+
+    try:
+        await client.send_message(
+            user_id,
+            f"✅ Your **{feature_type}** has been activated!\n"
+            f"⏳ Expires on: {expiry_date.strftime('%d-%m-%Y')}\n"
+            "Use /start to continue."
+        )
+    except:
+        pass
+
+async def verify_payment_screenshot(message, feature_type, client):
+    try:
+        if not message.photo:
+            return await message.reply_text("📸 Please upload a **payment screenshot**.")
+
+        img = await message.download(in_memory=True)
+        text = pytesseract.image_to_string(Image.open(io.BytesIO(img))).lower()
+
+        if "paid" in text and "krrishmehta@jio" in text:
+            if "₹99" in text and "normal" in feature_type.lower():
+                await grant_premium(message.from_user.id, "Normal Premium", client)
+                return
+            elif "₹249" in text and "ultra" in feature_type.lower():
+                await grant_premium(message.from_user.id, "Ultra Premium", client)
+                return
+            elif "₹599" in text and "vip" in feature_type.lower():
+                await grant_premium(message.from_user.id, "VIP Premium", client)
+                return
+
+        await message.reply_text("❌ Could not verify payment. Please contact admin for help.")
+    except Exception as e:
+        await client.send_message(
+            LOG_CHANNEL,
+            f"⚠️ OCR Error:\n<code>{e}</code>\nClone Data: {clone}\n\nKindly check this message to get assistance."
+        )
+        print(f"⚠️ OCR Error: {e}")
+        print(traceback.format_exc())
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -1914,6 +2002,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         f"⚠️ Update Force Subscribe Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
                     )
                     print(f"⚠️ Update Force Subscribe Error: {e}")
+                    print(traceback.format_exc())
                     await query.message.edit_text(f"❌ Failed to update **force subscribe channel**: {e}")
                     await asyncio.sleep(2)
                     await show_fsub_menu(client, query.message, bot_id)
@@ -3063,92 +3152,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 "After payment, click the **Payment Done** button below to confirm."
             )
 
-            buttons = [
-                [InlineKeyboardButton("✅ Payment Done", callback_data=f"paid_{feature_type.replace(' ', '_')}")],
-                [InlineKeyboardButton("⬅️ Back", callback_data="premium")]
-            ]
+            PREMIUM_STATE[user_id] = feature_type
 
             await query.message.edit_text(
                 text=text,
-                reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode=enums.ParseMode.MARKDOWN
             )
-
-        # User clicked Payment Done
-        elif data.startswith("paid_"):
-            feature_type = data.replace("paid_", "").replace("_", " ")
-
-            await query.message.edit_text(
-                f"⏳ Payment received for **{feature_type}**.\n"
-                "Waiting for admin approval...",
-                parse_mode=enums.ParseMode.MARKDOWN
-            )
-
-            approve_buttons = [
-                [InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user_id}_{feature_type.replace(' ', '_')}")],
-                [InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user_id}_{feature_type.replace(' ', '_')}")]
-            ]
-
-            for admin_id in ADMINS:
-                await client.send_message(
-                    admin_id,
-                    f"💰 Payment confirmation request:\n\n"
-                    f"👤 User: [{query.from_user.first_name}](tg://user?id={user_id})\n"
-                    f"🆔 ID: `{user_id}`\n"
-                    f"🗓 Feature: {feature_type}\n\n"
-                    "Click Approve or Reject:",
-                    reply_markup=InlineKeyboardMarkup(approve_buttons)
-                )
-
-        # Owner approves
-        elif data.startswith("approve_") and user_id in ADMINS:
-            parts = data.split("_", 2)
-            target_user_id = int(parts[1])
-            feature_type = parts[2].replace("_", " ")
-
-            if "Normal" in feature_type:
-                plan_type = "normal"
-                days = 30
-            elif "Ultra" in feature_type:
-                plan_type = "ultra"
-                days = 30
-            elif "VIP" in feature_type:
-                plan_type = "vip"
-                days = 30
-            else:
-                plan_type = "normal"
-                days = 30
-
-            expiry_date = datetime.utcnow() + timedelta(days=days)
-            await db.add_premium_user(target_user_id, days, plan_type)
-
-            await query.message.edit_text(f"✅ Payment approved for user `{target_user_id}` ({feature_type})")
-
-            try:
-                await client.send_message(
-                    target_user_id,
-                    f"✅ Your **{feature_type}** has been activated!\n"
-                    f"Expires on: {expiry_date.strftime('%d-%m-%Y')}\n"
-                    "Use /start to continue."
-                )
-            except:
-                pass
-
-        # Owner rejects
-        elif data.startswith("reject_") and user_id in ADMINS:
-            parts = data.split("_", 2)
-            target_user_id = int(parts[1])
-            feature_type = parts[2].replace("_", " ")
-
-            await query.message.edit_text(f"❌ Payment rejected for user `{target_user_id}` ({feature_type})")
-
-            try:
-                await client.send_message(
-                    target_user_id,
-                    f"❌ Your payment for **{feature_type}** was rejected.\nContact admin for assistance."
-                )
-            except:
-                pass
 
         # Close
         elif data == "close":
@@ -3166,6 +3175,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             f"⚠️ Callback Handler Error:\n\n<code>{e}</code>\n\nKindly check this message for assistance."
         )
         print(f"⚠️ Callback Handler Error: {e}")
+        print(traceback.format_exc())
         await query.answer("❌ An error occurred. The admin has been notified.", show_alert=True)
 
 @Client.on_message(filters.all)
@@ -3176,7 +3186,8 @@ async def message_capture(client: Client, message: Message):
             user_id = message.from_user.id if message.from_user else None
 
             if not (
-                user_id in CLONE_TOKEN
+                user_id in PREMIUM_STATE
+                or user_id in CLONE_TOKEN
                 or user_id in START_TEXT
                 or user_id in START_PHOTO
                 or user_id in CAPTION_TEXT
@@ -3197,6 +3208,23 @@ async def message_capture(client: Client, message: Message):
                 or user_id in ADD_MODERATOR
             ):
                 return
+
+            # -------------------- PAYMENT CAPTURE --------------------
+            if user_id in PREMIUM_STATE:
+                feature_type = PREMIUM_STATE.get(user_id)
+
+                if not feature_type:
+                    return
+
+                for admin_id in ADMINS:
+                    try:
+                        await message.copy(admin_id, caption=f"📸 Payment screenshot from `{user_id}` for {feature_type}")
+                    except:
+                        pass
+
+                await verify_payment_screenshot(message, feature_type, client)
+
+                PREMIUM_STATE.pop(user_id, None)
 
             # -------------------- CREATE CLONE --------------------
             if user_id in CLONE_TOKEN:
@@ -3441,7 +3469,6 @@ async def message_capture(client: Client, message: Message):
 
                 new_text = message.text.strip() if message.text else ""
 
-                # Steps: channel -> target -> mode
                 if step == "channel":
                     channel_id_int = None
                     if message.forward_from_chat:
@@ -3642,3 +3669,4 @@ async def message_capture(client: Client, message: Message):
     except Exception as e:
         await client.send_message(LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nKindly check this message to get assistance.")
         print(f"⚠️ Unexpected Error in message_capture: {e}")
+        print(traceback.format_exc())
