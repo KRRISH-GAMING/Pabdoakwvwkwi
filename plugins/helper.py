@@ -28,6 +28,17 @@ def get_size(size):
         size /= 1024.0
     return "%.2f %s" % (size, units[i])
 
+async def safe_action(coro_func, *args, **kwargs):
+    while True:
+        try:
+            return await coro_func(*args, **kwargs)
+        except FloodWait as e:
+            print(f"⏱ FloodWait: sleeping {e.value} seconds")
+            await asyncio.sleep(e.value)
+        except Exception as e:
+            print(f"❌ Error in safe_action: {e}")
+            return None
+
 async def is_subscribedx(client, query):
     if REQUEST_TO_JOIN_MODE == True and JoinReqs().isActive():
         try:
@@ -237,7 +248,7 @@ async def check_verification(client, userid):
         return False
     return True
 
-"""async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, reload_url):
+async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, reload_url):
     try:
         if delay_time > 0:
             await asyncio.sleep(delay_time)
@@ -245,11 +256,11 @@ async def check_verification(client, userid):
         for msg in msg_to_delete:
             if msg:
                 try:
-                    await msg.delete()
+                    await safe_action(msg.delete)
                 except FloodWait as e:
                     print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
                     await asyncio.sleep(e.value)
-                    await msg.delete()
+                    await safe_action(msg.delete)
                 except UserIsBlocked:
                     print("⚠️ User blocked while deleting.")
                     return
@@ -259,16 +270,16 @@ async def check_verification(client, userid):
         if notice_msg:
             keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]) if reload_url else None
             try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
+                await safe_action(notice_msg.edit_text, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
             except Exception as e:
                 print(f"⚠️ Could not edit notice_msg: {e}")
                 try:
-                    await client.send_message(notice_msg.chat.id, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
+                    await safe_action(client.send_message, notice_msg.chat.id, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
                 except Exception as e2:
                     print(f"⚠️ Could not send fallback message: {e2}")
 
     except Exception as e:
-        await client.send_message(
+        await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Auto Delete Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
@@ -285,7 +296,7 @@ async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id,
 
     await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
 
-    await db.delete_scheduled_deletes(message_ids)"""
+    await db.delete_scheduled_deletes(message_ids)
 
 def random_code(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
