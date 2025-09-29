@@ -1997,7 +1997,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 link = data.get("link")
                 name = data.get("name", "Channel")
 
-                await safe_action(query.message.edit_text("✏️ Updating your clone's **force subscribe channel**, please wait...")
+                await safe_action(query.message.edit_text("✏️ Updating your clone's **force subscribe channel**, please wait..."))
                 try:
                     fsub_data = clone.get("force_subscribe", [])
                     existing = next((x for x in fsub_data if x["channel"] == ch), None)
@@ -2018,7 +2018,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                             "mode": mode
                         })
                     await db.update_clone(bot_id, {"force_subscribe": fsub_data})
-                    await safe_action(query.message.edit_text("✅ Successfully updated **force subscribe channel**!")
+                    await safe_action(query.message.edit_text("✅ Successfully updated **force subscribe channel**!"))
                     await asyncio.sleep(2)
                     await show_fsub_menu(client, query.message, bot_id)
                     ADD_FSUB.pop(user_id, None)
@@ -2026,10 +2026,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await safe_action(client.send_message(
                         LOG_CHANNEL,
                         f"⚠️ Update Force Subscribe Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-                    )
+                    ))
                     print(f"⚠️ Update Force Subscribe Error: {e}")
                     print(traceback.format_exc())
-                    await safe_action(query.message.edit_text(f"❌ Failed to update **force subscribe channel**: {e}")
+                    await safe_action(query.message.edit_text(f"❌ Failed to update **force subscribe channel**: {e}"))
                     await asyncio.sleep(2)
                     await show_fsub_menu(client, query.message, bot_id)
                     ADD_FSUB.pop(user_id, None)
