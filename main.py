@@ -104,7 +104,7 @@ async def complete_task(client_id: int):
 async def dispatch_task(chat_id: int, text: str):
     client, client_id = get_least_loaded_bot()
     try:
-        await client.send_message(chat_id, text)
+        await safe_action(client.send_message, chat_id, text)
     except Exception as e:
         logger.warning(f"Failed to send with bot {client_id}: {e}")
     finally:
