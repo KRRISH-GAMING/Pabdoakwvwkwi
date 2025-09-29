@@ -568,6 +568,8 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
         if not await db.is_premium(owner_id):
             return
 
+        username = clone.get('username', bot_id)
+
         clone_client = get_client(bot_id)
         if not clone_client:
             return
@@ -582,6 +584,8 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if not await db.is_premium(owner_id):
                     return
 
+                username = fresh.get('username', bot_id)
+
                 mode = fresh.get("ap_mode", "single")
 
                 item = None
@@ -590,7 +594,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if mode == "single":
                     item = await db.pop_random_unposted_media(bot_id)
                     if not item:
-                        print(f"⌛ No new media for {bot_id}, sleeping 60s...")
+                        print(f"⌛ No new media for {username}, sleeping 60s...")
                         await asyncio.sleep(60)
                         continue
 
@@ -615,7 +619,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                             items.append(item)
 
                     if not items:
-                        print(f"⌛ No new media for {bot_id}, sleeping 60s...")
+                        print(f"⌛ No new media for {username}, sleeping 60s...")
                         await asyncio.sleep(60)
                         continue
 
@@ -673,7 +677,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                         for it in items:
                             await db.unmark_media_posted(bot_id, it["file_id"])
 
-                print(f"⚠️ Clone Auto-post error for {bot_id}: {e}")
+                print(f"⚠️ Clone Auto-post error for {username}: {e}")
                 try:
                     await clone_client.send_message(
                         LOG_CHANNEL,
