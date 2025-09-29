@@ -289,7 +289,7 @@ async def start(client, message):
                     )
                     
                     reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
-                    asyncio.create_task(schedule_delete(client, db, sent_msg.chat.id, [sent_msg.id], notice.id, auto_delete_time2, reload_url))
+                    asyncio.create_task(auto_delete_message(client, [sent_msg], notice, auto_delete_time2, reload_url))
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
@@ -425,7 +425,7 @@ async def start(client, message):
                     )
 
                     reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
-                    asyncio.create_task(schedule_delete(client, db, sent_files[0].chat.id, [msg.id for msg in sent_files], notice.id, auto_delete_time2, reload_url))
+                    asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2, reload_url))
 
                 await safe_action(sts.edit_text, f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
@@ -512,7 +512,7 @@ async def start(client, message):
                     )
 
                     reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
-                    asyncio.create_task(schedule_delete(client, db, msg.id, [msg.id], notice.id, auto_delete_time2, reload_url))
+                    asyncio.create_task(auto_delete_message(client, [msg], notice, auto_delete_time2, reload_url))
                 return
             except UserIsBlocked:
                 print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
