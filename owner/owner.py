@@ -2333,7 +2333,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await safe_action(query.message.edit_text("✏️ Updating **auto post**, please wait...")
+                await safe_action(query.message.edit_text("✏️ Updating **auto post**, please wait..."))
                 try:
                     await db.update_clone(bot_id, {
                         "auto_post": True,
@@ -2341,14 +2341,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         "ap_mode": mode
                     })
                     asyncio.create_task(auto_post_clone(bot_id, db, chat_id))
-                    await safe_action(query.message.edit_text("✅ Successfully updated **auto post**!")
+                    await safe_action(query.message.edit_text("✅ Successfully updated **auto post**!"))
                     await asyncio.sleep(2)
                     await show_post_menu(client, query.message, bot_id)
                     AUTO_POST.pop(user_id, None)
                 except Exception as e:
                     await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
                     await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Update Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
-                    await safe_action(query.message.edit_text(f"❌ Failed to update **auto post**: {e}")
+                    await safe_action(query.message.edit_text(f"❌ Failed to update **auto post**: {e}"))
                     await asyncio.sleep(2)
                     await show_post_menu(client, query.message, bot_id)
                     AUTO_POST.pop(user_id, None)
@@ -2519,7 +2519,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await safe_action(query.message.edit_text(
                         text="🔗 Please provide the updated **Upi I'd**:",
                         reply_markup=InlineKeyboardMarkup(buttons)
-                    )
+                    ))
 
             # Cancel Premium User
             elif action == "cancel_pu":
