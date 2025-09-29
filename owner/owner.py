@@ -107,7 +107,7 @@ async def set_auto_menu(client):
 
         print("✅ Main Bot Menu Commands Set!")
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Set Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -129,7 +129,7 @@ async def set_clone_menu(xd):
         await xd.set_bot_commands(clone_cmds, scope=BotCommandScopeDefault())
         print("✅ Clone Bot Menu Commands Set!")
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -152,7 +152,7 @@ async def start(client, message):
 
         if not await db.is_user_exist(user_id):
             await db.add_user(user_id, first_name)
-            await safe_action(client.send_message(
+            await safe_action(lambda: client.send_message(
                 LOG_CHANNEL,
                 script.LOG_TEXT.format(user_id, mention, username)
             ))
@@ -167,7 +167,7 @@ async def start(client, message):
 
                 btn = [[InlineKeyboardButton("🔔 Join Channel", url=invite_link.invite_link)]]
 
-                return await safe_action(client.send_message(
+                return await safe_action(lambda: client.send_message(
                     user_id,
                     "🚨 You must join the channel first to use this bot.",
                     reply_markup=InlineKeyboardMarkup(btn),
@@ -184,12 +184,12 @@ async def start(client, message):
                 [InlineKeyboardButton('🌟 Buy Premium', callback_data='premium')],
                 [InlineKeyboardButton('🔒 Close', callback_data='close')]
             ]
-            return await safe_action(message.reply_text(
+            return await safe_action(lambda: message.reply_text(
                 script.START_TXT.format(user=message.from_user.mention, bot=client.me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Start Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -199,9 +199,9 @@ async def start(client, message):
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(client, message):
     try:
-        await safe_action(message.reply_text(script.HELP_TXT))
+        await safe_action(lambda: message.reply_text(script.HELP_TXT))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Help Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -211,40 +211,40 @@ async def help(client, message):
 @Client.on_message(filters.command("add_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def add_premium(client: Client, message: Message):
     try:
-        ask_id = await safe_action(client.ask(
+        ask_id = await safe_action(lambda: client.ask(
             chat_id=message.chat.id,
             text="👤 Send the User ID to add as premium:",
             filters=filters.text,
         ))
         user_id = int(ask_id.text.strip())
 
-        ask_days = await safe_action(client.ask(
+        ask_days = await safe_action(lambda: client.ask(
             chat_id=message.chat.id,
             text="📅 Send number of days for premium:",
             filters=filters.text,
         ))
         days = int(ask_days.text.strip())
 
-        ask_plan = await safe_action(client.ask(
+        ask_plan = await safe_action(lambda: client.ask(
             chat_id=message.chat.id,
             text="💎 Send plan type:\n\n- `normal`\n- `ultra`",
             filters=filters.text,
         ))
         plan = ask_plan.text.lower().strip()
         if plan not in ["normal", "ultra"]:
-            return await safe_action(message.reply_text("❌ Invalid plan type. Must be 'normal' or 'ultra'."))
+            return await safe_action(lambda: message.reply_text("❌ Invalid plan type. Must be 'normal' or 'ultra'."))
 
         await db.add_premium_user(user_id, days, plan)
 
         expiry = (datetime.utcnow() + timedelta(days=days)).strftime("%Y-%m-%d %H:%M")
-        await safe_action(message.reply_text(
+        await safe_action(lambda: message.reply_text(
             f"✅ Added **{plan.title()} Premium**\n\n"
             f"👤 User ID: `{user_id}`\n"
             f"📅 Days: {days}\n"
             f"⏳ Expiry: {expiry}"
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Add Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -254,7 +254,7 @@ async def add_premium(client: Client, message: Message):
 @Client.on_message(filters.command("remove_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
 async def remove_premium(client: Client, message: Message):
     try:
-        ask_id = await safe_action(client.ask(
+        ask_id = await safe_action(lambda: client.ask(
             chat_id=message.chat.id,
             text="👤 Send the User ID to remove from premium:",
             filters=filters.text,
@@ -263,12 +263,12 @@ async def remove_premium(client: Client, message: Message):
         user_id = int(ask_id.text.strip())
         user = await db.get_premium_user(user_id)
         if not user:
-            return await safe_action(message.reply_text(f"ℹ️ User `{user_id}` is **not premium**."))
+            return await safe_action(lambda: message.reply_text(f"ℹ️ User `{user_id}` is **not premium**."))
 
         await db.remove_premium_user(user_id)
-        await safe_action(message.reply_text(f"✅ Removed premium from {user_id}."))
+        await safe_action(lambda: message.reply_text(f"✅ Removed premium from {user_id}."))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Remove Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -280,7 +280,7 @@ async def list_premium(client: Client, message: Message):
     try:
         users = await db.list_premium_users()
         if not users:
-            return await safe_action(message.reply_text("ℹ️ No premium users found."))
+            return await safe_action(lambda: message.reply_text("ℹ️ No premium users found."))
 
         text = "👑 **Premium Users List** 👑\n\n"
         for u in users:
@@ -308,9 +308,9 @@ async def list_premium(client: Client, message: Message):
                 caption="📄 Premium Users List"
             ))
         else:
-            await safe_action(message.reply_text(text))
+            await safe_action(lambda: message.reply_text(text))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ List Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -321,13 +321,13 @@ async def list_premium(client: Client, message: Message):
 async def check_premium(client: Client, message: Message):
     try:
         if len(message.command) < 2:
-            return await safe_action(message.reply_text("❌ Usage: /check_premium <user_id>"))
+            return await safe_action(lambda: message.reply_text("❌ Usage: /check_premium <user_id>"))
 
         user_id = int(message.command[1])
         user = await db.get_premium_user(user_id)
 
         if not user:
-            return await safe_action(message.reply_text(f"ℹ️ User `{user_id}` is **not premium**."))
+            return await safe_action(lambda: message.reply_text(f"ℹ️ User `{user_id}` is **not premium**."))
 
         plan = user.get("plan_type", "normal").title()
         expiry = user.get("expiry_time")
@@ -336,20 +336,20 @@ async def check_premium(client: Client, message: Message):
             remaining = expiry - datetime.utcnow()
             days_left = remaining.days
             exp_str = expiry.strftime("%Y-%m-%d %H:%M")
-            await safe_action(message.reply_text(
+            await safe_action(lambda: message.reply_text(
                 f"👤 **User:** `{user_id}`\n"
                 f"💎 **Plan:** {plan}\n"
                 f"📅 **Expiry:** {exp_str}\n"
                 f"⏳ **Remaining:** {days_left} days"
             ))
         else:
-            await safe_action(message.reply_text(
+            await safe_action(lambda: message.reply_text(
                 f"👤 **User:** `{user_id}`\n"
                 f"💎 **Plan:** {plan}\n"
                 f"❌ Premium expired."
             ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -367,15 +367,15 @@ async def broadcast(client, message):
         if message.reply_to_message:
             b_msg = message.reply_to_message
         else:
-            b_msg = await safe_action(client.ask(
+            b_msg = await safe_action(lambda: client.ask(
                 message.chat.id,
                 "📩 Send the message to broadcast\n\n/cancel to stop.",
             ))
 
             if b_msg.text and b_msg.text.lower() == '/cancel':
-                return await safe_action(message.reply('🚫 Broadcast cancelled.'))
+                return await safe_action(lambda: message.reply('🚫 Broadcast cancelled.'))
 
-        sts = await safe_action(message.reply_text("⏳ Broadcast starting..."))
+        sts = await safe_action(lambda: message.reply_text("⏳ Broadcast starting..."))
         start_time = time.time()
         total_users = await db.total_users_count()
 
@@ -406,7 +406,7 @@ async def broadcast(client, message):
                         eta = timedelta(seconds=int(remaining / speed)) if speed > 0 else "∞"
 
                         try:
-                            await safe_action(sts.edit(f"""
+                            await safe_action(lambda: sts.edit(f"""
 📢 <b>Broadcast in Progress...</b>
 
 {progress}
@@ -451,9 +451,9 @@ async def broadcast(client, message):
 
 ⚡ Speed: {speed:.2f} users/sec
 """
-        await safe_action(sts.edit(final_text))
+        await safe_action(lambda: sts.edit(final_text))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -468,13 +468,13 @@ async def stats(client, message):
 
         uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
-        await safe_action(message.reply(
+        await safe_action(lambda: message.reply(
             f"📊 Status for @{username}\n\n"
             f"👤 Users: {users_count}\n"
             f"⏱ Uptime: {uptime}\n",
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Stats Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -483,20 +483,20 @@ async def stats(client, message):
 
 @Client.on_message(filters.command('restart') & filters.user(ADMINS) & filters.private)
 async def restart(client, message):
-    msg = await safe_action(message.reply_text(f"🔄 Restarting the server...\n[░░░░░░░░░░] 0%", quote=True))
+    msg = await safe_action(lambda: message.reply_text(f"🔄 Restarting the server...\n[░░░░░░░░░░] 0%", quote=True))
 
     for i in range(1, 11):
         await asyncio.sleep(0.5)
         bar = '▓' * i + '░' * (10 - i)
-        await safe_action(msg.edit_text(f"🔄 Restarting the server...\n[{bar}] {i*10}%"))
+        await safe_action(lambda: msg.edit_text(f"🔄 Restarting the server...\n[{bar}] {i*10}%"))
 
-    await safe_action(msg.edit_text(f"✅ Server restarted successfully!"))
+    await safe_action(lambda: msg.edit_text(f"✅ Server restarted successfully!"))
 
     try:
         os.execl(sys.executable, sys.executable, *sys.argv)
     except Exception as e:
         print(f"⚠️ Error restarting the server: {e}")
-        return await safe_action(msg.edit_text(
+        return await safe_action(lambda: msg.edit_text(
             f"❌ Failed to restart the server.\n\nError: {e}"
         ))
 
@@ -506,13 +506,13 @@ async def contact(client, message):
         if message.reply_to_message:
             c_msg = message.reply_to_message
         else:
-            c_msg = await safe_action(client.ask(
+            c_msg = await safe_action(lambda: client.ask(
                 message.from_user.id,
                 "📩 Now send me your contact message\n\nType /cancel to stop.",
             ))
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply("🚫 Contact cancelled."))
+                return await safe_action(lambda: message.reply("🚫 Contact cancelled."))
 
         header = (
             f"📩 **New Contact Message**\n\n"
@@ -524,16 +524,16 @@ async def contact(client, message):
             content = f"\n💬 Message:\n{c_msg.text}"
             final_text = header + content
             for admin_id in ADMINS:
-                await safe_action(client.send_message(admin_id, final_text))
+                await safe_action(lambda: client.send_message(admin_id, final_text))
         else:
             orig_caption = c_msg.caption or ""
             final_caption = f"{header}\n💬 Message:\n{orig_caption}" if orig_caption else header
             for admin_id in ADMINS:
-                await safe_action(c_msg.copy(admin_id, caption=final_caption))
+                await safe_action(lambda: c_msg.copy(admin_id, caption=final_caption))
 
-        await safe_action(message.reply_text("✅ Your message has been sent to the admin!"))
+        await safe_action(lambda: message.reply_text("✅ Your message has been sent to the admin!"))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Contact Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -560,18 +560,18 @@ async def reply(client, message):
                 f"📩 **Reply from Admin**\n\n"
                 f"💬 Message:\n{message.text}"
             )
-            await safe_action(client.send_message(user_id, text))
+            await safe_action(lambda: client.send_message(user_id, text))
         else:
             orig_caption = message.caption or ""
             final_caption = (
                 f"📩 **Reply from Admin**\n\n💬 Message:\n{orig_caption}"
                 if orig_caption else "📩 **Reply from Admin**"
             )
-            await safe_action(message.copy(user_id, caption=final_caption))
+            await safe_action(lambda: message.copy(user_id, caption=final_caption))
 
-        await safe_action(message.reply("✅ Reply delivered!"))
+        await safe_action(lambda: message.reply("✅ Reply delivered!"))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -599,13 +599,13 @@ async def show_clone_menu(client, message, user_id):
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="start")])
 
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             script.MANAGEC_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
 
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Clone Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -620,12 +620,12 @@ async def show_text_menu(client, message, bot_id):
             InlineKeyboardButton('🔄 Default', callback_data=f'default_text_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'start_message_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.ST_TXT_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Text Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -640,12 +640,12 @@ async def show_photo_menu(client, message, bot_id):
             InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_photo_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'start_message_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.ST_PIC_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Photo Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -660,12 +660,12 @@ async def show_caption_menu(client, message, bot_id):
             InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_caption_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'start_message_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.CAPTION_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Caption Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -695,12 +695,12 @@ async def show_button_menu(client, message, bot_id):
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")])
 
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.BUTTON_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Button Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -715,12 +715,12 @@ async def show_header_menu(client, message, bot_id):
             InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_header_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'link_message_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.HEADER_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Header Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -735,12 +735,12 @@ async def show_footer_menu(client, message, bot_id):
             InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_footer_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'link_message_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.FOOTER_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Footer Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -798,12 +798,12 @@ async def show_fsub_menu(client, message, bot_id):
         if not fsub_data:
             text = '📢 No active Force Subscribe channels.\n\n➕ Add one below:'
 
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=f"{script.FSUB_TXT}\n\n{text}",
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Force Subscribe Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -860,12 +860,12 @@ async def show_token_menu(client, message, bot_id):
             status = "🔴 Disabled"
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.TOKEN_TXT.format(status=f"{status}"),
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Token Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -880,12 +880,12 @@ async def show_validity_menu(client, message, bot_id):
             InlineKeyboardButton('🔄 Default', callback_data=f'default_atvalidity_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'access_token_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AT_VALIDITY_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Validity Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -900,12 +900,12 @@ async def show_tutorial_menu(client, message, bot_id):
             InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_attutorial_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'access_token_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AT_TUTORIAL_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Tutorial Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -949,12 +949,12 @@ async def show_post_menu(client, message, bot_id):
             status = "🔴 Disabled"
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AUTO_POST_TXT.format(status=f"{status}"),
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Post Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -969,12 +969,12 @@ async def show_image_menu(client, message, bot_id):
             InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_apimage_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_post_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AP_IMG_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Image Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -989,12 +989,12 @@ async def show_sleep_menu(client, message, bot_id):
             InlineKeyboardButton('🔄 Default', callback_data=f'default_apsleep_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_post_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AP_SLEEP_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Sleep Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1005,7 +1005,7 @@ async def show_premium_menu(client, message, bot_id):
     try:
         clone = await db.get_clone_by_id(bot_id)
         if not clone:
-            await safe_action(message.edit_text("❌ Clone not found."))
+            await safe_action(lambda: message.edit_text("❌ Clone not found."))
             return
 
         premium_user = clone.get("premium_user", [])
@@ -1050,10 +1050,10 @@ async def show_premium_menu(client, message, bot_id):
 
         text = script.PREMIUM_TXT + f"\n\n👥 **Current Premium Users:**\n{pu_list_text}"
 
-        await safe_action(message.edit_text(text=text, reply_markup=InlineKeyboardMarkup(buttons)))
+        await safe_action(lambda: message.edit_text(text=text, reply_markup=InlineKeyboardMarkup(buttons)))
 
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1068,12 +1068,12 @@ async def show_time_menu(client, message, bot_id):
             InlineKeyboardButton('🔄 Default', callback_data=f'default_adtime_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_delete_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AD_TIME_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Time Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1088,12 +1088,12 @@ async def show_message_menu(client, message, bot_id):
             InlineKeyboardButton('🔄 Default', callback_data=f'default_admessage_{bot_id}')],
             [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_delete_{bot_id}')]
         ]
-        await safe_action(message.edit_text(
+        await safe_action(lambda: message.edit_text(
             text=script.AD_MSG_TXT,
             reply_markup=InlineKeyboardMarkup(buttons)
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Message Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1131,9 +1131,9 @@ async def show_moderator_menu(client, message, bot_id):
         if mod_list_text:
             text += f"\n\n👥 **Current Moderators:**\n{mod_list_text}"
 
-        await safe_action(message.edit_text(text=text, reply_markup=InlineKeyboardMarkup(buttons)))
+        await safe_action(lambda: message.edit_text(text=text, reply_markup=InlineKeyboardMarkup(buttons)))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Show Moderator Menu Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1206,7 +1206,7 @@ async def fetch_fampay_payments():
         return transactions
 
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1230,7 +1230,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton('🔒 Close', callback_data='close')]
             ]
             me = await client.get_me()
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.START_TXT.format(user=query.from_user.mention, bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1238,7 +1238,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # Help
         elif data == "help":
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.HELP_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1247,7 +1247,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data == "about":
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
             me = await client.get_me()
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.ABOUT_TXT.format(bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1260,7 +1260,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data == "add_clone":
             CLONE_TOKEN[user_id] = query.message
             buttons = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_add_clone")]]
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.CLONE_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1281,7 +1281,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if time.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
-                await safe_action(message.reply_text(f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start."))
+                await safe_action(lambda: message.reply_text(f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start."))
 
             active = clone.get("active", True)
             activate_text = "✅ Activate" if active else "❌ Deactivated"
@@ -1302,7 +1302,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_{bot_id}')],
                 [InlineKeyboardButton('⬅️ Back', callback_data='clone')]
             ]
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.CUSTOMIZEC_TXT.format(username=f"@{clone['username']}"),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1371,7 +1371,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if time.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
-                await safe_action(message.reply_text(f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start."))
+                await safe_action(lambda: message.reply_text(f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start."))
 
             active = clone.get("active", True)
 
@@ -1392,7 +1392,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                      InlineKeyboardButton('🔘 Start Button', callback_data=f'start_button_{bot_id}')],
                     [InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]
                 ]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.ST_MSG_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1417,7 +1417,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 START_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_edit_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_ST_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1478,7 +1478,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 START_PHOTO[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_ST_PIC,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1547,7 +1547,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 CAPTION_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addcaption_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_CAPTION_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1620,7 +1620,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         "step": "name"
                     }
                 buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addbutton_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_BUTTON_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1669,7 +1669,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                      InlineKeyboardButton('🔻 Footer Text', callback_data=f'footer_{bot_id}')],
                     [InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]
                 ]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.CH_MSG_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1691,7 +1691,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status = "🔴 Disabled"
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.WORD_FILTER_TXT.format(status=f"{status}"),
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1713,7 +1713,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status_text = "🔴 **Offensive Word Filter** has been successfully DISABLED!"
 
                 buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"word_filter_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1735,7 +1735,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status = "🔴 Disabled"
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.MEDIA_FILTER_TXT.format(status=f"{status}"),
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1757,7 +1757,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status_text = "🔴 **Offensive Media Filter** has been successfully DISABLED!"
 
                 buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"media_filter_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1787,7 +1787,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status = "🔴 Disabled"
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.RANDOM_CAPTION_TXT.format(status=f"{status}"),
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1809,7 +1809,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status_text = "🔴 **Random Caption** has been successfully DISABLED!"
 
                 buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"random_caption_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1834,7 +1834,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 HEADER_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addheader_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_HEADER_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1899,7 +1899,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 FOOTER_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addfooter_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_FOOTER_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1973,7 +1973,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     "step": "channel"
                 }
                 buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addfsub_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_FSUB_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -1997,7 +1997,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 link = data.get("link")
                 name = data.get("name", "Channel")
 
-                await safe_action(query.message.edit_text("✏️ Updating your clone's **force subscribe channel**, please wait..."))
+                await safe_action(lambda: query.message.edit_text("✏️ Updating your clone's **force subscribe channel**, please wait..."))
                 try:
                     fsub_data = clone.get("force_subscribe", [])
                     existing = next((x for x in fsub_data if x["channel"] == ch), None)
@@ -2018,18 +2018,18 @@ async def cb_handler(client: Client, query: CallbackQuery):
                             "mode": mode
                         })
                     await db.update_clone(bot_id, {"force_subscribe": fsub_data})
-                    await safe_action(query.message.edit_text("✅ Successfully updated **force subscribe channel**!"))
+                    await safe_action(lambda: query.message.edit_text("✅ Successfully updated **force subscribe channel**!"))
                     await asyncio.sleep(2)
                     await show_fsub_menu(client, query.message, bot_id)
                     ADD_FSUB.pop(user_id, None)
                 except Exception as e:
-                    await safe_action(client.send_message(
+                    await safe_action(lambda: client.send_message(
                         LOG_CHANNEL,
                         f"⚠️ Update Force Subscribe Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     ))
                     print(f"⚠️ Update Force Subscribe Error: {e}")
                     print(traceback.format_exc())
-                    await safe_action(query.message.edit_text(f"❌ Failed to update **force subscribe channel**: {e}"))
+                    await safe_action(lambda: query.message.edit_text(f"❌ Failed to update **force subscribe channel**: {e}"))
                     await asyncio.sleep(2)
                     await show_fsub_menu(client, query.message, bot_id)
                     ADD_FSUB.pop(user_id, None)
@@ -2106,7 +2106,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     callback = f"access_token_{bot_id}"
 
                 buttons = [[InlineKeyboardButton(text, callback_data=callback)]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2143,7 +2143,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 ACCESS_TOKEN_VALIDITY[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editatvalidity_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="⏱ Please provide the new **Access Token Validity** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2213,7 +2213,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 ACCESS_TOKEN_TUTORIAL[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="🔗 Please provide the updated **Access Token Tutorial** link:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2308,7 +2308,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     callback = f"auto_post_{bot_id}"
 
                 buttons = [[InlineKeyboardButton(text, callback_data=callback)]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2333,7 +2333,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await safe_action(query.message.edit_text("✏️ Updating **auto post**, please wait..."))
+                await safe_action(lambda: query.message.edit_text("✏️ Updating **auto post**, please wait..."))
                 try:
                     await db.update_clone(bot_id, {
                         "auto_post": True,
@@ -2341,14 +2341,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         "ap_mode": mode
                     })
                     asyncio.create_task(auto_post_clone(bot_id, db, chat_id))
-                    await safe_action(query.message.edit_text("✅ Successfully updated **auto post**!"))
+                    await safe_action(lambda: query.message.edit_text("✅ Successfully updated **auto post**!"))
                     await asyncio.sleep(2)
                     await show_post_menu(client, query.message, bot_id)
                     AUTO_POST.pop(user_id, None)
                 except Exception as e:
                     await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
-                    await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Update Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
-                    await safe_action(query.message.edit_text(f"❌ Failed to update **auto post**: {e}"))
+                    await safe_action(lambda: client.send_message(LOG_CHANNEL, f"⚠️ Update Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
+                    await safe_action(lambda: query.message.edit_text(f"❌ Failed to update **auto post**: {e}"))
                     await asyncio.sleep(2)
                     await show_post_menu(client, query.message, bot_id)
                     AUTO_POST.pop(user_id, None)
@@ -2375,7 +2375,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 AUTO_POST_IMAGE[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.EDIT_AP_IMG,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2444,7 +2444,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 AUTO_POST_SLEEP[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editapsleep_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="⏱ Please provide the new **Auto Post Sleep** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2516,7 +2516,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 else:
                     PREMIUM_UPI[user_id] = (query.message, bot_id)
                     buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_pu_{bot_id}')]]
-                    await safe_action(query.message.edit_text(
+                    await safe_action(lambda: query.message.edit_text(
                         text="🔗 Please provide the updated **Upi I'd**:",
                         reply_markup=InlineKeyboardMarkup(buttons)
                     ))
@@ -2533,7 +2533,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await db.update_clone(bot_id, {"premium_upi": None})
 
                 buttons = [[InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="❌ Premium setup cancelled.\nYou can re-enable it anytime by providing a valid UPI ID.",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2548,7 +2548,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 ADD_PREMIUM[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addpu_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="✏️ Please provide the User ID of the new **premium user**:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2606,7 +2606,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         buttons.append([InlineKeyboardButton(f"👤 {name}", callback_data=f"remove_pu_{bot_id}_{user_id_int}")])
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"premium_user_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     "👥 Please select a **premium user** to remove from the list:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2680,7 +2680,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status = "🔴 Disabled"
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.DELETE_TXT.format(status=f"{status}"),
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2702,7 +2702,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status_text = "🔴 Auto Delete has been successfully DISABLED!"
 
                 buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"auto_delete_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2727,7 +2727,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 AUTO_DELETE_TIME[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadtime_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="⏱ Please provide the new **Auto Delete Time** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2797,7 +2797,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 AUTO_DELETE_MESSAGE[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="📄 Please provide the new **Auto Delete Message**:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2852,7 +2852,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status = "🔴 Disabled"
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=script.FORWARD_TXT.format(status=f"{status}"),
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2874,7 +2874,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     status_text = "🔴 **Forward Protect** has been successfully DISABLED!"
 
                 buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"forward_protect_{bot_id}")]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2899,7 +2899,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 ADD_MODERATOR[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addmoderator_{bot_id}')]]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text="✏️ Please provide the User ID of the new **moderator**:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2941,7 +2941,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     buttons.append([InlineKeyboardButton(f"👤 {name}", callback_data=f"remove_mod_{bot_id}_{mod}")])
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"moderator_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     "👥 Please select a **moderator** to remove from the list:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -2988,7 +2988,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     buttons.append([InlineKeyboardButton(f"👤 {name}", callback_data=f"transfer_mod_{bot_id}_{mod}")])
 
                 buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"moderator_{bot_id}")])
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     "🔁 Please select a **moderator** to transfer ownership rights:",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -3016,7 +3016,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await db.update_clone(bot_id, {"$addToSet": {"moderators": str(old_owner)}}, raw=True)
 
                 await db.update_clone(bot_id, {"$pull": {"moderators": str(mod_id)}}, raw=True)
-                await safe_action(client.send_message(
+                await safe_action(lambda: client.send_message(
                     mod_id,
                     f"✅ You are now the owner of the bot **{clone.get('name')}** (ID: {clone.get('bot_id')})"
                 ))
@@ -3078,28 +3078,28 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await safe_action(query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[░░░░░░░░░░] 0%"))
+                await safe_action(lambda: query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[░░░░░░░░░░] 0%"))
 
                 for i in range(1, 11):
                     await asyncio.sleep(0.5)
                     bar = '▓' * i + '░' * (10 - i)
-                    await safe_action(query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%"))
+                    await safe_action(lambda: query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%"))
 
                 try:
                     clone_client = get_client(bot_id)
                     if not clone_client:
-                        return await safe_action(query.message.edit_text("❌ Clone client not found in memory!"))
+                        return await safe_action(lambda: query.message.edit_text("❌ Clone client not found in memory!"))
 
                     await clone_client.stop()
                     await asyncio.sleep(1)
                     await clone_client.start()
                 except Exception as e:
                     print(f"⚠️ Error restarting clone {bot_id}: {e}")
-                    return await safe_action(query.message.edit_text(
+                    return await safe_action(lambda: query.message.edit_text(
                         f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}"
                     ))
 
-                await safe_action(query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!"))
+                await safe_action(lambda: query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!"))
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
@@ -3115,7 +3115,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     [InlineKeyboardButton('✅ Yes, Sure', callback_data=f'delete_clone_{bot_id}')],
                     [InlineKeyboardButton('❌ No, Go Back', callback_data=f'manage_{bot_id}')]
                 ]
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     text='⚠️ Are You Sure? Do you want **delete** your clone bot.',
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
@@ -3130,7 +3130,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 bot_id = int(bot_id)
                 await db.delete_clone(bot_id)
-                await safe_action(query.message.edit_text("✅ Clone deleted successfully."))
+                await safe_action(lambda: query.message.edit_text("✅ Clone deleted successfully."))
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
@@ -3164,7 +3164,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton("⬅️ Back", callback_data="start")]
             ]
 
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=text,
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode=enums.ParseMode.MARKDOWN
@@ -3196,7 +3196,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton("⬅️ Back", callback_data="premium")]
             ]
 
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=text,
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode=enums.ParseMode.MARKDOWN
@@ -3220,7 +3220,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 expiry_date = datetime.utcnow() + timedelta(days=days)
                 plan_type = feature_type.lower().split()[0]
                 await db.add_premium_user(user_id, days, plan_type)
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     f"✅ Payment confirmed!\n"
                     f"Feature: **{feature_type}**\n"
                     f"Amount: ₹{amount_expected}\n"
@@ -3229,7 +3229,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     parse_mode=enums.ParseMode.MARKDOWN
                 ))
             else:
-                await safe_action(query.message.edit_text(
+                await safe_action(lambda: query.message.edit_text(
                     f"✅ Your payment request for **{feature_type}** has been recorded.\n\n"
                     f"💰 Amount: ₹{amount_expected}\n"
                     f"⏳ Waiting for payment confirmation via UPI...\n\n"
@@ -3242,13 +3242,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.delete()
 
         else:
-            await safe_action(client.send_message(
+            await safe_action(lambda: client.send_message(
                 LOG_CHANNEL,
                 f"⚠️ Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
             ))
             await query.answer("⚠️ Unknown action.", show_alert=True)
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Callback Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -3364,7 +3364,7 @@ async def message_capture(client: Client, message: Message):
                     await promote(bot.username)
                     await set_clone_menu(xd)
 
-                    await safe_action(client.send_message(
+                    await safe_action(lambda: client.send_message(
                         LOG_CHANNEL,
                         f"✅ New Clone Bot Created\n\n"
                         f"Bot Id: {bot.id}\n"
@@ -3380,7 +3380,7 @@ async def message_capture(client: Client, message: Message):
                     await show_clone_menu(client, msg, user_id)
                     CLONE_TOKEN.pop(user_id, None)
                 except Exception as e:
-                    await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Create Bot Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
+                    await safe_action(lambda: client.send_message(LOG_CHANNEL, f"⚠️ Create Bot Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
                     await msg.edit_text(f"❌ Failed to create **bot**: {e}")
                     await asyncio.sleep(2)
                     await show_clone_menu(client, msg, user_id)
@@ -3466,7 +3466,7 @@ async def message_capture(client: Client, message: Message):
                         await globals()[menu_func](client, orig_msg, bot_id)
                         handler_dict.pop(user_id, None)
                     except Exception as e:
-                        await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Error updating {db_field}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
+                        await safe_action(lambda: client.send_message(LOG_CHANNEL, f"⚠️ Error updating {db_field}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
                         await safe_action(orig_msg.edit_text(f"❌ Failed to update **{db_field.replace('_', ' ')}**: {e}"))
                         await asyncio.sleep(2)
                         await globals()[menu_func](client, orig_msg, bot_id)
@@ -3510,7 +3510,7 @@ async def message_capture(client: Client, message: Message):
                         await show_button_menu(client, orig_msg, bot_id)
                         ADD_BUTTON.pop(user_id, None)
                     except Exception as e:
-                        await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Update Start Button Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
+                        await safe_action(lambda: client.send_message(LOG_CHANNEL, f"⚠️ Update Start Button Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
                         await safe_action(orig_msg.edit_text(f"❌ Failed to update **start button**: {e}"))
                         await asyncio.sleep(2)
                         await show_button_menu(client, orig_msg, bot_id)
@@ -3643,7 +3643,7 @@ async def message_capture(client: Client, message: Message):
                             bot_id,
                             {"access_token": False, "at_shorten_link": None, "at_shorten_api": None}
                         )
-                        await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Update Access Token Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
+                        await safe_action(lambda: client.send_message(LOG_CHANNEL, f"⚠️ Update Access Token Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
                         await safe_action(orig_msg.edit_text(f"❌ Failed to update **access token**: {e}"))
                         await asyncio.sleep(2)
                         await show_token_menu(client, orig_msg, bot_id)
@@ -3728,6 +3728,6 @@ async def message_capture(client: Client, message: Message):
                 AUTO_POST.pop(user_id, None)
                 return
     except Exception as e:
-        await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
+        await safe_action(lambda: client.send_message(LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
         print(f"⚠️ Unexpected Error in message_capture: {e}")
         print(traceback.format_exc())
