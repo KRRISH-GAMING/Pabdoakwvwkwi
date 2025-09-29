@@ -237,8 +237,8 @@ async def start():
         tz = pytz.timezone("Asia/Kolkata")
         now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
         await dispatch_task(LOG_CHANNEL, script.RESTART_TXT.format(today, now))
-    except Exception:
-        logger.warning("Failed to send restart log")
+    except Exception as e:
+        logger.warning(f"Failed to send restart log: {e}")
 
     logger.info("Bot fully started. Idle mode...")
     await idle()
