@@ -104,7 +104,7 @@ async def complete_task(client_id: int):
 async def dispatch_task(chat_id: int, text: str):
     client, client_id = get_least_loaded_bot()
     try:
-        await client.send_message(chat_id, text)
+        await safe_action(client.send_message, chat_id, text)
     except Exception as e:
         logger.warning(f"Failed to send with bot {client_id}: {e}")
     finally:
@@ -170,14 +170,14 @@ async def restart_bots():
                 set_client(bot_me.id, xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-            """fresh = await db.get_clone_by_id(bot_me.id)
+            fresh = await db.get_clone_by_id(bot_me.id)
             if fresh and fresh.get("auto_post", False):
                 auto_post_channel = fresh.get("ap_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot_me.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")"""
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
@@ -194,7 +194,7 @@ async def restart_bots():
     await asyncio.gather(*tasks)
     print("✅ All clone bots processed for restart.")
 
-"""async def init_auto_deletes(client, db: Database):
+async def init_auto_deletes(client, db: Database):
     scheduled = await db.get_all_scheduled_deletes()
 
     for task in scheduled:
@@ -213,7 +213,7 @@ async def restart_bots():
 
         asyncio.create_task(
             schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
-        )"""
+        )
 
 async def start():
     logger.info("Initializing Bot...")
@@ -230,7 +230,8 @@ async def start():
     await initialize_clients()
     #await start_web_server()
     await restart_bots()
-    #await init_auto_deletes(StreamBot, db)
+
+    asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
         today = date.today()
