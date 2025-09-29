@@ -104,7 +104,7 @@ async def complete_task(client_id: int):
 async def dispatch_task(chat_id: int, text: str):
     client, client_id = get_least_loaded_bot()
     try:
-        await client.send_message(chat_id, text)
+        await safe_action(client.send_message, chat_id, text)
     except Exception as e:
         logger.warning(f"Failed to send with bot {client_id}: {e}")
     finally:
@@ -237,8 +237,8 @@ async def start():
         tz = pytz.timezone("Asia/Kolkata")
         now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
         await dispatch_task(LOG_CHANNEL, script.RESTART_TXT.format(today, now))
-    except Exception as e:
-        logger.warning(f"Failed to send restart log: {e}")
+    except Exception:
+        logger.warning("Failed to send restart log")
 
     logger.info("Bot fully started. Idle mode...")
     await idle()
