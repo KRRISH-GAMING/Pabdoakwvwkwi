@@ -520,19 +520,16 @@ async def contact(client, message):
             f"🆔 ID: `{message.from_user.id}`\n"
         )
 
-        if c_msg.media:
+        if c_msg.text:
+            content = f"\n💬 Message:\n{c_msg.text}"
+            final_text = header + content
+            for admin_id in ADMINS:
+                await safe_action(client.send_message, admin_id, final_text)
+        else:
             orig_caption = c_msg.caption or ""
             final_caption = f"{header}\n💬 Message:\n{orig_caption}" if orig_caption else header
             for admin_id in ADMINS:
                 await safe_action(c_msg.copy, admin_id, caption=final_caption)
-        elif c_msg.text:
-            content = f"\n💬 Message:\n{c_msg.text}"
-            final_text = header + content
-            for admin_id in ADMINS:
-                await safe_action(c_msg.copy, admin_id, final_text)
-        else:
-            for admin_id in ADMINS:
-                await safe_action(client.send_message, admin_id, header)
 
         await safe_action(message.reply_text, "✅ Your message has been sent to the admin!")
     except Exception as e:
@@ -558,15 +555,19 @@ async def reply(client, message):
         except:
             return
 
-        if message.media:
-            orig_caption = message.caption or ""
-            final_caption = f"📩 **Reply from Admin**\n\n💬 Message:\n{orig_caption}" if orig_caption else "📩 **Reply from Admin**"
-            await safe_action(message.copy, user_id, caption=final_caption)
-        elif message.text:
-            text = f"📩 **Reply from Admin**\n\n💬 Message:\n{message.text}"
+        if message.text:
+            text = (
+                f"📩 **Reply from Admin**\n\n"
+                f"💬 Message:\n{message.text}"
+            )
             await safe_action(client.send_message, user_id, text)
         else:
-            await safe_action(client.send_message, user_id, "📩 **Reply from Admin**")
+            orig_caption = message.caption or ""
+            final_caption = (
+                f"📩 **Reply from Admin**\n\n💬 Message:\n{orig_caption}"
+                if orig_caption else "📩 **Reply from Admin**"
+            )
+            await safe_action(message.copy, user_id, caption=final_caption)
 
         await safe_action(message.reply, "✅ Reply delivered!")
     except Exception as e:
