@@ -153,7 +153,7 @@ async def start(client, message):
                     await safe_action(client.send_message,
                         LOG_CHANNEL,
                         f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-                    ))
+                    )
                     print(f"⚠️ Clone Fsub Handler Error: {e}")
                     print(traceback.format_exc())
 
@@ -267,7 +267,7 @@ async def start(client, message):
                         protect_content=forward_protect
                     )
                 else:
-                    sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect))
+                    sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect)
 
                 if sent_msg:
                     if buttons_data:
@@ -286,7 +286,7 @@ async def start(client, message):
                     notice = await safe_action(client.send_message,
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
-                    ))
+                    )
                     
                     reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
                     asyncio.create_task(schedule_delete(client, db, sent_msg.chat.id, [sent_msg.id], notice.id, auto_delete_time2, reload_url))
@@ -382,7 +382,7 @@ async def start(client, message):
                                 protect_content=forward_protect
                             )
                         else:
-                            sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect))
+                            sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect)
 
                         buttons = []
                         for btn in buttons_data:
@@ -422,7 +422,7 @@ async def start(client, message):
                     notice = await safe_action(client.send_message,
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
-                    ))
+                    )
 
                     reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
                     asyncio.create_task(schedule_delete(client, db, sent_files[0].chat.id, [msg.id for msg in sent_files], notice.id, auto_delete_time2, reload_url))
@@ -632,7 +632,7 @@ async def genlink(client, message):
             )
 
             if g_msg.text and g_msg.text.lower() == '/cancel':
-                return await safe_action(message.reply, '🚫 Process has been cancelled.'))
+                return await safe_action(message.reply, '🚫 Process has been cancelled.')
 
         file_id = None
         file_name = None
@@ -667,7 +667,7 @@ async def genlink(client, message):
         await safe_action(message.reply,
             f"🔗 Here is your link:\n\n{share_link}",
             reply_markup=reply_markup
-        ))
+        )
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -700,25 +700,25 @@ async def batch(client, message):
         )
 
         if " " not in message.text:
-            return await safe_action(message.reply, usage_text))
+            return await safe_action(message.reply, usage_text)
 
         links = message.text.strip().split(" ")
         if len(links) != 3:
-            return await safe_action(message.reply, usage_text))
+            return await safe_action(message.reply, usage_text)
 
         cmd, first, last = links
         regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
 
         match = regex.match(first)
         if not match:
-            return await safe_action(message.reply, '❌ Invalid first link.'))
+            return await safe_action(message.reply, '❌ Invalid first link.')
         f_chat_id = match.group(4)
         f_msg_id = int(match.group(5))
         f_chat_id = int(f"-100{f_chat_id}") if f_chat_id.isnumeric() else f_chat_id
 
         match = regex.match(last)
         if not match:
-            return await safe_action(message.reply, '❌ Invalid last link.'))
+            return await safe_action(message.reply, '❌ Invalid last link.')
         l_chat_id = match.group(4)
         l_msg_id = int(match.group(5))
         l_chat_id = int(f"-100{l_chat_id}") if l_chat_id.isnumeric() else l_chat_id
@@ -809,9 +809,9 @@ async def batch(client, message):
             reply_markup=reply_markup
         )
     except ChannelInvalid:
-        await safe_action(message.reply, '⚠️ This may be a private channel / group. Make me an admin over there to index the files.'))
+        await safe_action(message.reply, '⚠️ This may be a private channel / group. Make me an admin over there to index the files.')
     except (UsernameInvalid, UsernameNotModified):
-        await safe_action(message.reply, '⚠️ Invalid Link specified.'))
+        await safe_action(message.reply, '⚠️ Invalid Link specified.')
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -854,7 +854,7 @@ async def shorten_handler(client: Client, message: Message):
         )
 
         if len(cmd) == 1:
-            help_msg = await safe_action(message.reply, help_text))
+            help_msg = await safe_action(message.reply, help_text)
             SHORTEN_STATE[user_id] = {"step": 1, "help_msg_id": help_msg.id}
 
             if user.get("base_site") and user.get("shortener_api"):
@@ -1017,7 +1017,7 @@ async def stats(client, message):
             f"💾 Used: {get_size(storage_used)} / {get_size(storage_limit)}\n"
             f"💽 Free: {get_size(storage_free)}\n"
             f"⏱ Uptime: {uptime}\n",
-        ))
+        )
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1068,14 +1068,14 @@ async def contact(client, message):
             content = f"\n💬 Message:\n{c_msg.text}"
             final_text = header + content
             if owner_id:
-                await safe_action(client.send_message, owner_id, final_text))
+                await safe_action(client.send_message, owner_id, final_text)
             for mod_id in moderators:
-                await safe_action(client.send_message, mod_id, final_text))
+                await safe_action(client.send_message, mod_id, final_text)
         else:
             if owner_id:
-                await safe_action(client.send_message, owner_id, header))
+                await safe_action(client.send_message, owner_id, header)
             for mod_id in moderators:
-                await safe_action(client.send_message, mod_id, header))
+                await safe_action(client.send_message, mod_id, header)
 
         await safe_action(message.reply_text, "✅ Your message has been sent to the admin!")
     except Exception as e:
@@ -1168,7 +1168,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(query.message.edit_text,
                 "💎 Choose your Premium Plan to remove ads:",
                 reply_markup=InlineKeyboardMarkup(premium_btns)
-            ))
+            )
 
         # User clicked a specific plan
         elif data.startswith("premium_") and not data.startswith("premium_done_"):
@@ -1212,7 +1212,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(query.message.edit_text,
                 f"⏳ Payment received for **Premium Plan** ({days} days).\nWaiting for admin approval...",
                 parse_mode=enums.ParseMode.MARKDOWN
-            ))
+            )
 
             approval_buttons = [
                 [
@@ -1230,7 +1230,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     f"🗓 Plan: {days} days\n\n"
                     f"Do you want to approve or reject?",
                     reply_markup=InlineKeyboardMarkup(approval_buttons)
-                ))
+                )
 
             for mod_id in moderators:
                 await safe_action(client.send_message,
@@ -1241,7 +1241,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     f"🗓 Plan: {days} days\n\n"
                     f"Do you want to approve or reject?",
                     reply_markup=InlineKeyboardMarkup(approval_buttons)
-                ))
+                )
 
         # Admin approves premium
         elif data.startswith("approve_"):
@@ -1281,11 +1281,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(client.send_message,
                 user_id,
                 f"✅ Your Premium Plan ({days} days) has been approved!\nEnjoy ad-free experience 🎉"
-            ))
+            )
 
             await safe_action(query.message.edit_text,
                 f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
-            ))
+            )
 
         # Admin rejects premium
         elif data.startswith("reject_"):
@@ -1321,11 +1321,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(client.send_message,
                 user_id,
                 f"❌ Your Premium Plan ({days} days) payment was *rejected*.\nContact support for help.",
-            ))
+            )
 
             await safe_action(query.message.edit_text,
                 f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
-            ))
+            )
 
         # Start Menu
         elif data == "start":
@@ -1366,7 +1366,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(client.send_message,
                 LOG_CHANNEL,
                 f"⚠️ Clone Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-            ))
+            )
             await query.answer("⚠️ Unknown action.", show_alert=True)
     except UserIsBlocked:
         print(f"⚠️ User {query.from_user.id} blocked the bot. Skipping callback...")
@@ -1441,7 +1441,7 @@ async def message_capture(client: Client, message: Message):
                 await safe_action(message.reply,
                     f"🔗 Here is your shortened link:\n\n{short_link}",
                     reply_markup=reply_markup
-                ))
+                )
                 
                 SHORTEN_STATE.pop(user_id, None)
         elif chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]:
