@@ -1234,11 +1234,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         if data.startswith("checksub"):
             if not await is_subscribedy(client, query):
-                await query.answer("Join our channel first.", show_alert=True)
+                await safe_action(query.answer, "Join our channel first.", show_alert=True)
                 return
             
             _, kk, file_id = data.split("#")
-            await query.answer(url=f"https://t.me/{me.username}?start={kk}_{file_id}")
+            await safe_action(query.answer,url=f"https://t.me/{me.username}?start={kk}_{file_id}")
 
         # Remove Ads / Premium Plan Menu
         elif data == "remove_ads":
@@ -1258,7 +1258,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data.startswith("premium_") and not data.startswith("premium_done_"):
             parts = data.split("_")
             if len(parts) < 2 or not parts[1].isdigit():
-                await query.answer("⚠️ Invalid plan.", show_alert=True)
+                await safe_action(query.answer, "⚠️ Invalid plan.", show_alert=True)
                 return
             days = int(parts[1])
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
@@ -1287,7 +1287,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data.startswith("premium_done_"):
             parts = data.split("_")
             if len(parts) < 3 or not parts[-1].isdigit():
-                await query.answer("⚠️ Invalid premium data.", show_alert=True)
+                await safe_action(query.answer, "⚠️ Invalid premium data.", show_alert=True)
                 return
             days = int(parts[-1])
             user_id = query.from_user.id
@@ -1332,7 +1332,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             try:
                 parts = data.split("_")
                 if len(parts) < 3:
-                    await query.answer("⚠️ Invalid approve data.", show_alert=True)
+                    await safe_action(query.answer, "⚠️ Invalid approve data.", show_alert=True)
                     return
 
                 user_id_str, days_str = parts[1], parts[2]
@@ -1340,7 +1340,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 days = int(days_str)
 
             except Exception:
-                await query.answer("⚠️ Invalid approve data.", show_alert=True)
+                await safe_action(query.answer, "⚠️ Invalid approve data.", show_alert=True)
                 return
 
             premium_users = clone.get("premium_user", [])
@@ -1376,7 +1376,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             try:
                 parts = data.split("_")
                 if len(parts) < 3:
-                    await query.answer("⚠️ Invalid reject data.", show_alert=True)
+                    await safe_action(query.answer, "⚠️ Invalid reject data.", show_alert=True)
                     return
 
                 user_id_str, days_str = parts[1], parts[2]
@@ -1384,7 +1384,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 days = int(days_str)
 
             except Exception:
-                await query.answer("⚠️ Invalid reject data.", show_alert=True)
+                await safe_action(query.answer, "⚠️ Invalid reject data.", show_alert=True)
                 return
 
             premium_users = clone.get("premium_user", [])
@@ -1451,7 +1451,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 LOG_CHANNEL,
                 f"⚠️ Clone Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
             )
-            await query.answer("⚠️ Unknown action.", show_alert=True)
+            await safe_action(query.answer, "⚠️ Unknown action.", show_alert=True)
     except UserIsBlocked:
         print(f"⚠️ User {query.from_user.id} blocked the bot. Skipping callback...")
         return
@@ -1464,7 +1464,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
         print(f"⚠️ Clone Callback Handler Error: {e}")
         print(traceback.format_exc())
-        await query.answer("❌ An error occurred. The admin has been notified.", show_alert=True)
+        await safe_action(query.answer, "❌ An error occurred. The admin has been notified.", show_alert=True)
 
 @Client.on_message(filters.all)
 async def message_capture(client: Client, message: Message):
