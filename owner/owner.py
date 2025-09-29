@@ -199,7 +199,7 @@ async def start(client, message):
 @Client.on_message(filters.command("help") & filters.private & filters.incoming)
 async def help(client, message):
     try:
-        await safe_action(message.reply_text, script.HELP_TXT))
+        await safe_action(message.reply_text, script.HELP_TXT)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -242,7 +242,7 @@ async def add_premium(client: Client, message: Message):
             f"👤 User ID: `{user_id}`\n"
             f"📅 Days: {days}\n"
             f"⏳ Expiry: {expiry}"
-        ))
+        )
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -303,12 +303,12 @@ async def list_premium(client: Client, message: Message):
                 text += f"• `{user_id}` | {username} | {plan} | ❌ Expired\n"
 
         if len(text) > 4000:
-            await safe_action(message.reply_document(
+            await safe_action(message.reply_document,
                 document=("premium_users.txt", text.encode("utf-8")),
                 caption="📄 Premium Users List"
-            ))
+            )
         else:
-            await safe_action(message.reply_text, text))
+            await safe_action(message.reply_text, text)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -321,7 +321,7 @@ async def list_premium(client: Client, message: Message):
 async def check_premium(client: Client, message: Message):
     try:
         if len(message.command) < 2:
-            return await safe_action(message.reply_text, "❌ Usage: /check_premium <user_id>"))
+            return await safe_action(message.reply_text, "❌ Usage: /check_premium <user_id>")
 
         user_id = int(message.command[1])
         user = await db.get_premium_user(user_id)
@@ -341,13 +341,13 @@ async def check_premium(client: Client, message: Message):
                 f"💎 **Plan:** {plan}\n"
                 f"📅 **Expiry:** {exp_str}\n"
                 f"⏳ **Remaining:** {days_left} days"
-            ))
+            )
         else:
             await safe_action(message.reply_text,
                 f"👤 **User:** `{user_id}`\n"
                 f"💎 **Plan:** {plan}\n"
                 f"❌ Premium expired."
-            ))
+            )
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -373,9 +373,9 @@ async def broadcast(client, message):
             )
 
             if b_msg.text and b_msg.text.lower() == '/cancel':
-                return await safe_action(message.reply, '🚫 Broadcast cancelled.'))
+                return await safe_action(message.reply, '🚫 Broadcast cancelled.')
 
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting..."))
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...")
         start_time = time.time()
         total_users = await db.total_users_count()
 
@@ -483,7 +483,7 @@ async def stats(client, message):
 
 @Client.on_message(filters.command('restart') & filters.user(ADMINS) & filters.private)
 async def restart(client, message):
-    msg = await safe_action(message.reply_text, f"🔄 Restarting the server...\n[░░░░░░░░░░] 0%", quote=True))
+    msg = await safe_action(message.reply_text, f"🔄 Restarting the server...\n[░░░░░░░░░░] 0%", quote=True)
 
     for i in range(1, 11):
         await asyncio.sleep(0.5)
@@ -560,7 +560,7 @@ async def reply(client, message):
                 f"📩 **Reply from Admin**\n\n"
                 f"💬 Message:\n{message.text}"
             )
-            await safe_action(client.send_message, user_id, text))
+            await safe_action(client.send_message, user_id, text)
         else:
             orig_caption = message.caption or ""
             final_caption = (
