@@ -286,7 +286,7 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
         print(f"⚠️ Clone Auto Delete Error: {e}")
         print(traceback.format_exc())
 
-async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id, delay_time, reload_url):
+"""async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id, delay_time, reload_url):
     delete_at = datetime.now(timezone.utc) + timedelta(seconds=delay_time)
 
     await db.add_scheduled_delete(chat_id, message_ids, notice_id, delete_at, reload_url)
@@ -296,7 +296,7 @@ async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id,
 
     await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
 
-    await db.delete_scheduled_deletes(message_ids)
+    await db.delete_scheduled_deletes(message_ids)"""
 
 def random_code(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
