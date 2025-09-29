@@ -509,7 +509,7 @@ async def start(client, message):
                     notice = await safe_action(client.send_message,
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
-                    ))
+                    )
 
                     reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
                     asyncio.create_task(schedule_delete(client, db, msg.id, [msg.id], notice.id, auto_delete_time2, reload_url))
