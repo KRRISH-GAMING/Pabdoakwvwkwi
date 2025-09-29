@@ -69,13 +69,13 @@ async def promote(bot_username: str):
             )
         )
 
-        await safe_action(assistant.send_message(
+        await safe_action(lambda: assistant.send_message(
             LOG_CHANNEL,
             f"✅ Clone bot @{bot_username} promoted as admin"
         ))
         print(f"✅ Clone bot @{bot_username} promoted as admin")
     except Exception as e:
-        await safe_action(assistant.send_message(
+        await safe_action(lambda: assistant.send_message(
             LOG_CHANNEL,
             f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
