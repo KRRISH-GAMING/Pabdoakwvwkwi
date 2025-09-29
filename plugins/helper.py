@@ -256,7 +256,7 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
         for msg in msg_to_delete:
             if msg:
                 try:
-                    await msg.delete()
+                    await safe_action(msg.delete)
                 except FloodWait as e:
                     print(f"⚠️ FloodWait {e.value}s while deleting, sleeping...")
                     await asyncio.sleep(e.value)
@@ -270,11 +270,11 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
         if notice_msg:
             keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("♻️ Get Again", url=reload_url)]]) if reload_url else None
             try:
-                await notice_msg.edit_text("✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
+                await safe_action(notice_msg.edit_text, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
             except Exception as e:
                 print(f"⚠️ Could not edit notice_msg: {e}")
                 try:
-                    await client.send_message(notice_msg.chat.id, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
+                    await safe_action(client.send_message, notice_msg.chat.id, "✅ Your File/Video is successfully deleted!", reply_markup=keyboard)
                 except Exception as e2:
                     print(f"⚠️ Could not send fallback message: {e2}")
 
