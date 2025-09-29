@@ -676,7 +676,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 print(f"⚠️ Clone Auto-post error for {bot_id}: {e}")
                 try:
-                    await clone_lambda: client.send_message(
+                    await clone_client.send_message(
                         LOG_CHANNEL,
                         f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
@@ -711,7 +711,7 @@ async def genlink(client, message):
         if message.reply_to_message:
             g_msg = message.reply_to_message
         else:
-            g_msg = await safe_action(client.ask(
+            g_msg = await safe_action(lambda: client.ask(
                 message.chat.id,
                 "📩 Please send me the message (file/text/media) to generate a shareable link.\n\nSend /cancel to stop.",
             ))
@@ -982,7 +982,7 @@ async def broadcast(client, message):
         if message.reply_to_message:
             b_msg = message.reply_to_message
         else:
-            b_msg = await safe_action(client.ask(
+            b_msg = await safe_action(lambda: client.ask(
                 message.from_user.id,
                 "📩 Now send me your broadcast message\n\nType /cancel to stop.",
             ))
@@ -1129,7 +1129,7 @@ async def contact(client, message):
         if message.reply_to_message:
             c_msg = message.reply_to_message
         else:
-            c_msg = await safe_action(client.ask(
+            c_msg = await safe_action(lambda: client.ask(
                 message.from_user.id,
                 "📩 Now send me your contact message\n\nType /cancel to stop.",
             ))
