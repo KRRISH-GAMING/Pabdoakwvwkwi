@@ -28,6 +28,17 @@ def get_size(size):
         size /= 1024.0
     return "%.2f %s" % (size, units[i])
 
+async def safe_action(func, *args, **kwargs):
+    try:
+        return await func(*args, **kwargs)
+    except FloodWait as e:
+        print(f"⚠️ FloodWait {e.value} sec. Sleeping...")
+        await asyncio.sleep(e.value)
+        return await safe_action(func, *args, **kwargs)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return None
+
 async def is_subscribedx(client, query):
     if REQUEST_TO_JOIN_MODE == True and JoinReqs().isActive():
         try:
