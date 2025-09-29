@@ -3097,7 +3097,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     print(f"⚠️ Error restarting clone {bot_id}: {e}")
                     return await safe_action(query.message.edit_text(
                         f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}"
-                    )
+                    ))
 
                 await safe_action(query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!"))
                 await asyncio.sleep(2)
