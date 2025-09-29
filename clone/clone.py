@@ -442,6 +442,90 @@ async def start(client, message):
                     )
                     print(f"⚠️ Clone Batch File Handler Error: {e}")
                     print(traceback.format_exc())
+
+        # --- Auto Post Handler ---
+        if data.startswith("AUTO-"):
+            encoded = data.replace("AUTO-", "", 1)
+            decoded = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).decode("ascii").strip()
+            pre, file_id = decoded.split("_", 1)
+
+            if access_token and user_id != owner_id and user_id not in moderators and user_id not in premium and not await check_verification(client, user_id):
+                verify_url = await get_token(client, user_id, f"https://t.me/{me.username}?start=")
+                btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
+
+                if premium_upi:
+                    btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data='remove_ads')])
+
+                if tutorial_url:
+                    btn.append([InlineKeyboardButton("ℹ️ Tutorial", url=tutorial_url)])
+
+                btn.append([InlineKeyboardButton("♻️ Try Again", url=f"https://t.me/{me.username}?start=AUTO-{encoded}")])
+
+                return await safe_action(message.reply_text,
+                    "🚫 You are not **verified**! Kindly **verify** to continue.",
+                    protect_content=forward_protect,
+                    reply_markup=InlineKeyboardMarkup(btn)
+                )
+
+            try:
+                msg = await safe_action(client.send_cached_media,
+                    chat_id=user_id,
+                    file_id=file_id,
+                    protect_content=forward_protect
+                )
+
+                filetype = msg.media
+                file = getattr(msg, filetype.value)
+                file_name = getattr(file, "file_name", None) or "None"
+                file_size = getattr(file, "file_size", None)
+
+                if file_size and isinstance(file_size, int):
+                    await db.add_storage_used(me.id, file_size)
+
+                original_caption = msg.caption or ""
+                if caption:
+                    try:
+                        f_caption = caption.format(
+                            file_name=file_name,
+                            file_size=get_size(file_size) if file_size else "N/A",
+                            caption=original_caption
+                        )
+                    except:
+                        f_caption = original_caption or f"<code>{file_name}</code>"
+                else:
+                    f_caption = original_caption or f"<code>{file_name}</code>"
+
+                buttons = []
+                for btn in buttons_data:
+                    buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
+
+                if buttons:
+                    await safe_action(msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                else:
+                    await safe_action(msg.edit_caption, f_caption)
+
+                notice=None
+                if msg and auto_delete:
+                    notice = await safe_action(client.send_message,
+                        user_id,
+                        auto_delete_msg.format(time=number, unit=unit),
+                    ))
+
+                    reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
+                    asyncio.create_task(schedule_delete(client, db, msg.id, [msg.id], notice.id, auto_delete_time2, reload_url))
+                return
+            except UserIsBlocked:
+                print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
+                return
+            except Exception as e:
+                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+                    raise
+                await safe_action(client.send_message,
+                    LOG_CHANNEL,
+                    f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                )
+                print(f"⚠️ Clone Auto Post Handler Error: {e}")
+                print(traceback.format_exc())
     except UserIsBlocked:
         print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
         return
