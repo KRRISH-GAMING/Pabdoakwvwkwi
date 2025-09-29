@@ -577,13 +577,27 @@ async def reply(client, message):
         print(f"⚠️ Reply Error: {e}")
         print(traceback.format_exc())
 
-async def show_clone_menu(client, message, user_id):
+async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int = 6):
     try:
-        clones = await db.get_clones_by_user(user_id)
-        buttons = []
+        is_admin = user_id in ADMINS
 
-        if clones:
-            for clone in clones:
+        if is_admin:
+            bots_cursor = await db.get_all_bots()
+            clones = await bots_cursor.to_list(None)
+        else:
+            clones = await db.get_clones_by_user(user_id)
+        
+        buttons = []
+        if is_admin:
+            total_clones = len(clones)
+            start = (page - 1) * per_page
+            end = start + per_page
+            clones_page = clones[start:end]
+        else:
+            clones_page = clones
+
+        if clones_page:
+            for clone in clones_page:
                 bot_name = clone.get("name") or f"Clone {clone['bot_id']}"
                 buttons.append([
                     InlineKeyboardButton(
@@ -591,6 +605,15 @@ async def show_clone_menu(client, message, user_id):
                         callback_data=f"manage_{clone['bot_id']}"
                     )
                 ])
+
+        if is_admin and total_clones > per_page:
+            nav_buttons = []
+            if page > 1:
+                nav_buttons.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"clone_page_{page-1}"))
+            if end < total_clones:
+                nav_buttons.append(InlineKeyboardButton("➡️ Next", callback_data=f"clone_page_{page+1}"))
+            if nav_buttons:
+                buttons.append(nav_buttons)
 
         is_vip = await db.is_premium(user_id, required_plan="vip")
         if is_vip or not clones:
@@ -1145,33 +1168,54 @@ async def fetch_fampay_payments():
         IMAP_USER = "krrishraj237@gmail.com"
         IMAP_PASS = "ewcz wblx fdgv unpp"
 
+        print("🔌 Connecting to IMAP...")
         mail = imaplib.IMAP4_SSL(IMAP_HOST)
         mail.login(IMAP_USER, IMAP_PASS)
+        print("✅ Logged into mailbox")
+
         mail.select("inbox")
+        print("📥 Inbox selected")
 
         status, email_ids = mail.search(None, 'FROM "no-reply@fampay.in" UNSEEN')
-        if status != "OK" or not email_ids[0]:
+        print("🔍 Search status:", status)
+        print("📨 Raw email ids:", email_ids)
+
+        if status != "OK" or not email_ids or not email_ids[0]:
+            print("⚠️ No unseen FamPay emails found")
             return []
 
         email_list = email_ids[0].split()
+        print("📨 Total unseen emails:", len(email_list))
+
         latest_5_emails = email_list[-5:]
+        print("📩 Checking last 5 emails:", latest_5_emails)
+
         transactions = []
         kolkata_tz = pytz.timezone("Asia/Kolkata")
 
         for email_id in latest_5_emails:
+            print(f"➡️ Fetching email ID: {email_id}")
             status, msg_data = mail.fetch(email_id, "(RFC822)")
-            if status != "OK":
+            print("   ↪ Fetch status:", status)
+
+            if status != "OK" or not msg_data:
+                print(f"   ⚠️ Failed to fetch email {email_id}")
                 continue
 
             raw_email = msg_data[0][1]
             msg = email.message_from_bytes(raw_email)
 
             email_date = msg["Date"]
+            print("   📅 Raw email date:", email_date)
+
             try:
                 email_datetime = datetime.strptime(email_date, "%a, %d %b %Y %H:%M:%S %z")
-            except ValueError:
+            except ValueError as ve:
+                print(f"   ⚠️ Date parse error: {ve}")
                 continue
+
             email_datetime = email_datetime.astimezone(kolkata_tz)
+            print("   🕒 Converted datetime:", email_datetime)
 
             body = ""
             if msg.is_multipart():
@@ -1182,34 +1226,48 @@ async def fetch_fampay_payments():
             else:
                 body = msg.get_payload(decode=True).decode(errors="ignore")
 
+            print("   📜 Email body snippet:", body[:200], "..." if len(body) > 200 else "")
+
             if not body:
+                print("   ⚠️ Empty email body")
                 continue
 
             amount_match = re.search(r"₹\s?([\d,.]+)", body)
-            amount = float(amount_match.group(1).replace(", ", "")) if amount_match else None
+            if amount_match:
+                print("   💰 Found amount string:", amount_match.group(1))
+                amount = float(amount_match.group(1).replace(",", ""))
+            else:
+                print("   ⚠️ No amount found")
+                amount = None
 
             txn_match = re.search(r"transaction id\s*[:\-]?\s*(\w+)", body, re.I)
             txn_id = txn_match.group(1) if txn_match else None
+            print("   🔑 Transaction ID:", txn_id)
 
             if not amount or not txn_id:
+                print("   ⚠️ Missing amount or txn_id, skipping email")
                 continue
 
-            transactions.append({
+            txn = {
                 "date": email_datetime.strftime("%Y-%m-%d %H:%M:%S"),
                 "amount": amount,
                 "txn_id": txn_id
-            })
+            }
+            print("   ✅ Transaction added:", txn)
+            transactions.append(txn)
 
-        print("Fetched payments:", transactions)
+        print("🎉 Final transactions:", transactions)
         mail.logout()
+        print("👋 Logged out from mailbox")
         return transactions
 
     except Exception as e:
-        await safe_action(client.send_message,
+        await safe_action(
+            client.send_message,
             LOG_CHANNEL,
             f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
-        print(f"⚠️ IMAP Error: {e}")
+        print(f"❌ IMAP Error: {e}")
         print(traceback.format_exc())
         return []
 
@@ -1254,6 +1312,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # Clone Menu
         elif data == "clone":
             await show_clone_menu(client, query.message, user_id)
+
+        # Clone Menu Page
+        elif data.startswith("clone_page_"):
+            page = int(data.replace("clone_page_", ""))
+            await show_clone_menu(client, query.message, user_id, page=page)
 
         # Add Clone
         elif data == "add_clone":
