@@ -594,7 +594,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if mode == "single":
                     item = await db.pop_random_unposted_media(bot_id)
                     if not item:
-                        print(f"⌛ No new media for {username}, sleeping 60s...")
+                        print(f"⌛ No new media for @{username}, sleeping 60s...")
                         await asyncio.sleep(60)
                         continue
 
@@ -619,7 +619,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                             items.append(item)
 
                     if not items:
-                        print(f"⌛ No new media for {username}, sleeping 60s...")
+                        print(f"⌛ No new media for @{username}, sleeping 60s...")
                         await asyncio.sleep(60)
                         continue
 
@@ -677,7 +677,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                         for it in items:
                             await db.unmark_media_posted(bot_id, it["file_id"])
 
-                print(f"⚠️ Clone Auto-post error for {username}: {e}")
+                print(f"⚠️ Clone Auto-post error for @{username}: {e}")
                 try:
                     await clone_client.send_message(
                         LOG_CHANNEL,
@@ -1428,6 +1428,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 text=start_text.format(user=query.from_user.mention, bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
+            await safe_action(query.answer)
 
         # Help
         elif data == "help":
@@ -1436,6 +1437,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 text=script.HELP_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
+            await safe_action(query.answer)
 
         # About
         elif data == "about":
@@ -1445,6 +1447,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 text=script.CABOUT_TXT.format(bot=me.mention, developer=ownerid),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
+            await safe_action(query.answer)
 
         # Close
         elif data == "close":
