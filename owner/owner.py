@@ -1176,7 +1176,7 @@ async def fetch_fampay_payments():
         mail.select("inbox")
         print("📥 Inbox selected")
 
-        status, email_ids = mail.search(None, 'UNSEEN')
+        status, email_ids = mail.search(None, 'FROM "noreply@fampay.in" UNSEEN')
         print("🔍 Search status:", status)
         print("📨 Raw email ids:", email_ids)
 
