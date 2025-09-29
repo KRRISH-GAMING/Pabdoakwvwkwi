@@ -2561,7 +2561,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ADD_PREMIUM(user_id, None)
+                ADD_PREMIUM.pop(user_id, None)
                 await show_premium_menu(client, query.message, bot_id)
 
             # Remove Premium User Menu
