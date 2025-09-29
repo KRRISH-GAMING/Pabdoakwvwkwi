@@ -155,7 +155,7 @@ async def start(client, message):
             await safe_action(client.send_message,
                 LOG_CHANNEL,
                 script.LOG_TEXT.format(user_id, mention, username)
-            ))
+            )
 
         if AUTH_CHANNEL and not await is_subscribedx(client, message):
             await asyncio.sleep(2)
