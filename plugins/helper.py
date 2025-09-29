@@ -237,7 +237,7 @@ async def check_verification(client, userid):
         return False
     return True
 
-async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, reload_url):
+"""async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, reload_url):
     try:
         if delay_time > 0:
             await asyncio.sleep(delay_time)
@@ -285,7 +285,7 @@ async def schedule_delete(client, db: Database, chat_id, message_ids, notice_id,
 
     await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
 
-    await db.delete_scheduled_deletes(message_ids)
+    await db.delete_scheduled_deletes(message_ids)"""
 
 def random_code(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
