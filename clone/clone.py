@@ -72,7 +72,7 @@ async def start(client, message):
 
                 clone_client = get_client(me.id)
                 if not clone_client:
-                    await client.send_message(user_id, "⚠️ Clone bot not running. Start it first!")
+                    await client.send_message( user_id, "⚠️ Clone bot not running. Start it first!")
                     return
 
                 for item in fsub_data:
@@ -191,11 +191,11 @@ async def start(client, message):
         if data.startswith("VERIFY-"):
             parts = data.split("-", 2)
             if len(parts) != 3:
-                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
+                return await message.reply_text( "❌ Invalid or expired link!", protect_content=forward_protect)
 
             user_id, token = parts[1], parts[2]
             if str(message.from_user.id) != user_id:
-                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
+                return await message.reply_text( "❌ Invalid or expired link!", protect_content=forward_protect)
 
             if await check_token(client, user_id, token):
                 await verify_user(client, user_id, token)
@@ -204,7 +204,7 @@ async def start(client, message):
                     protect_content=forward_protect
                 )
             else:
-                return await message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect)
+                return await message.reply_text( "❌ Invalid or expired link!", protect_content=forward_protect)
 
         # --- Single File Handler ---
         if data.startswith("SINGLE-"):
@@ -233,7 +233,7 @@ async def start(client, message):
 
                 file = await db.get_file(decode_file_id)
                 if not file:
-                    return await message.reply("❌ File not found in database.")
+                    return await message.reply( "❌ File not found in database.")
 
                 file_id = file.get("file_id")
                 file_name = file.get("file_name") or "None"
@@ -267,16 +267,16 @@ async def start(client, message):
                         protect_content=forward_protect
                     )
                 else:
-                    sent_msg = await message.reply_text(original_caption, protect_content=forward_protect)
+                    sent_msg = await message.reply_text( original_caption, protect_content=forward_protect)
 
                 if sent_msg:
                     if buttons_data:
                         buttons = [[InlineKeyboardButton(btn["name"], url=btn["url"])] for btn in buttons_data]
                         try:
                             if sent_msg.caption is not None:
-                                await sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                                await sent_msg.edit_caption( f_caption, reply_markup=InlineKeyboardMarkup(buttons))
                             else:
-                                await sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                                await sent_msg.edit_text( original_caption, reply_markup=InlineKeyboardMarkup(buttons))
                         except Exception as e:
                             if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                                 raise
@@ -327,19 +327,19 @@ async def start(client, message):
 
                 batch = await db.get_batch(decode_file_id)
                 if not batch:
-                    return await message.reply("⚠️ Batch not found or expired.")
+                    return await message.reply( "⚠️ Batch not found or expired.")
 
                 file_ids = batch.get("file_ids", [])
                 total_files = len(file_ids)
                 if not total_files:
-                    return await message.reply("⚠️ No files in this batch.")
+                    return await message.reply( "⚠️ No files in this batch.")
 
-                sts = await message.reply(f"📦 Preparing batch...\n\nTotal files: **{total_files}**")
+                sts = await message.reply( f"📦 Preparing batch...\n\nTotal files: **{total_files}**")
 
                 sent_files = []
                 for index, db_file_id in enumerate(file_ids, start=1):
                     try:
-                        await sts.edit_text(f"📤 Sending file {index}/{total_files}...")
+                        await sts.edit_text( f"📤 Sending file {index}/{total_files}...")
 
                         if batch.get("is_auto_post"):
                             file = await db.get_file_by_file_id(db_file_id, me.id)
@@ -382,7 +382,7 @@ async def start(client, message):
                                 protect_content=forward_protect
                             )
                         else:
-                            sent_msg = await message.reply_text(original_caption, protect_content=forward_protect)
+                            sent_msg = await message.reply_text( original_caption, protect_content=forward_protect)
 
                         buttons = []
                         for btn in buttons_data:
@@ -391,9 +391,9 @@ async def start(client, message):
                         if buttons:
                             try:
                                 if sent_msg and sent_msg.caption is not None:
-                                    await sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                                    await sent_msg.edit_caption( f_caption, reply_markup=InlineKeyboardMarkup(buttons))
                                 else:
-                                    await sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                                    await sent_msg.edit_text( original_caption, reply_markup=InlineKeyboardMarkup(buttons))
                             except Exception as e:
                                 if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                                     raise
@@ -427,7 +427,7 @@ async def start(client, message):
                     reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
                     asyncio.create_task(schedule_delete(client, db, sent_files[0].chat.id, [msg.id for msg in sent_files], notice.id, auto_delete_time2, reload_url))
 
-                await sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
+                await sts.edit_text( f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
                 await asyncio.sleep(5)
                 await sts.delete()
             except Exception as e:
@@ -500,9 +500,9 @@ async def start(client, message):
                     buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
 
                 if buttons:
-                    await msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                    await msg.edit_caption( f_caption, reply_markup=InlineKeyboardMarkup(buttons))
                 else:
-                    await msg.edit_caption(f_caption)
+                    await msg.edit_caption( f_caption)
 
                 notice=None
                 if msg and auto_delete:
@@ -545,7 +545,7 @@ async def help(client, message):
         if not clone:
             return
 
-        await message.reply_text(script.HELP_TXT)
+        await message.reply_text( script.HELP_TXT)
     except UserIsBlocked:
         print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
         return
@@ -705,7 +705,7 @@ async def genlink(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await message.reply("❌ You are not authorized to use this bot.")
+            return await message.reply( "❌ You are not authorized to use this bot.")
 
         if message.reply_to_message:
             g_msg = message.reply_to_message
@@ -716,7 +716,7 @@ async def genlink(client, message):
             )
 
             if g_msg.text and g_msg.text.lower() == '/cancel':
-                return await message.reply('🚫 Process has been cancelled.')
+                return await message.reply( '🚫 Process has been cancelled.')
 
         file_id = None
         file_name = None
@@ -776,7 +776,7 @@ async def batch(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await message.reply("❌ You are not authorized to use this bot.")
+            return await message.reply( "❌ You are not authorized to use this bot.")
 
         usage_text = (
             f"📌 Use correct format.\n\n"
@@ -784,35 +784,35 @@ async def batch(client, message):
         )
 
         if " " not in message.text:
-            return await message.reply(usage_text)
+            return await message.reply( usage_text)
 
         links = message.text.strip().split(" ")
         if len(links) != 3:
-            return await message.reply(usage_text)
+            return await message.reply( usage_text)
 
         cmd, first, last = links
         regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
 
         match = regex.match(first)
         if not match:
-            return await message.reply('❌ Invalid first link.')
+            return await message.reply( '❌ Invalid first link.')
         f_chat_id = match.group(4)
         f_msg_id = int(match.group(5))
         f_chat_id = int(f"-100{f_chat_id}") if f_chat_id.isnumeric() else f_chat_id
 
         match = regex.match(last)
         if not match:
-            return await message.reply('❌ Invalid last link.')
+            return await message.reply( '❌ Invalid last link.')
         l_chat_id = match.group(4)
         l_msg_id = int(match.group(5))
         l_chat_id = int(f"-100{l_chat_id}") if l_chat_id.isnumeric() else l_chat_id
 
         if f_chat_id != l_chat_id:
-            return await message.reply("❌ Chat IDs do not match.")
+            return await message.reply( "❌ Chat IDs do not match.")
 
         is_bot_admin = await is_admin(client, f_chat_id, me.id)
         if not is_bot_admin:
-            return await message.reply("⚠️ I must be an admin in that channel/group to index messages.")
+            return await message.reply( "⚠️ I must be an admin in that channel/group to index messages.")
 
         chat_id = (await client.get_chat(f_chat_id)).id
 
@@ -820,7 +820,7 @@ async def batch(client, message):
         end_id = max(f_msg_id, l_msg_id)
         total_msgs = (end_id - start_id) + 1
 
-        sts = await message.reply("⏳ Generating links for your messages... This may take some time.")
+        sts = await message.reply( "⏳ Generating links for your messages... This may take some time.")
 
         outlist = []
         og_msg = 0
@@ -893,9 +893,9 @@ async def batch(client, message):
             reply_markup=reply_markup
         )
     except ChannelInvalid:
-        await message.reply('⚠️ This may be a private channel / group. Make me an admin over there to index the files.')
+        await message.reply( '⚠️ This may be a private channel / group. Make me an admin over there to index the files.')
     except (UsernameInvalid, UsernameNotModified):
-        await message.reply('⚠️ Invalid Link specified.')
+        await message.reply( '⚠️ Invalid Link specified.')
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
@@ -920,7 +920,7 @@ async def shorten_handler(client: Client, message: Message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await message.reply("❌ You are not authorized to use this bot.")
+            return await message.reply( "❌ You are not authorized to use this bot.")
 
         user_id = message.from_user.id
         cmd = message.command
@@ -938,20 +938,20 @@ async def shorten_handler(client: Client, message: Message):
         )
 
         if len(cmd) == 1:
-            help_msg = await message.reply(help_text)
+            help_msg = await message.reply( help_text)
             SHORTEN_STATE[user_id] = {"step": 1, "help_msg_id": help_msg.id}
 
             if user.get("base_site") and user.get("shortener_api"):
                 SHORTEN_STATE[user_id]["step"] = 3
-                await message.reply("🔗 Base site and API already set. Send the link you want to shorten:")
+                await message.reply( "🔗 Base site and API already set. Send the link you want to shorten:")
             else:
-                await message.reply("Please send your **base site** (e.g., shortnerdomain.com):")
+                await message.reply( "Please send your **base site** (e.g., shortnerdomain.com):")
             return
 
         if len(cmd) == 2 and cmd[1].lower() == "none":
             await clonedb.update_user_info(user_id, {"base_site": None, "shortener_api": None})
             SHORTEN_STATE.pop(user_id, None)
-            return await message.reply("✅ Base site and API have been reset successfully.")
+            return await message.reply( "✅ Base site and API have been reset successfully.")
     except Exception as e:
         await client.send_message(
             LOG_CHANNEL,
@@ -976,7 +976,7 @@ async def broadcast(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await message.reply("❌ You are not authorized to use this bot.")
+            return await message.reply( "❌ You are not authorized to use this bot.")
 
         if message.reply_to_message:
             b_msg = message.reply_to_message
@@ -987,11 +987,11 @@ async def broadcast(client, message):
             )
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
-                return await message.reply("🚫 Broadcast cancelled.")
+                return await message.reply( "🚫 Broadcast cancelled.")
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
-        sts = await message.reply_text("⏳ Broadcast starting...")
+        sts = await message.reply_text( "⏳ Broadcast starting...")
 
         done = blocked = deleted = failed = success = 0
         start_time = time.time()
@@ -1084,7 +1084,7 @@ async def stats(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await message.reply("❌ You are not authorized to use this bot.")
+            return await message.reply( "❌ You are not authorized to use this bot.")
 
         users_count = clone.get("users_count", 0)
         storage_used = clone.get("storage_used", 0)
@@ -1110,110 +1110,6 @@ async def stats(client, message):
         print(f"⚠️ Clone Stats Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("contact") & filters.private & filters.incoming)
-async def contact(client, message):
-    try:
-        me = await get_me_safe(client)
-        if not me:
-            return
-
-        clone = await db.get_bot(me.id)
-        if not clone:
-            return
-
-        owner_id = clone.get("user_id")
-        moderators = [int(m) for m in clone.get("moderators", [])]
-
-        if message.reply_to_message:
-            c_msg = message.reply_to_message
-        else:
-            c_msg = await client.ask(
-                message.from_user.id,
-                "📩 Now send me your contact message\n\nType /cancel to stop."
-            )
-
-            if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await message.reply("🚫 Contact cancelled.")
-
-        header = (
-            f"📩 **New Contact Message**\n\n"
-            f"👤 User: [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n"
-            f"🆔 ID: `{message.from_user.id}`\n"
-        )
-
-        if c_msg.media:
-            orig_caption = c_msg.caption or ""
-            final_caption = f"{header}\n💬 Message:\n{orig_caption}" if orig_caption else header
-            if owner_id:
-                await c_msg.copy(owner_id, caption=final_caption)
-            for mod_id in moderators:
-                await c_msg.copy(mod_id, caption=final_caption)
-        elif c_msg.text:
-            content = f"\n💬 Message:\n{c_msg.text}"
-            final_text = header + content
-            if owner_id:
-                await client.send_message(owner_id, final_text)
-            for mod_id in moderators:
-                await client.send_message(mod_id, final_text)
-        else:
-            if owner_id:
-                await client.send_message(owner_id, header)
-            for mod_id in moderators:
-                await client.send_message(mod_id, header)
-
-        await message.reply_text("✅ Your message has been sent to the admin!")
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Clone Contact Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Clone Contact Error: {e}")
-        print(traceback.format_exc())
-
-@Client.on_message(filters.private & filters.reply)
-async def reply(client, message):
-    try:
-        me = await get_me_safe(client)
-        if not me:
-            return
-
-        clone = await db.get_bot(me.id)
-        if not clone:
-            return
-
-        if not message.reply_to_message:
-            return
-
-        if not message.reply_to_message.text or "🆔 ID:" not in message.reply_to_message.text:
-            return
-
-        try:
-            user_id_line = [line for line in message.reply_to_message.text.splitlines() if line.startswith("🆔 ID:")][0]
-            user_id = int(user_id_line.replace("🆔 ID:", "").strip(" `"))
-        except Exception:
-            return
-
-        if message.media:
-            orig_caption = message.caption or ""
-            final_caption = f"📩 **Reply from Admin**\n\n💬 Message:\n{orig_caption}" if orig_caption else "📩 **Reply from Admin**"
-            await message.copy(user_id, caption=final_caption)
-        elif message.text:
-            text = f"📩 **Reply from Admin**\n\n💬 Message:\n{message.text}"
-            await client.send_message(user_id, text)
-        else:
-            await client.send_message(user_id, "📩 **Reply from Admin**")
-
-        await message.reply("✅ Reply delivered!")
-    except UserIsBlocked:
-        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping reply...")
-        return
-    except Exception as e:
-        await client.send_message(
-            LOG_CHANNEL,
-            f"⚠️ Clone Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Clone Reply Error: {e}")
-        print(traceback.format_exc())
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -1493,17 +1389,17 @@ async def message_capture(client: Client, message: Message):
                 base_site = message.text.strip()
                 new_text = base_site.removeprefix("https://").removeprefix("http://")
                 if not domain(new_text):
-                    return await message.reply("❌ Invalid domain. Send a valid base site:")
+                    return await message.reply( "❌ Invalid domain. Send a valid base site:")
                 await clonedb.update_user_info(user_id, {"base_site": new_text})
                 state["step"] = 2
-                await message.reply("✅ Base site set. Now send your **Shortener API key**:")
+                await message.reply( "✅ Base site set. Now send your **Shortener API key**:")
                 return
 
             if state["step"] == 2:
                 api = message.text.strip()
                 await clonedb.update_user_info(user_id, {"shortener_api": api})
                 state["step"] = 3
-                await message.reply("✅ API set. Now send the **link to shorten**:")
+                await message.reply( "✅ API set. Now send the **link to shorten**:")
                 return
 
             if state["step"] == 3:
@@ -1514,7 +1410,7 @@ async def message_capture(client: Client, message: Message):
 
                 if not base_site or not api_key:
                     SHORTEN_STATE[user_id] = {"step": 1}
-                    return await message.reply("❌ Base site or API missing. Let's start over.")
+                    return await message.reply( "❌ Base site or API missing. Let's start over.")
 
                 short_link = await get_short_link(user, long_link)
 
@@ -1574,14 +1470,14 @@ async def message_capture(client: Client, message: Message):
 
                         if notify_msg and notify_msg.strip():
                             for mod_id in moderators:
-                                await client.send_message(chat_id=mod_id, text=notify_msg)
+                                await client.send_message( chat_id=mod_id, text=notify_msg)
                             if owner_id:
-                                await client.send_message(chat_id=owner_id, text=notify_msg)
+                                await client.send_message( chat_id=owner_id, text=notify_msg)
             else:
                 for mod_id in moderators:
-                    await client.send_message(chat_id=mod_id, text="⚠️ Bot is not admin.")
+                    await client.send_message( chat_id=mod_id, text="⚠️ Bot is not admin.")
                 if owner_id:
-                    await client.send_message(chat_id=owner_id, text="⚠️ Bot is not admin.")
+                    await client.send_message( chat_id=owner_id, text="⚠️ Bot is not admin.")
 
             new_text = ""
 
@@ -1625,9 +1521,9 @@ async def message_capture(client: Client, message: Message):
                                 )
             else:
                 for mod_id in moderators:
-                    await client.send_message(chat_id=mod_id, text="⚠️ Bot is not admin.")
+                    await client.send_message( chat_id=mod_id, text="⚠️ Bot is not admin.")
                 if owner_id:
-                    await client.send_message(chat_id=owner_id, text="⚠️ Bot is not admin.")
+                    await client.send_message( chat_id=owner_id, text="⚠️ Bot is not admin.")
 
             media_file_id = None
             media_type = None
