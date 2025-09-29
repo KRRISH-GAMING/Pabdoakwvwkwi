@@ -3019,7 +3019,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_action(client.send_message(
                     mod_id,
                     f"✅ You are now the owner of the bot **{clone.get('name')}** (ID: {clone.get('bot_id')})"
-                )
+                ))
                 await query.answer("✅ Ownership transferred!", show_alert=True)
                 await show_clone_menu(client, query.message, old_owner)
 
@@ -3068,7 +3068,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await query.message.edit_reply_markup(
                     InlineKeyboardMarkup(manage_buttons)
-                ))
+                )
 
             # Restart
             elif action == "restart":
@@ -3078,17 +3078,17 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await query.answer("⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await safe_action(query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[░░░░░░░░░░] 0%")
+                await safe_action(query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[░░░░░░░░░░] 0%"))
 
                 for i in range(1, 11):
                     await asyncio.sleep(0.5)
                     bar = '▓' * i + '░' * (10 - i)
-                    await safe_action(query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%")
+                    await safe_action(query.message.edit_text(f"🔄 Restarting clone bot `@{clone['username']}`...\n[{bar}] {i*10}%"))
 
                 try:
                     clone_client = get_client(bot_id)
                     if not clone_client:
-                        return await safe_action(query.message.edit_text("❌ Clone client not found in memory!")
+                        return await safe_action(query.message.edit_text("❌ Clone client not found in memory!"))
 
                     await clone_client.stop()
                     await asyncio.sleep(1)
@@ -3099,7 +3099,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         f"❌ Failed to restart clone bot `@{clone['username']}`.\n\nError: {e}"
                     )
 
-                await safe_action(query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!")
+                await safe_action(query.message.edit_text(f"✅ Clone bot `@{clone['username']}` restarted successfully!"))
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
