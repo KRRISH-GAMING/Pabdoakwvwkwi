@@ -3245,7 +3245,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(client.send_message(
                 LOG_CHANNEL,
                 f"⚠️ Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-            )
+            ))
             await query.answer("⚠️ Unknown action.", show_alert=True)
     except Exception as e:
         await safe_action(client.send_message(
@@ -3322,7 +3322,7 @@ async def message_capture(client: Client, message: Message):
                     CLONE_TOKEN.pop(user_id, None)
                     return
 
-                await msg.edit_text("👨‍💻 Creating your **bot**, please wait...")
+                await safe_action(msg.edit_text("👨‍💻 Creating your **bot**, please wait..."))
                 try:
                     old_client = ACTIVE_CLONES.get(token)
                     if old_client:
@@ -3373,9 +3373,9 @@ async def message_capture(client: Client, message: Message):
                         f"Bot Name: {bot.first_name} {bot.last_name}\n"
                         f"Bot Username: @{bot.username}\n"
                         f"Bot Token: <code>{token}</code>"
-                    )
+                    ))
 
-                    await msg.edit_text(f"✅ Successfully cloned your **bot**: @{bot.username}")
+                    await safe_action(msg.edit_text(f"✅ Successfully cloned your **bot**: @{bot.username}"))
                     await asyncio.sleep(2)
                     await show_clone_menu(client, msg, user_id)
                     CLONE_TOKEN.pop(user_id, None)
@@ -3441,13 +3441,13 @@ async def message_capture(client: Client, message: Message):
                                 os.remove(content)
                             shutil.move(temp_file, content)
                         except Exception as e:
-                            await safe_action(orig_msg.edit_text(f"❌ Failed to save photo: {e}")
+                            await safe_action(orig_msg.edit_text(f"❌ Failed to save photo: {e}"))
                             await asyncio.sleep(2)
                             await globals()[menu_func](client, orig_msg, bot_id)
                             handler_dict.pop(user_id, None)
                             return
 
-                    await safe_action(orig_msg.edit_text(f"✏️ Updating **{db_field.replace('_', ' ')}**, please wait...")
+                    await safe_action(orig_msg.edit_text(f"✏️ Updating **{db_field.replace('_', ' ')}**, please wait..."))
                     try:
                         clone = await db.get_clone_by_id(bot_id)
                         if db_field == "premium_user":
@@ -3461,13 +3461,13 @@ async def message_capture(client: Client, message: Message):
                         else:
                             await db.update_clone(bot_id, {db_field: content})
 
-                        await safe_action(orig_msg.edit_text(f"✅ Successfully updated **{db_field.replace('_', ' ')}**!")
+                        await safe_action(orig_msg.edit_text(f"✅ Successfully updated **{db_field.replace('_', ' ')}**!"))
                         await asyncio.sleep(2)
                         await globals()[menu_func](client, orig_msg, bot_id)
                         handler_dict.pop(user_id, None)
                     except Exception as e:
                         await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Error updating {db_field}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
-                        await safe_action(orig_msg.edit_text(f"❌ Failed to update **{db_field.replace('_', ' ')}**: {e}")
+                        await safe_action(orig_msg.edit_text(f"❌ Failed to update **{db_field.replace('_', ' ')}**: {e}"))
                         await asyncio.sleep(2)
                         await globals()[menu_func](client, orig_msg, bot_id)
                         handler_dict.pop(user_id, None)
@@ -3499,19 +3499,19 @@ async def message_capture(client: Client, message: Message):
                 elif step == "url":
                     btn_name = data["btn_name"]
                     btn_url = new_text
-                    await safe_action(orig_msg.edit_text("✏️ Updating **start button**, please wait...")
+                    await safe_action(orig_msg.edit_text("✏️ Updating **start button**, please wait..."))
                     try:
                         clone = await db.get_clone_by_id(bot_id)
                         buttons_data = clone.get("button", [])
                         buttons_data.append({"name": btn_name, "url": btn_url})
                         await db.update_clone(bot_id, {"button": buttons_data})
-                        await safe_action(orig_msg.edit_text("✅ Successfully updated **start button**!")
+                        await safe_action(orig_msg.edit_text("✅ Successfully updated **start button**!"))
                         await asyncio.sleep(2)
                         await show_button_menu(client, orig_msg, bot_id)
                         ADD_BUTTON.pop(user_id, None)
                     except Exception as e:
                         await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Update Start Button Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
-                        await safe_action(orig_msg.edit_text(f"❌ Failed to update **start button**: {e}")
+                        await safe_action(orig_msg.edit_text(f"❌ Failed to update **start button**: {e}"))
                         await asyncio.sleep(2)
                         await show_button_menu(client, orig_msg, bot_id)
                         ADD_BUTTON.pop(user_id, None)
@@ -3554,7 +3554,7 @@ async def message_capture(client: Client, message: Message):
                         ch_name = chat.title or "Unknown"
                         ch_link = f"https://t.me/{chat.username}" if chat.username else None
                     except Exception as e:
-                        await safe_action(orig_msg.edit_text(f"❌ Failed to get channel info: {e}")
+                        await safe_action(orig_msg.edit_text(f"❌ Failed to get channel info: {e}"))
                         await asyncio.sleep(2)
                         await show_fsub_menu(client, orig_msg, bot_id)
                         ADD_FSUB.pop(user_id, None)
@@ -3570,7 +3570,7 @@ async def message_capture(client: Client, message: Message):
                             ADD_FSUB.pop(user_id, None)
                             return
                     except Exception as e:
-                        await safe_action(orig_msg.edit_text(f"❌ Failed to check clone bot in channel: {e}")
+                        await safe_action(orig_msg.edit_text(f"❌ Failed to check clone bot in channel: {e}"))
                         await asyncio.sleep(2)
                         await show_fsub_menu(client, orig_msg, bot_id)
                         ADD_FSUB.pop(user_id, None)
@@ -3599,7 +3599,7 @@ async def message_capture(client: Client, message: Message):
                         await safe_action(orig_msg.edit_text(
                             f"🎯 Target saved: `{target}`\n\nNow choose the **mode** for this channel:",
                             reply_markup=InlineKeyboardMarkup(buttons)
-                        )
+                        ))
                     except:
                         await safe_action(orig_msg.edit_text("❌ Invalid number! Send 0 or a positive integer."))
                         await asyncio.sleep(2)
@@ -3631,10 +3631,10 @@ async def message_capture(client: Client, message: Message):
                     ACCESS_TOKEN[user_id]["step"] = "api"
                     await safe_action(orig_msg.edit_text("✅ Shorten link saved! Now send your API key."))
                 elif step == "api":
-                    await safe_action(orig_msg.edit_text("✏️ Updating **access token**, please wait...")
+                    await safe_action(orig_msg.edit_text("✏️ Updating **access token**, please wait..."))
                     try:
                         await db.update_clone(bot_id, {"at_shorten_link": data["at_shorten_link"], "at_shorten_api": new_text})
-                        await safe_action(orig_msg.edit_text("✅ Successfully updated **access token**!")
+                        await safe_action(orig_msg.edit_text("✅ Successfully updated **access token**!"))
                         await asyncio.sleep(2)
                         await show_token_menu(client, orig_msg, bot_id)
                         ACCESS_TOKEN.pop(user_id, None)
@@ -3644,7 +3644,7 @@ async def message_capture(client: Client, message: Message):
                             {"access_token": False, "at_shorten_link": None, "at_shorten_api": None}
                         )
                         await safe_action(client.send_message(LOG_CHANNEL, f"⚠️ Update Access Token Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."))
-                        await safe_action(orig_msg.edit_text(f"❌ Failed to update **access token**: {e}")
+                        await safe_action(orig_msg.edit_text(f"❌ Failed to update **access token**: {e}"))
                         await asyncio.sleep(2)
                         await show_token_menu(client, orig_msg, bot_id)
                         ACCESS_TOKEN.pop(user_id, None)
@@ -3687,7 +3687,7 @@ async def message_capture(client: Client, message: Message):
                     ch_link = f"https://t.me/{chat.username}" if chat.username else None
                 except Exception as e:
                     await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
-                    await safe_action(orig_msg.edit_text(f"❌ Failed to get channel info: {e}")
+                    await safe_action(orig_msg.edit_text(f"❌ Failed to get channel info: {e}"))
                     await asyncio.sleep(2)
                     await show_post_menu(client, orig_msg, bot_id)
                     AUTO_POST.pop(user_id, None)
