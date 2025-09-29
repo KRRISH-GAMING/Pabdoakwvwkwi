@@ -1564,7 +1564,7 @@ async def message_capture(client: Client, message: Message):
                     if text != original_text:
                         try:
                             await safe_action(message.edit, text)
-                            notify_msg = f"⚠️ Edited inappropriate content in clone @{me.username}.\nMessage ID: {message.id}"
+                            notify_msg = f"⚠️ Edited inappropriate content in clone @{me.username}.\nChat Title: {message.chat.title}\nChat ID: {message.chat.id}\nMessage ID: {message.id}"
                         except Exception as e:
                             if "CHAT_ADMIN_REQUIRED" in str(e) or "MESSAGE_EDIT_FORBIDDEN" in str(e):
                                 print(f"⚠️ Cannot edit message in {chat.id} (no permission). Skipping.")
@@ -1660,7 +1660,7 @@ async def message_capture(client: Client, message: Message):
                         media_type=media_type,
                         date=int(message.date.timestamp())
                     )
-                    print(f"✅ Saved media: {media_type} ({media_file_id}) for bot {me.id}")
+                    print(f"✅ Saved media: {media_type} ({media_file_id}) for bot @{me.username}")
                     await asyncio.sleep(0.25)
     except Exception as e:
         await safe_action(client.send_message,
