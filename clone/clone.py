@@ -72,7 +72,7 @@ async def start(client, message):
 
                 clone_client = get_client(me.id)
                 if not clone_client:
-                    await safe_action(client.send_message(user_id, "⚠️ Clone bot not running. Start it first!"))
+                    await safe_action(lambda: client.send_message(user_id, "⚠️ Clone bot not running. Start it first!"))
                     return
 
                 for item in fsub_data:
@@ -135,7 +135,7 @@ async def start(client, message):
                                 InlineKeyboardButton("♻️ Try Again", url=f"https://t.me/{me.username}?start={start_arg}")
                             ])
 
-                    await safe_action(client.send_message(
+                    await safe_action(lambda: client.send_message(
                         user_id,
                         "🚨 You must join the channel(s) first to use this bot.",
                         reply_markup=InlineKeyboardMarkup(buttons),
@@ -150,7 +150,7 @@ async def start(client, message):
                     print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
                     return
                 else:
-                    await safe_action(client.send_message(
+                    await safe_action(lambda: client.send_message(
                         LOG_CHANNEL,
                         f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     ))
@@ -175,7 +175,7 @@ async def start(client, message):
                     reply_markup=InlineKeyboardMarkup(buttons)
                 ))
 
-            return await safe_action(message.reply_text(
+            return await safe_action(lambda: message.reply_text(
                 start_text.format(user=mention, bot=client.me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -191,20 +191,20 @@ async def start(client, message):
         if data.startswith("VERIFY-"):
             parts = data.split("-", 2)
             if len(parts) != 3:
-                return await safe_action(message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect))
+                return await safe_action(lambda: message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect))
 
             user_id, token = parts[1], parts[2]
             if str(message.from_user.id) != user_id:
-                return await safe_action(message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect))
+                return await safe_action(lambda: message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect))
 
             if await check_token(client, user_id, token):
                 await verify_user(client, user_id, token)
-                return await safe_action(message.reply_text(
+                return await safe_action(lambda: message.reply_text(
                     f"Hey {message.from_user.mention}, **verification** successful! ✅",
                     protect_content=forward_protect
                 ))
             else:
-                return await safe_action(message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect))
+                return await safe_action(lambda: message.reply_text("❌ Invalid or expired link!", protect_content=forward_protect))
 
         # --- Single File Handler ---
         if data.startswith("SINGLE-"):
@@ -225,7 +225,7 @@ async def start(client, message):
 
                     btn.append([InlineKeyboardButton("♻️ Try Again", url=f"https://t.me/{me.username}?start=SINGLE-{encoded}")])
 
-                    return await safe_action(message.reply_text(
+                    return await safe_action(lambda: message.reply_text(
                         "🚫 You are not **verified**! Kindly **verify** to continue.",
                         protect_content=forward_protect,
                         reply_markup=InlineKeyboardMarkup(btn)
@@ -233,7 +233,7 @@ async def start(client, message):
 
                 file = await db.get_file(decode_file_id)
                 if not file:
-                    return await safe_action(message.reply("❌ File not found in database."))
+                    return await safe_action(lambda: message.reply("❌ File not found in database."))
 
                 file_id = file.get("file_id")
                 file_name = file.get("file_name") or "None"
@@ -260,29 +260,30 @@ async def start(client, message):
 
                 sent_msg = None
                 if file_id:
-                    sent_msg = await safe_action(client.send_cached_media(
+                    sent_msg = await safe_action(lambda: client.send_cached_media(
                         chat_id=user_id,
                         file_id=file_id,
                         caption=f_caption,
                         protect_content=forward_protect
                     ))
                 else:
-                    sent_msg = await safe_action(message.reply_text(original_caption, protect_content=forward_protect))
+                    sent_msg = await safe_action(lambda: message.reply_text(original_caption, protect_content=forward_protect))
 
-                if buttons_data:
-                    buttons = [[InlineKeyboardButton(btn["name"], url=btn["url"])] for btn in buttons_data]
-                    try:
-                        if sent_msg and sent_msg.caption is not None:
-                            await safe_action(sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons)))
-                        else:
-                            await safe_action(sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons)))
-                    except Exception as e:
-                        if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-                            raise
+                if sent_msg:
+                    if buttons_data:
+                        buttons = [[InlineKeyboardButton(btn["name"], url=btn["url"])] for btn in buttons_data]
+                        try:
+                            if sent_msg.caption is not None:
+                                await safe_action(lambda: sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons)))
+                            else:
+                                await safe_action(lambda: sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons)))
+                        except Exception as e:
+                            if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+                                raise
 
                 notice = None
                 if sent_msg and auto_delete:
-                    notice = await safe_action(client.send_message(
+                    notice = await safe_action(lambda: client.send_message(
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     ))
@@ -293,7 +294,7 @@ async def start(client, message):
                 print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
                 return
             except Exception as e:
-                await safe_action(client.send_message(
+                await safe_action(lambda: client.send_message(
                     LOG_CHANNEL,
                     f"⚠️ Clone Single File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                 ))
@@ -318,7 +319,7 @@ async def start(client, message):
 
                     btn.append([InlineKeyboardButton("♻️ Try Again", url=f"https://t.me/{me.username}?start=BATCH-{file_id}")])
 
-                    return await safe_action(message.reply_text(
+                    return await safe_action(lambda: message.reply_text(
                         "🚫 You are not **verified**! Kindly **verify** to continue.",
                         protect_content=forward_protect,
                         reply_markup=InlineKeyboardMarkup(btn)
@@ -326,19 +327,20 @@ async def start(client, message):
 
                 batch = await db.get_batch(decode_file_id)
                 if not batch:
-                    return await safe_action(message.reply("⚠️ Batch not found or expired."))
+                    return await safe_action(lambda: message.reply("⚠️ Batch not found or expired."))
 
                 file_ids = batch.get("file_ids", [])
                 total_files = len(file_ids)
                 if not total_files:
-                    return await safe_action(message.reply("⚠️ No files in this batch."))
+                    return await safe_action(lambda: message.reply("⚠️ No files in this batch."))
 
-                sts = await safe_action(message.reply(f"📦 Preparing batch...\n\nTotal files: **{total_files}**"))
+                sts = await safe_action(lambda: message.reply(f"📦 Preparing batch...\n\nTotal files: **{total_files}**"))
 
                 sent_files = []
                 for index, db_file_id in enumerate(file_ids, start=1):
                     try:
-                        await safe_action(sts.edit_text(f"📤 Sending file {index}/{total_files}..."))
+                        if sts:
+                            await safe_action(lambda: sts.edit_text(f"📤 Sending file {index}/{total_files}..."))
 
                         if batch.get("is_auto_post"):
                             file = await db.get_file_by_file_id(db_file_id, me.id)
@@ -374,14 +376,14 @@ async def start(client, message):
 
                         sent_msg = None
                         if file_id:
-                            sent_msg = await safe_action(client.send_cached_media(
+                            sent_msg = await safe_action(lambda: client.send_cached_media(
                                 chat_id=user_id,
                                 file_id=file_id,
                                 caption=f_caption,
                                 protect_content=forward_protect
                             ))
                         else:
-                            sent_msg = await safe_action(message.reply_text(original_caption, protect_content=forward_protect))
+                            sent_msg = await safe_action(lambda: message.reply_text(original_caption, protect_content=forward_protect))
 
                         buttons = []
                         for btn in buttons_data:
@@ -390,9 +392,9 @@ async def start(client, message):
                         if buttons:
                             try:
                                 if sent_msg and sent_msg.caption is not None:
-                                    await safe_action(sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons)))
+                                    await safe_action(lambda: sent_msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons)))
                                 else:
-                                    await safe_action(sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons)))
+                                    await safe_action(lambda: sent_msg.edit_text(original_caption, reply_markup=InlineKeyboardMarkup(buttons)))
                             except Exception as e:
                                 if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                                     raise
@@ -409,7 +411,7 @@ async def start(client, message):
                             print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
                             return
                         else:
-                            await safe_action(client.send_message(
+                            await safe_action(lambda: client.send_message(
                                 LOG_CHANNEL,
                                 f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                             ))
@@ -418,7 +420,7 @@ async def start(client, message):
 
                 notice = None
                 if sent_files and auto_delete:
-                    notice = await safe_action(client.send_message(
+                    notice = await safe_action(lambda: client.send_message(
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     ))
@@ -426,7 +428,7 @@ async def start(client, message):
                     reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
                     asyncio.create_task(schedule_delete(client, db, sent_files[0].chat.id, [msg.id for msg in sent_files], notice.id, auto_delete_time2, reload_url))
 
-                await safe_action(sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**"))
+                await safe_action(lambda: sts.edit_text(f"✅ Batch completed!\n\nTotal files sent: **{total_files}**"))
                 await asyncio.sleep(5)
                 await sts.delete()
             except Exception as e:
@@ -435,7 +437,7 @@ async def start(client, message):
                 if isinstance(e, UserIsBlocked):
                     print(f"⚠️ User {user_id} blocked the bot. Ignoring.")
                 else:
-                    await safe_action(client.send_message(
+                    await safe_action(lambda: client.send_message(
                         LOG_CHANNEL,
                         f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     ))
@@ -460,14 +462,14 @@ async def start(client, message):
 
                 btn.append([InlineKeyboardButton("♻️ Try Again", url=f"https://t.me/{me.username}?start=AUTO-{encoded}")])
 
-                return await safe_action(message.reply_text(
+                return await safe_action(lambda: message.reply_text(
                     "🚫 You are not **verified**! Kindly **verify** to continue.",
                     protect_content=forward_protect,
                     reply_markup=InlineKeyboardMarkup(btn)
                 ))
 
             try:
-                msg = await safe_action(client.send_cached_media(
+                msg = await safe_action(lambda: client.send_cached_media(
                     chat_id=user_id,
                     file_id=file_id,
                     protect_content=forward_protect
@@ -499,13 +501,13 @@ async def start(client, message):
                     buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
 
                 if buttons:
-                    await safe_action(msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons)))
+                    await safe_action(lambda: msg.edit_caption(f_caption, reply_markup=InlineKeyboardMarkup(buttons)))
                 else:
-                    await safe_action(msg.edit_caption(f_caption))
+                    await safe_action(lambda: msg.edit_caption(f_caption))
 
                 notice=None
                 if msg and auto_delete:
-                    notice = await safe_action(client.send_message(
+                    notice = await safe_action(lambda: client.send_message(
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
                     ))
@@ -519,7 +521,7 @@ async def start(client, message):
             except Exception as e:
                 if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                     raise
-                await safe_action(client.send_message(
+                await safe_action(lambda: client.send_message(
                     LOG_CHANNEL,
                     f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                 ))
@@ -529,7 +531,7 @@ async def start(client, message):
         print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
         return
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Start Bot Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -544,12 +546,12 @@ async def help(client, message):
         if not clone:
             return
 
-        await safe_action(message.reply_text(script.HELP_TXT))
+        await safe_action(lambda: message.reply_text(script.HELP_TXT))
     except UserIsBlocked:
         print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
         return
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Help Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -674,7 +676,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 print(f"⚠️ Clone Auto-post error for {bot_id}: {e}")
                 try:
-                    await clone_client.send_message(
+                    await clone_lambda: client.send_message(
                         LOG_CHANNEL,
                         f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
@@ -682,7 +684,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     pass
                 await asyncio.sleep(30)
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"❌ Clone AutoPost crashed for {bot_id}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -704,7 +706,7 @@ async def genlink(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await safe_action(message.reply("❌ You are not authorized to use this bot."))
+            return await safe_action(lambda: message.reply("❌ You are not authorized to use this bot."))
 
         if message.reply_to_message:
             g_msg = message.reply_to_message
@@ -715,7 +717,7 @@ async def genlink(client, message):
             ))
 
             if g_msg.text and g_msg.text.lower() == '/cancel':
-                return await safe_action(message.reply('🚫 Process has been cancelled.'))
+                return await safe_action(lambda: message.reply('🚫 Process has been cancelled.'))
 
         file_id = None
         file_name = None
@@ -747,12 +749,12 @@ async def genlink(client, message):
             [[InlineKeyboardButton("🔁 Share URL", url=f'https://t.me/share/url?url={share_link}')]]
         )
 
-        await safe_action(message.reply(
-            f"🔗 Here is your link:\n{share_link}",
+        await safe_action(lambda: message.reply(
+            f"🔗 Here is your link:\n\n{share_link}",
             reply_markup=reply_markup
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Generate Link Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -775,7 +777,7 @@ async def batch(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await safe_action(message.reply("❌ You are not authorized to use this bot."))
+            return await safe_action(lambda: message.reply("❌ You are not authorized to use this bot."))
 
         usage_text = (
             f"📌 Use correct format.\n\n"
@@ -783,35 +785,35 @@ async def batch(client, message):
         )
 
         if " " not in message.text:
-            return await safe_action(message.reply(usage_text))
+            return await safe_action(lambda: message.reply(usage_text))
 
         links = message.text.strip().split(" ")
         if len(links) != 3:
-            return await safe_action(message.reply(usage_text))
+            return await safe_action(lambda: message.reply(usage_text))
 
         cmd, first, last = links
         regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
 
         match = regex.match(first)
         if not match:
-            return await safe_action(message.reply('❌ Invalid first link.'))
+            return await safe_action(lambda: message.reply('❌ Invalid first link.'))
         f_chat_id = match.group(4)
         f_msg_id = int(match.group(5))
         f_chat_id = int(f"-100{f_chat_id}") if f_chat_id.isnumeric() else f_chat_id
 
         match = regex.match(last)
         if not match:
-            return await safe_action(message.reply('❌ Invalid last link.'))
+            return await safe_action(lambda: message.reply('❌ Invalid last link.'))
         l_chat_id = match.group(4)
         l_msg_id = int(match.group(5))
         l_chat_id = int(f"-100{l_chat_id}") if l_chat_id.isnumeric() else l_chat_id
 
         if f_chat_id != l_chat_id:
-            return await safe_action(message.reply("❌ Chat IDs do not match."))
+            return await safe_action(lambda: message.reply("❌ Chat IDs do not match."))
 
         is_bot_admin = await is_admin(client, f_chat_id, me.id)
         if not is_bot_admin:
-            return await safe_action(message.reply("⚠️ I must be an admin in that channel/group to index messages."))
+            return await safe_action(lambda: message.reply("⚠️ I must be an admin in that channel/group to index messages."))
 
         chat_id = (await client.get_chat(f_chat_id)).id
 
@@ -819,7 +821,7 @@ async def batch(client, message):
         end_id = max(f_msg_id, l_msg_id)
         total_msgs = (end_id - start_id) + 1
 
-        sts = await safe_action(message.reply("⏳ Generating links for your messages... This may take some time."))
+        sts = await safe_action(lambda: message.reply("⏳ Generating links for your messages... This may take some time."))
 
         outlist = []
         og_msg = 0
@@ -836,7 +838,7 @@ async def batch(client, message):
             if og_msg % 10 == 0 or tot == total_msgs:
                 try:
                     progress_bar = batch_progress_bar(tot, total_msgs)
-                    await safe_action(sts.edit(f"""
+                    await safe_action(lambda: sts.edit(f"""
 ⚙️ <b>Generating Batch Link...</b>
 
 📂 Total: {total_msgs}
@@ -887,16 +889,16 @@ async def batch(client, message):
             [[InlineKeyboardButton("🔁 Share URL", url=f'https://t.me/share/url?url={share_link}')]]
         )
 
-        await safe_action(sts.edit(
-            f"🔗 Here is your link:\n{share_link}",
+        await safe_action(lambda: sts.edit(
+            f"🔗 Here is your link:\n\n{share_link}",
             reply_markup=reply_markup
         ))
     except ChannelInvalid:
-        await safe_action(message.reply('⚠️ This may be a private channel / group. Make me an admin over there to index the files.'))
+        await safe_action(lambda: message.reply('⚠️ This may be a private channel / group. Make me an admin over there to index the files.'))
     except (UsernameInvalid, UsernameNotModified):
-        await safe_action(message.reply('⚠️ Invalid Link specified.'))
+        await safe_action(lambda: message.reply('⚠️ Invalid Link specified.'))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Batch Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -919,7 +921,7 @@ async def shorten_handler(client: Client, message: Message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await safe_action(message.reply("❌ You are not authorized to use this bot."))
+            return await safe_action(lambda: message.reply("❌ You are not authorized to use this bot."))
 
         user_id = message.from_user.id
         cmd = message.command
@@ -937,22 +939,22 @@ async def shorten_handler(client: Client, message: Message):
         )
 
         if len(cmd) == 1:
-            help_msg = await safe_action(message.reply(help_text))
+            help_msg = await safe_action(lambda: message.reply(help_text))
             SHORTEN_STATE[user_id] = {"step": 1, "help_msg_id": help_msg.id}
 
             if user.get("base_site") and user.get("shortener_api"):
                 SHORTEN_STATE[user_id]["step"] = 3
-                await safe_action(message.reply("🔗 Base site and API already set. Send the link you want to shorten:"))
+                await safe_action(lambda: message.reply("🔗 Base site and API already set. Send the link you want to shorten:"))
             else:
-                await safe_action(message.reply("Please send your **base site** (e.g., shortnerdomain.com):"))
+                await safe_action(lambda: message.reply("Please send your **base site** (e.g., shortnerdomain.com):"))
             return
 
         if len(cmd) == 2 and cmd[1].lower() == "none":
             await clonedb.update_user_info(user_id, {"base_site": None, "shortener_api": None})
             SHORTEN_STATE.pop(user_id, None)
-            return await safe_action(message.reply("✅ Base site and API have been reset successfully."))
+            return await safe_action(lambda: message.reply("✅ Base site and API have been reset successfully."))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -975,7 +977,7 @@ async def broadcast(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await safe_action(message.reply("❌ You are not authorized to use this bot."))
+            return await safe_action(lambda: message.reply("❌ You are not authorized to use this bot."))
 
         if message.reply_to_message:
             b_msg = message.reply_to_message
@@ -986,11 +988,11 @@ async def broadcast(client, message):
             ))
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply("🚫 Broadcast cancelled."))
+                return await safe_action(lambda: message.reply("🚫 Broadcast cancelled."))
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
-        sts = await safe_action(message.reply_text("⏳ Broadcast starting..."))
+        sts = await safe_action(lambda: message.reply_text("⏳ Broadcast starting..."))
 
         done = blocked = deleted = failed = success = 0
         start_time = time.time()
@@ -1018,7 +1020,7 @@ async def broadcast(client, message):
                     eta = timedelta(seconds=int(remaining / speed)) if speed > 0 else "∞"
 
                     try:
-                        await safe_action(sts.edit(f"""
+                        await safe_action(lambda: sts.edit(f"""
 📢 <b>Broadcast in Progress...</b>
 
 {progress}
@@ -1058,9 +1060,9 @@ async def broadcast(client, message):
 
 ⚡ Speed: {speed:.2f} users/sec
 """
-        await safe_action(sts.edit(final_text))
+        await safe_action(lambda: sts.edit(final_text))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1083,7 +1085,7 @@ async def stats(client, message):
         moderators = [int(m) for m in moderators]
 
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
-            return await safe_action(message.reply("❌ You are not authorized to use this bot."))
+            return await safe_action(lambda: message.reply("❌ You are not authorized to use this bot."))
 
         users_count = clone.get("users_count", 0)
         storage_used = clone.get("storage_used", 0)
@@ -1093,7 +1095,7 @@ async def stats(client, message):
 
         uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
-        await safe_action(message.reply(
+        await safe_action(lambda: message.reply(
             f"📊 Status for @{clone.get('username')}\n\n"
             f"👤 Users: {users_count}\n"
             f"🚫 Banned: {banned_users}\n"
@@ -1102,7 +1104,7 @@ async def stats(client, message):
             f"⏱ Uptime: {uptime}\n",
         ))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Stats Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1133,7 +1135,7 @@ async def contact(client, message):
             ))
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply("🚫 Contact cancelled."))
+                return await safe_action(lambda: message.reply("🚫 Contact cancelled."))
 
         header = (
             f"📩 **New Contact Message**\n\n"
@@ -1145,20 +1147,20 @@ async def contact(client, message):
             content = f"\n💬 Message:\n{c_msg.text}"
             final_text = header + content
             if owner_id:
-                await safe_action(client.send_message(owner_id, final_text))
+                await safe_action(lambda: client.send_message(owner_id, final_text))
             for mod_id in moderators:
-                await safe_action(client.send_message(mod_id, final_text))
+                await safe_action(lambda: client.send_message(mod_id, final_text))
         else:
             orig_caption = c_msg.caption or ""
             final_caption = f"{header}\n💬 Message:\n{orig_caption}" if orig_caption else header
             if owner_id:
-                await safe_action(c_msg.copy(owner_id, caption=final_caption))
+                await safe_action(lambda: c_msg.copy(owner_id, caption=final_caption))
             for mod_id in moderators:
-                await safe_action(c_msg.copy(mod_id, caption=final_caption))
+                await safe_action(lambda: c_msg.copy(mod_id, caption=final_caption))
 
-        await safe_action(message.reply_text("✅ Your message has been sent to the admin!"))
+        await safe_action(lambda: message.reply_text("✅ Your message has been sent to the admin!"))
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Contact Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1193,21 +1195,21 @@ async def reply(client, message):
                 f"📩 **Reply from Admin**\n\n"
                 f"💬 Message:\n{message.text}"
             )
-            await safe_action(client.send_message(user_id, text))
+            await safe_action(lambda: client.send_message(user_id, text))
         else:
             orig_caption = message.caption or ""
             final_caption = (
                 f"📩 **Reply from Admin**\n\n💬 Message:\n{orig_caption}"
                 if orig_caption else "📩 **Reply from Admin**"
             )
-            await safe_action(message.copy(user_id, caption=final_caption))
+            await safe_action(lambda: message.copy(user_id, caption=final_caption))
 
-        await safe_action(message.reply("✅ Reply delivered!"))
+        await safe_action(lambda: message.reply("✅ Reply delivered!"))
     except UserIsBlocked:
         print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
         return
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1248,7 +1250,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton("1 Year", callback_data="premium_365")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="start")]
             ]
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 "💎 Choose your Premium Plan to remove ads:",
                 reply_markup=InlineKeyboardMarkup(premium_btns)
             ))
@@ -1267,7 +1269,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="remove_ads")]
             ]
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 f"💎 Premium Plan Details:\n\n"
                 f"🗓 Duration: {days} days\n"
                 f"💰 Price: {price}\n"
@@ -1292,7 +1294,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             user_id = query.from_user.id
             first_name = query.from_user.first_name
 
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 f"⏳ Payment received for **Premium Plan** ({days} days).\nWaiting for admin approval...",
                 parse_mode=enums.ParseMode.MARKDOWN
             ))
@@ -1305,7 +1307,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             ]
 
             if owner_id:
-                await safe_action(client.send_message(
+                await safe_action(lambda: client.send_message(
                     owner_id,
                     f"📩 *New Payment Confirmation*\n\n"
                     f"👤 User: [{first_name}](tg://user?id={user_id})\n"
@@ -1316,7 +1318,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 ))
 
             for mod_id in moderators:
-                await safe_action(client.send_message(
+                await safe_action(lambda: client.send_message(
                     mod_id,
                     f"📩 *New Payment Confirmation*\n\n"
                     f"👤 User: [{first_name}](tg://user?id={user_id})\n"
@@ -1361,12 +1363,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
-            await safe_action(client.send_message(
+            await safe_action(lambda: client.send_message(
                 user_id,
                 f"✅ Your Premium Plan ({days} days) has been approved!\nEnjoy ad-free experience 🎉"
             ))
 
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 f"✅ Approved Premium Plan for user `{user_id}` ({days} days)."
             ))
 
@@ -1401,12 +1403,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await db.update_clone(me.id, {"premium_user": normalized})
 
-            await safe_action(client.send_message(
+            await safe_action(lambda: client.send_message(
                 user_id,
                 f"❌ Your Premium Plan ({days} days) payment was *rejected*.\nContact support for help.",
             ))
 
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 f"❌ Rejected Premium Plan for user `{user_id}` ({days} days)."
             ))
 
@@ -1419,7 +1421,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton('🔒 Close', callback_data='close')]
             ]
             start_text = clone.get("wlc", script.START_TXT)
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=start_text.format(user=query.from_user.mention, bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1427,7 +1429,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # Help
         elif data == "help":
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.HELP_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1436,7 +1438,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data == "about":
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
             ownerid = int(clone['user_id'])
-            await safe_action(query.message.edit_text(
+            await safe_action(lambda: query.message.edit_text(
                 text=script.CABOUT_TXT.format(bot=me.mention, developer=ownerid),
                 reply_markup=InlineKeyboardMarkup(buttons)
             ))
@@ -1446,7 +1448,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.delete()
 
         else:
-            await safe_action(client.send_message(
+            await safe_action(lambda: client.send_message(
                 LOG_CHANNEL,
                 f"⚠️ Clone Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
             ))
@@ -1457,7 +1459,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     except Exception as e:
         if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
             raise
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1492,17 +1494,17 @@ async def message_capture(client: Client, message: Message):
                 base_site = message.text.strip()
                 new_text = base_site.removeprefix("https://").removeprefix("http://")
                 if not domain(new_text):
-                    return await safe_action(message.reply("❌ Invalid domain. Send a valid base site:"))
+                    return await safe_action(lambda: message.reply("❌ Invalid domain. Send a valid base site:"))
                 await clonedb.update_user_info(user_id, {"base_site": new_text})
                 state["step"] = 2
-                await safe_action(message.reply("✅ Base site set. Now send your **Shortener API key**:"))
+                await safe_action(lambda: message.reply("✅ Base site set. Now send your **Shortener API key**:"))
                 return
 
             if state["step"] == 2:
                 api = message.text.strip()
                 await clonedb.update_user_info(user_id, {"shortener_api": api})
                 state["step"] = 3
-                await safe_action(message.reply("✅ API set. Now send the **link to shorten**:"))
+                await safe_action(lambda: message.reply("✅ API set. Now send the **link to shorten**:"))
                 return
 
             if state["step"] == 3:
@@ -1513,7 +1515,7 @@ async def message_capture(client: Client, message: Message):
 
                 if not base_site or not api_key:
                     SHORTEN_STATE[user_id] = {"step": 1}
-                    return await safe_action(message.reply("❌ Base site or API missing. Let's start over."))
+                    return await safe_action(lambda: message.reply("❌ Base site or API missing. Let's start over."))
 
                 short_link = await get_short_link(user, long_link)
 
@@ -1521,8 +1523,8 @@ async def message_capture(client: Client, message: Message):
                     [[InlineKeyboardButton("🔁 Share URL", url=f'https://t.me/share/url?url={short_link}')]]
                 )
 
-                await safe_action(message.reply(
-                    f"🔗 Here is your shortened link:\n{short_link}",
+                await safe_action(lambda: message.reply(
+                    f"🔗 Here is your shortened link:\n\n{short_link}",
                     reply_markup=reply_markup
                 ))
                 
@@ -1562,7 +1564,7 @@ async def message_capture(client: Client, message: Message):
                     notify_msg = None
                     if text != original_text:
                         try:
-                            await safe_action(message.edit(text))
+                            await safe_action(lambda: message.edit(text))
                             notify_msg = f"⚠️ Edited inappropriate content in clone @{me.username}.\nMessage ID: {message.id}"
                         except Exception as e:
                             if "CHAT_ADMIN_REQUIRED" in str(e) or "MESSAGE_EDIT_FORBIDDEN" in str(e):
@@ -1573,14 +1575,14 @@ async def message_capture(client: Client, message: Message):
 
                         if notify_msg and notify_msg.strip():
                             for mod_id in moderators:
-                                await safe_action(client.send_message(chat_id=mod_id, text=notify_msg))
+                                await safe_action(lambda: client.send_message(chat_id=mod_id, text=notify_msg))
                             if owner_id:
-                                await safe_action(client.send_message(chat_id=owner_id, text=notify_msg))
+                                await safe_action(lambda: client.send_message(chat_id=owner_id, text=notify_msg))
             else:
                 for mod_id in moderators:
-                    await safe_action(client.send_message(chat_id=mod_id, text="⚠️ Bot is not admin."))
+                    await safe_action(lambda: client.send_message(chat_id=mod_id, text="⚠️ Bot is not admin."))
                 if owner_id:
-                    await safe_action(client.send_message(chat_id=owner_id, text="⚠️ Bot is not admin."))
+                    await safe_action(lambda: client.send_message(chat_id=owner_id, text="⚠️ Bot is not admin."))
 
             new_text = ""
 
@@ -1609,7 +1611,7 @@ async def message_capture(client: Client, message: Message):
                             file_id = message.document.file_id
 
                         if file_id:
-                            await safe_action(client.send_cached_media(
+                            await safe_action(lambda: client.send_cached_media(
                                 chat_id=message.chat.id,
                                 file_id=file_id,
                                 caption=new_text if new_text.strip() else None,
@@ -1617,16 +1619,16 @@ async def message_capture(client: Client, message: Message):
                             ))
                         else:
                             if new_text and new_text.strip():
-                                await safe_action(client.send_message(
+                                await safe_action(lambda: client.send_message(
                                     chat_id=message.chat.id,
                                     text=new_text,
                                     parse_mode=enums.ParseMode.HTML
                                 ))
             else:
                 for mod_id in moderators:
-                    await safe_action(client.send_message(chat_id=mod_id, text="⚠️ Bot is not admin."))
+                    await safe_action(lambda: client.send_message(chat_id=mod_id, text="⚠️ Bot is not admin."))
                 if owner_id:
-                    await safe_action(client.send_message(chat_id=owner_id, text="⚠️ Bot is not admin."))
+                    await safe_action(lambda: client.send_message(chat_id=owner_id, text="⚠️ Bot is not admin."))
 
             media_file_id = None
             media_type = None
@@ -1662,7 +1664,7 @@ async def message_capture(client: Client, message: Message):
                     print(f"✅ Saved media: {media_type} ({media_file_id}) for bot {me.id}")
                     await asyncio.sleep(0.25)
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone message_capture Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1733,7 +1735,7 @@ async def member_updated_handler(client, event):
             await db.update_clone(me.id, {"force_subscribe": fsub_data})
 
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone member_updated_handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
@@ -1772,7 +1774,7 @@ async def join_request_handler(client, request):
             await db.update_clone(client.me.id, {"force_subscribe": fsub_data})
 
     except Exception as e:
-        await safe_action(client.send_message(
+        await safe_action(lambda: client.send_message(
             LOG_CHANNEL,
             f"⚠️ Clone join_request_handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         ))
