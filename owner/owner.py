@@ -1168,54 +1168,41 @@ async def fetch_fampay_payments():
         IMAP_USER = "krrishraj237@gmail.com"
         IMAP_PASS = "ewcz wblx fdgv unpp"
 
-        print("🔌 Connecting to IMAP...")
         mail = imaplib.IMAP4_SSL(IMAP_HOST)
         mail.login(IMAP_USER, IMAP_PASS)
-        print("✅ Logged into mailbox")
 
         mail.select("inbox")
-        print("📥 Inbox selected")
 
-        status, email_ids = mail.search(None, 'FROM "noreply@fampay.in" UNSEEN')
-        print("🔍 Search status:", status)
+        status, email_ids = mail.search(None, 'UNSEEN')
         print("📨 Raw email ids:", email_ids)
 
         if status != "OK" or not email_ids or not email_ids[0]:
-            print("⚠️ No unseen FamPay emails found")
             return []
 
         email_list = email_ids[0].split()
-        print("📨 Total unseen emails:", len(email_list))
 
         latest_5_emails = email_list[-5:]
-        print("📩 Checking last 5 emails:", latest_5_emails)
 
         transactions = []
         kolkata_tz = pytz.timezone("Asia/Kolkata")
 
         for email_id in latest_5_emails:
-            print(f"➡️ Fetching email ID: {email_id}")
             status, msg_data = mail.fetch(email_id, "(RFC822)")
-            print("   ↪ Fetch status:", status)
 
             if status != "OK" or not msg_data:
-                print(f"   ⚠️ Failed to fetch email {email_id}")
                 continue
 
             raw_email = msg_data[0][1]
             msg = email.message_from_bytes(raw_email)
 
             email_date = msg["Date"]
-            print("   📅 Raw email date:", email_date)
 
             try:
                 email_datetime = datetime.strptime(email_date, "%a, %d %b %Y %H:%M:%S %z")
             except ValueError as ve:
-                print(f"   ⚠️ Date parse error: {ve}")
                 continue
 
             email_datetime = email_datetime.astimezone(kolkata_tz)
-            print("   🕒 Converted datetime:", email_datetime)
 
             body = ""
             if msg.is_multipart():
@@ -1226,26 +1213,19 @@ async def fetch_fampay_payments():
             else:
                 body = msg.get_payload(decode=True).decode(errors="ignore")
 
-            print("   📜 Email body snippet:", body[:200], "..." if len(body) > 200 else "")
-
             if not body:
-                print("   ⚠️ Empty email body")
                 continue
 
             amount_match = re.search(r"₹\s?([\d,.]+)", body)
             if amount_match:
-                print("   💰 Found amount string:", amount_match.group(1))
                 amount = float(amount_match.group(1).replace(",", ""))
             else:
-                print("   ⚠️ No amount found")
                 amount = None
 
             txn_match = re.search(r"transaction id\s*[:\-]?\s*(\w+)", body, re.I)
             txn_id = txn_match.group(1) if txn_match else None
-            print("   🔑 Transaction ID:", txn_id)
 
             if not amount or not txn_id:
-                print("   ⚠️ Missing amount or txn_id, skipping email")
                 continue
 
             txn = {
@@ -1253,12 +1233,11 @@ async def fetch_fampay_payments():
                 "amount": amount,
                 "txn_id": txn_id
             }
-            print("   ✅ Transaction added:", txn)
             transactions.append(txn)
 
-        print("🎉 Final transactions:", transactions)
+            mail.store(email_id, '+FLAGS', '\\Seen')
+
         mail.logout()
-        print("👋 Logged out from mailbox")
         return transactions
 
     except Exception as e:
@@ -3247,10 +3226,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             text = (
                 f"💳 **{feature_type} Payment** 💳\n\n"
-                f"Amount: {price}\n"
-                "UPI ID: `krishraj237@fam`\n"
-                "Send payment to UPI ID\n\n"
-                "After payment, click the **Payment Done** button below to confirm."
+                f"💰 Amount: {price}\n"
+                "🏦 UPI ID: `krishraj237@fam`\n\n"
+                "📸 Scan the QR below or send payment to UPI ID.\n\n"
+                "After payment, click **✅ Payment Done** below to confirm."
             )
 
             buttons = [
@@ -3258,8 +3237,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton("⬅️ Back", callback_data="premium")]
             ]
 
-            await safe_action(query.message.edit_text,
-                text=text,
+            await safe_action(query.message.delete)
+
+            await safe_action(client.send_photo,
+                chat_id=query.message.chat.id,
+                photo="https://i.ibb.co/99mFkHKS/IMG-20250929-210215.png",
+                caption=text,
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode=enums.ParseMode.MARKDOWN
             )
