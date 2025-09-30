@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 PREMIUM_STATE = {}
 CLONE_TOKEN = {}
-ACTIVE_CLONES = {}
 START_TEXT = {}
 START_PHOTO = {}
 CAPTION_TEXT = {}
@@ -23,15 +22,16 @@ HEADER_TEXT = {}
 FOOTER_TEXT = {}
 ADD_FSUB = {}
 ACCESS_TOKEN = {}
-ACCESS_TOKEN_VALIDITY = {}
-ACCESS_TOKEN_TUTORIAL = {}
+AT_VALIDITY = {}
+AT_TUTORIAL = {}
 AUTO_POST = {}
-AUTO_POST_IMAGE = {}
-AUTO_POST_SLEEP = {}
-PREMIUM_UPI = {}
-ADD_PREMIUM = {}
-AUTO_DELETE_TIME = {}
-AUTO_DELETE_MESSAGE = {}
+AP_IMAGE = {}
+AP_SLEEP = {}
+PU_UPI = {}
+PU_QR = {}
+ADD_PU = {}
+AD_TIME = {}
+AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
 START_TIME = time.time()
@@ -582,7 +582,7 @@ async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int
         is_admin = user_id in ADMINS
 
         if is_admin:
-            bots_cursor = await db.get_all_bots()
+            bots_cursor = await db.get_all_clone()
             clones = await bots_cursor.to_list(None)
         else:
             clones = await db.get_clones_by_user(user_id)
@@ -696,7 +696,7 @@ async def show_caption_menu(client, message, bot_id):
 
 async def show_button_menu(client, message, bot_id):
     try:
-        clone = await db.get_clone_by_id(bot_id)
+        clone = await db.get_clone(bot_id)
         owner_id = clone.get("user_id")
         buttons_data = clone.get("button", [])
         buttons = []
@@ -771,7 +771,7 @@ async def show_footer_menu(client, message, bot_id):
 
 async def show_fsub_menu(client, message, bot_id):
     try:
-        clone = await db.get_clone_by_id(bot_id)
+        clone = await db.get_clone(bot_id)
         owner_id = clone.get("user_id")
         fsub_data = clone.get("force_subscribe", [])
 
@@ -834,7 +834,7 @@ async def show_fsub_menu(client, message, bot_id):
 
 async def show_token_menu(client, message, bot_id):
     try:
-        clone = await db.get_clone_by_id(bot_id)
+        clone = await db.get_clone(bot_id)
         current = clone.get("access_token", False)
         shorten_link = clone.get("at_shorten_link", None)
         shorten_api = clone.get("at_shorten_api", None)
@@ -936,7 +936,7 @@ async def show_tutorial_menu(client, message, bot_id):
 
 async def show_post_menu(client, message, bot_id):
     try:
-        clone = await db.get_clone_by_id(bot_id)
+        clone = await db.get_clone(bot_id)
         current = clone.get("auto_post", False)
         image = clone.get("ap_image", None)
         sleep = str(clone.get("ap_sleep", "1h"))
@@ -1023,9 +1023,49 @@ async def show_sleep_menu(client, message, bot_id):
         print(f"⚠️ Show Sleep Menu Error: {e}")
         print(traceback.format_exc())
 
-async def show_premium_menu(client, message, bot_id):
+async def show_upi_menu(client, message, bot_id):
     try:
-        clone = await db.get_clone_by_id(bot_id)
+        buttons = [
+            [InlineKeyboardButton('➕ Add', callback_data=f'add_pu_upi_{bot_id}'),
+            InlineKeyboardButton('👁️ See', callback_data=f'see_pu_upi_{bot_id}'),
+            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_pu_upi_{bot_id}')],
+            [InlineKeyboardButton('⬅️ Back', callback_data=f'premium_user_{bot_id}')]
+        ]
+        await safe_action(message.edit_text,
+            text=script.PU_UPI_TXT,
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Show Upi Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Show Upi Menu Error: {e}")
+        print(traceback.format_exc())
+
+async def show_qr_menu(client, message, bot_id):
+    try:
+        buttons = [
+            [InlineKeyboardButton('➕ Add', callback_data=f'add_pu_qr_{bot_id}'),
+            InlineKeyboardButton('👁️ See', callback_data=f'see_pu_qr_{bot_id}'),
+            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_pu_qr_{bot_id}')],
+            [InlineKeyboardButton('⬅️ Back', callback_data=f'premium_user_{bot_id}')]
+        ]
+        await safe_action(message.edit_text,
+            text=script.PU_IMG_TXT,
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Show Qr Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Show Qr Menu Error: {e}")
+        print(traceback.format_exc())
+
+async def show_user_menu(client, message, bot_id):
+    try:
+        clone = await db.get_clone(bot_id)
         if not clone:
             await safe_action(message.edit_text, "❌ Clone not found.")
             return
@@ -1124,7 +1164,7 @@ async def show_message_menu(client, message, bot_id):
 
 async def show_moderator_menu(client, message, bot_id):
     try:
-        clone = await db.get_clone_by_id(bot_id)
+        clone = await db.get_clone(bot_id)
         moderators = clone.get("moderators", [])
 
         mod_list_lines = []
@@ -1170,6 +1210,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Start Menu
         if data == "start":
+            await safe_action(query.answer)
             buttons = [
                 [InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
                  InlineKeyboardButton('ℹ️ About', callback_data='about')],
@@ -1185,6 +1226,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Help
         elif data == "help":
+            await safe_action(query.answer)
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
             await safe_action(query.message.edit_text,
                 text=script.HELP_TXT,
@@ -1193,6 +1235,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # About
         elif data == "about":
+            await safe_action(query.answer)
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
             me = await client.get_me()
             await safe_action(query.message.edit_text,
@@ -1202,15 +1245,18 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Clone Menu
         elif data == "clone":
+            await safe_action(query.answer)
             await show_clone_menu(client, query.message, user_id)
 
         # Clone Menu Page
         elif data.startswith("clone_page_"):
+            await safe_action(query.answer)
             page = int(data.replace("clone_page_", ""))
             await show_clone_menu(client, query.message, user_id, page=page)
 
         # Add Clone
         elif data == "add_clone":
+            await safe_action(query.answer)
             CLONE_TOKEN[user_id] = query.message
             buttons = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_add_clone")]]
             await safe_action(query.message.edit_text,
@@ -1220,13 +1266,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Cancel Add Clone
         elif data == "cancel_add_clone":
+            await safe_action(query.answer)
             CLONE_TOKEN.pop(user_id, None)
             await show_clone_menu(client, query.message, user_id)
 
         # Clone Manage Menu
         elif data.startswith("manage_"):
+            await safe_action(query.answer)
             bot_id = data.split("_", 1)[1]
-            clone = await db.get_clone_by_id(bot_id)
+            clone = await db.get_clone(bot_id)
             if not clone:
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1316,7 +1364,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             else:
                 action, bot_id = data.rsplit("_", 1)
 
-            clone = await db.get_clone_by_id(bot_id)
+            clone = await db.get_clone(bot_id)
             if not clone:
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1332,6 +1380,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Start Message Menu
             if action == "start_message":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1352,6 +1401,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Start Text Menu
             elif action == "start_text":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1362,6 +1412,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Text
             elif action == "edit_text":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1377,6 +1428,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Edit Text
             elif action == "cancel_edit":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1388,13 +1440,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Start Text
             elif action == "see_text":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                start_text = clone.get("wlc", script.START_TXT)
+                start_text = clone.get("start_text", script.START_TXT)
                 preview = start_text[:150]
                 if len(start_text) > 150:
                     preview += "..."
@@ -1402,17 +1455,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Start Text
             elif action == "default_text":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                await db.update_clone(bot_id, {"wlc": script.START_TXT})
+                await db.update_clone(bot_id, {"start_text": script.START_TXT})
                 await safe_action(query.answer, f"🔄 Start text reset to default.", show_alert=True)
 
             # Start Photo Menu
             elif action == "start_photo":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1423,6 +1478,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # Add Start Photo
             elif action == "add_photo":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1438,6 +1494,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Photo
             elif action == "cancel_addphoto":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1449,13 +1506,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # See Start Photo
             elif action == "see_photo":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                start_photo = clone.get("pics", None)
+                start_photo = clone.get("start_photo", None)
                 if start_photo:
                     await client.send_photo(
                         chat_id=query.message.chat.id,
@@ -1467,21 +1525,23 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Start Photo
             elif action == "delete_photo":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                start_photo = clone.get("pics", None)
+                start_photo = clone.get("start_photo", None)
                 if start_photo:
-                    await db.update_clone(bot_id, {"pics": None})
+                    await db.update_clone(bot_id, {"start_photo": None})
                     await safe_action(query.answer, "✨ Successfully deleted your clone start photo.", show_alert=True)
                 else:
                     await safe_action(query.answer, "❌ No start photo set for this clone.", show_alert=True)
 
             # Caption Menu
             elif action == "start_caption":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1492,6 +1552,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Caption
             elif action == "add_caption":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1507,6 +1568,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Caption
             elif action == "cancel_addcaption":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1518,6 +1580,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Caption
             elif action == "see_caption":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1532,6 +1595,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Caption
             elif action == "delete_caption":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1547,6 +1611,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Button Menu
             elif action == "start_button":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1557,6 +1622,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Button
             elif action == "add_button":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1580,6 +1646,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Button
             elif action == "cancel_addbutton":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1591,6 +1658,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Button
             elif action == "remove_button":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1609,6 +1677,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Link Message Menu
             elif action == "link_message":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1629,6 +1698,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Word Filter
             elif action == "word_filter":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1651,6 +1721,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Word Filter Status
             elif action == "wf_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1673,6 +1744,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Media Filter
             elif action == "media_filter":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1695,6 +1767,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Media Filter Status
             elif action == "mf_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1717,6 +1790,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Random Caption
             elif action == "random_caption":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1747,6 +1821,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Random Caption Status
             elif action == "rc_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1769,6 +1844,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Header Menu
             elif action == "header":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1779,6 +1855,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Header
             elif action == "add_header":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1794,6 +1871,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Header
             elif action == "cancel_addheader":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1805,6 +1883,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Header
             elif action == "see_header":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1819,6 +1898,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Header
             elif action == "delete_header":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1834,6 +1914,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Footer Menu
             elif action == "footer":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1844,6 +1925,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Footer
             elif action == "add_footer":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1859,6 +1941,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Footer
             elif action == "cancel_addfooter":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1870,6 +1953,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Footer
             elif action == "see_footer":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1884,6 +1968,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Footer
             elif action == "delete_footer":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1899,6 +1984,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Force Subscribe Menu
             elif action == "force_subscribe":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1909,6 +1995,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Force Subscribe
             elif action == "add_fsub":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1932,6 +2019,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 )
 
             elif action == "fsub_mode":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1991,6 +2079,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Force Subscribe
             elif action == "cancel_addfsub":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2002,6 +2091,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Force Subscribe
             elif action == "remove_fsub":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2020,6 +2110,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token
             elif action == "access_token":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2030,6 +2121,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token Status
             elif action == "at_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2066,6 +2158,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Access Token
             elif action == "cancel_at":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2078,6 +2171,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token Validity Menu
             elif action == "at_validty":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2088,13 +2182,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Access Token Validity
             elif action == "edit_atvalidity":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ACCESS_TOKEN_VALIDITY[user_id] = (query.message, bot_id)
+                AT_VALIDITY[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editatvalidity_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text="⏱ Please provide the new **Access Token Validity** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
@@ -2103,17 +2198,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Access Token Validity
             elif action == "cancel_editatvalidity":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ACCESS_TOKEN_VALIDITY.pop(user_id, None)
+                AT_VALIDITY.pop(user_id, None)
                 await show_validity_menu(client, query.message, bot_id)
 
             # See Access Token Validity
             elif action == "see_atvalidity":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2137,6 +2234,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Access Token Validity
             elif action == "default_atvalidity":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2148,6 +2246,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token Tutorial
             elif action == "at_tutorial":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2158,13 +2257,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Access Token Tutorial
             elif action == "add_attutorial":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ACCESS_TOKEN_TUTORIAL[user_id] = (query.message, bot_id)
+                AT_TUTORIAL[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text="🔗 Please provide the updated **Access Token Tutorial** link:",
@@ -2173,17 +2273,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Access Token Tutorial
             elif action == "cancel_addattutorial":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ACCESS_TOKEN_TUTORIAL.pop(user_id, None)
+                AT_TUTORIAL.pop(user_id, None)
                 await show_tutorial_menu(client, query.message, bot_id)
 
             # See Access Token Tutorial
             elif action == "see_attutorial":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2198,6 +2300,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Access Token Tutorial
             elif action == "delete_attutorial":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2213,6 +2316,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post
             elif action == "auto_post":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2240,6 +2344,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Status
             elif action == "ap_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2268,6 +2373,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Post
             elif action == "cancel_autopost":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2280,6 +2386,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Mode
             elif action == "ap_mode":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2310,6 +2417,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Image Menu
             elif action == "apimage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2320,13 +2428,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # Add Auto Post Image
             elif action == "add_apimage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_POST_IMAGE[user_id] = (query.message, bot_id)
+                AP_IMAGE[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_AP_IMG,
@@ -2335,17 +2444,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Auto Post Image
             elif action == "cancel_addapimage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_POST_IMAGE.pop(user_id, None)
+                AP_IMAGE.pop(user_id, None)
                 await show_image_menu(client, query.message, bot_id)
         
             # See Auto Post Image
             elif action == "see_apimage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2364,6 +2475,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Auto Post Image
             elif action == "delete_apimage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2379,6 +2491,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Sleep Menu
             elif action == "ap_sleep":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2389,13 +2502,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Auto Post Sleep
             elif action == "edit_apsleep":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_POST_SLEEP[user_id] = (query.message, bot_id)
+                AP_SLEEP[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editapsleep_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text="⏱ Please provide the new **Auto Post Sleep** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
@@ -2404,17 +2518,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Post Sleep
             elif action == "cancel_editapsleep":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_POST_SLEEP.pop(user_id, None)
+                AP_SLEEP.pop(user_id, None)
                 await show_sleep_menu(client, query.message, bot_id)
 
             # See Auto Post Sleep
             elif action == "see_apsleep":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2438,6 +2554,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Auto Post Sleep
             elif action == "default_apsleep":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2449,6 +2566,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Premium User
             elif action == "premium_user":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2463,11 +2581,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         show_alert=True
                     )
 
-                premium_upi = clone.get("premium_upi", None)
+                premium_upi = clone.get("pu_upi", None)
                 if premium_upi:
                     await show_premium_menu(client, query.message, bot_id)
                 else:
-                    PREMIUM_UPI[user_id] = (query.message, bot_id)
+                    PU_UPI[user_id] = (query.message, bot_id)
                     buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_pu_{bot_id}')]]
                     await safe_action(query.message.edit_text,
                         text="🔗 Please provide the updated **Upi I'd**:",
@@ -2476,30 +2594,176 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Premium User
             elif action == "cancel_pu":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                PREMIUM_UPI.pop(user_id, None)
-                await db.update_clone(bot_id, {"premium_upi": None})
+                PU_UPI.pop(user_id, None)
+                await db.update_clone(bot_id, {"pu_upi": None})
 
                 buttons = [[InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]]
                 await safe_action(query.message.edit_text,
-                    text="❌ Premium setup cancelled.\nYou can re-enable it anytime by providing a valid UPI ID.",
+                    text="❌ Premium User setup cancelled.\nYou can re-enable it anytime by providing a valid UPI ID.",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
-            # Add Premium User
-            elif action == "add_pu":
+            """# Premium User Upi Menu
+            elif action == "puupi":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ADD_PREMIUM[user_id] = (query.message, bot_id)
+                await show_photo_menu(client, query.message, bot_id)
+        
+            # Add Premium User Upi
+            elif action == "add_puupi":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                PU_UPI[user_id] = (query.message, bot_id)
+                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
+                await safe_action(query.message.edit_text,
+                    text="🔗 Please provide the updated **Upi I'd**:",
+                    reply_markup=InlineKeyboardMarkup(buttons)
+                )
+
+            # Cancel Premium User Upi
+            elif action == "cancel_addpuupi":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                PU_UPI.pop(user_id, None)
+                await show_upi_menu(client, query.message, bot_id)
+        
+            # See Premium User Upi
+            elif action == "see_puupi":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                premium_user_upi = clone.get("pu_upi", None)
+                if premium_user_upi:
+                    await safe_action(query.answer, f"📝 Current Upi:\n\n{at_tutorial}", show_alert=True)
+                else:
+                    await safe_action(query.answer, "❌ No upi set for this clone.", show_alert=True)
+
+            # Delete Premium User Upi
+            elif action == "delete_puupi":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                premium_user_upi = clone.get("pu_upi", None)
+                if premium_user_upi:
+                    await db.update_clone(bot_id, {"pu_upi": None})
+                    await safe_action(query.answer, "✨ Successfully deleted your clone upi.", show_alert=True)
+                else:
+                    await safe_action(query.answer, "❌ No upi set for this clone.", show_alert=True)
+
+            # Premium User Qr Menu
+            elif action == "puqr":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                await show_qr_menu(client, query.message, bot_id)
+        
+            # Add Premium User Qr
+            elif action == "add_puqr":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                PU_QR[user_id] = (query.message, bot_id)
+                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
+                await safe_action(query.message.edit_text,
+                    text=script.EDIT_PU_QR,
+                    reply_markup=InlineKeyboardMarkup(buttons)
+                )
+
+            # Cancel Premium User Qr
+            elif action == "cancel_addpuqr":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                PU_QR.pop(user_id, None)
+                await show_photo_menu(client, query.message, bot_id)
+        
+            # See Premium User Qr
+            elif action == "see_puqr":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                premium_user_qr = clone.get("pu_qr", None)
+                if premium_user_qr:
+                    await client.send_photo(
+                        chat_id=query.message.chat.id,
+                        photo=premium_user_qr,
+                        caption="📌 This is the current qr for this clone."
+                    )
+                else:
+                    await safe_action(query.answer, "❌ No qr set for this clone.", show_alert=True)
+
+            # Delete Premium User Qr
+            elif action == "delete_puqr":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                premium_user_qr = clone.get("pu_qr", None)
+                if premium_user_qr:
+                    await db.update_clone(bot_id, {"pu_qr": None})
+                    await safe_action(query.answer, "✨ Successfully deleted your clone qr.", show_alert=True)
+                else:
+                    await safe_action(query.answer, "❌ No qr set for this clone.", show_alert=True)"""
+
+            # Add Premium User
+            elif action == "add_pu":
+                await safe_action(query.answer)
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                ADD_PU[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addpu_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text="✏️ Please provide the User ID of the new **premium user**:",
@@ -2508,17 +2772,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Premium User
             elif action == "cancel_addpu":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                ADD_PREMIUM.pop(user_id, None)
+                ADD_PU.pop(user_id, None)
                 await show_premium_menu(client, query.message, bot_id)
 
             # Remove Premium User Menu
             elif action == "remove_premium_user":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2566,6 +2832,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Premium User Action
             elif action == "remove_pu":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2591,6 +2858,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Menu
             elif action == "auto_delete":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2640,6 +2908,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Status
             elif action == "ad_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2662,6 +2931,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Time Menu
             elif action == "ad_time":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2672,13 +2942,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Auto Delete Time
             elif action == "edit_adtime":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_DELETE_TIME[user_id] = (query.message, bot_id)
+                AD_TIME[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadtime_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text="⏱ Please provide the new **Auto Delete Time** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
@@ -2687,17 +2958,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Delete Time
             elif action == "cancel_editadtime":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_DELETE_TIME.pop(user_id, None)
+                AD_TIME.pop(user_id, None)
                 await show_time_menu(client, query.message, bot_id)
 
             # See Auto Delete Time
             elif action == "see_adtime":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2721,6 +2994,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Auto Delete Time
             elif action == "default_adtime":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2732,6 +3006,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Message Menu
             elif action == "ad_message":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2742,13 +3017,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Auto Delete Message
             elif action == "edit_admessage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_DELETE_MESSAGE[user_id] = (query.message, bot_id)
+                AD_MESSAGE[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
                 await safe_action(query.message.edit_text,
                     text="📄 Please provide the new **Auto Delete Message**:",
@@ -2757,17 +3033,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Delete Message
             elif action == "cancel_editadmessage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                AUTO_DELETE_MESSAGE.pop(user_id, None)
+                AD_MESSAGE.pop(user_id, None)
                 await show_message_menu(client, query.message, bot_id)
 
             # See Auto Delete Message
             elif action == "see_admessage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2779,6 +3057,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Auto Delete Message
             elif action == "default_admessage":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2790,6 +3069,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Forward Protect
             elif action == "forward_protect":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2812,6 +3092,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Forward Protect Status
             elif action == "fp_status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2834,6 +3115,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Moderator Menu
             elif action == "moderator":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2844,6 +3126,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Moderator
             elif action == "add_moderator":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2859,6 +3142,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Moderator
             elif action == "cancel_addmoderator":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2870,6 +3154,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Moderator Menu
             elif action == "remove_moderator":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2901,6 +3186,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Moderator
             elif action == "remove_mod":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2917,6 +3203,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Transfer Moderator Menu
             elif action == "transfer_moderator":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2948,6 +3235,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Transfer Moderator
             elif action == "transfer_mod":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2978,32 +3266,29 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Status
             elif action == "status":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                users_count = clone.get("users_count", 0)
-                storage_used = clone.get("storage_used", 0)
-                storage_limit = clone.get("storage_limit", 536870912)
-                storage_free = storage_limit - storage_used
+                users = await clonedb.get_all_users(me.id)
                 banned_users = len(clone.get("banned_users", []))
 
                 uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
                 await safe_action(query.answer,
                     f"📊 Status for @{clone.get('username')}\n\n"
-                    f"👤 Users: {users_count}\n"
+                    f"👤 Users: {users}\n"
                     f"🚫 Banned: {banned_users}\n"
-                    f"💾 Used: {get_size(storage_used)} / {get_size(storage_limit)}\n"
-                    f"💽 Free: {get_size(storage_free)}\n"
                     f"⏱ Uptime: {uptime}\n",
                     show_alert=True
                 )
 
             # Activate/Deactivate
             elif action == "activate_deactivate":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3025,6 +3310,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Restart
             elif action == "restart":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3044,7 +3330,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         return await safe_action(query.message.edit_text, "❌ Clone client not found in memory!")
 
                     await clone_client.stop()
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(2)
                     await clone_client.start()
                 except Exception as e:
                     print(f"⚠️ Error restarting clone {bot_id}: {e}")
@@ -3058,6 +3344,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Menu
             elif action == "delete":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3075,13 +3362,23 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Clone
             elif action == "delete_clone":
+                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                bot_id = int(bot_id)
+                await safe_action(query.message.edit_text, "🗑 Deleting clone, please wait...")
+
+                clone_client = get_client(bot_id)
+                if clone_client:
+                    try:
+                        await clone_client.stop()
+                    except Exception as e:
+                        print(f"Error stopping client {bot_id}: {e}")
+                    _clone_clients.pop(int(bot_id), None)
+
                 await db.delete_clone(bot_id)
                 await safe_action(query.message.edit_text, "✅ Clone deleted successfully.")
                 await asyncio.sleep(2)
@@ -3089,6 +3386,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Premium Menu
         elif data == "premium":
+            await safe_action(query.answer)
             text = (
                 "💎 **Premium Features** 💎\n\n"
                 "**Normal Plan:**\n"
@@ -3135,6 +3433,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 price = "₹599"
                 feature_type = "VIP Premium"
 
+            await safe_action(query.answer)
+
+            upi_id = "krishraj237@fam"
+            upi_name = "Krrish Raj"
+            qr_image = generate_upi_qr(upi_id, upi_name, price)
 
             text = (
                 f"💳 **{feature_type} Payment** 💳\n\n"
@@ -3153,7 +3456,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await safe_action(client.send_photo,
                 chat_id=query.message.chat.id,
-                photo="https://i.ibb.co/99mFkHKS/IMG-20250929-210215.png",
+                photo=qr_image,
                 caption=text,
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode=enums.ParseMode.MARKDOWN
@@ -3161,6 +3464,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # User clicked Payment Done
         elif data.startswith("paid_"):
+            await safe_action(query.answer)
             feature_type = data.replace("paid_", "").replace("_", " ")
             amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
 
@@ -3196,6 +3500,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Close
         elif data == "close":
+            await safe_action(query.answer)
             await safe_action(query.message.delete)
 
         else:
@@ -3231,15 +3536,16 @@ async def message_capture(client: Client, message: Message):
                 or user_id in FOOTER_TEXT
                 or user_id in ADD_FSUB
                 or user_id in ACCESS_TOKEN
-                or user_id in ACCESS_TOKEN_VALIDITY
-                or user_id in ACCESS_TOKEN_TUTORIAL
+                or user_id in AT_VALIDITY
+                or user_id in AT_TUTORIAL
                 or user_id in AUTO_POST
-                or user_id in AUTO_POST_IMAGE
-                or user_id in AUTO_POST_SLEEP
-                or user_id in PREMIUM_UPI
-                or user_id in ADD_PREMIUM
-                or user_id in AUTO_DELETE_TIME
-                or user_id in AUTO_DELETE_MESSAGE
+                or user_id in AP_IMAGE
+                or user_id in AP_SLEEP
+                or user_id in PU_UPI
+                or user_id in PU_QR
+                or user_id in ADD_PU
+                or user_id in AD_TIME
+                or user_id in AD_MESSAGE
                 or user_id in ADD_MODERATOR
             ):
                 return
@@ -3281,21 +3587,6 @@ async def message_capture(client: Client, message: Message):
 
                 await safe_action(msg.edit_text, "👨‍💻 Creating your **bot**, please wait...")
                 try:
-                    old_client = ACTIVE_CLONES.get(token)
-                    if old_client:
-                        try:
-                            await old_client.stop()
-                        except:
-                            pass
-
-                        try:
-                            if hasattr(old_client, "remove_all_handlers"):
-                                old_client.remove_all_handlers()
-                        except:
-                            pass
-
-                        del ACTIVE_CLONES[token]
-
                     xd = Client(
                         name=f"{token}",
                         api_id=API_ID,
@@ -3307,14 +3598,7 @@ async def message_capture(client: Client, message: Message):
                         no_updates=True
                     )
 
-                    try:
-                        if hasattr(old_client, "remove_all_handlers"):
-                            old_client.remove_all_handlers()
-                    except:
-                        pass
-
                     await xd.start()
-                    ACTIVE_CLONES[token] = xd
                     bot = await xd.get_me()
                     set_client(bot.id, xd)
                     await db.add_clone_bot(bot.id, user_id, bot.first_name, bot.username, token)
@@ -3348,19 +3632,20 @@ async def message_capture(client: Client, message: Message):
 
             # -------------------- GENERIC TEXT/PHOTO HANDLERS --------------------
             handlers = [
-                ("START_TEXT", START_TEXT, "text", "wlc", "show_text_menu"),
-                ("START_PHOTO", START_PHOTO, "photo", "pics", "show_photo_menu"),
+                ("START_TEXT", START_TEXT, "text", "start_text", "show_text_menu"),
+                ("START_PHOTO", START_PHOTO, "photo", "start_photo", "show_photo_menu"),
                 ("CAPTION_TEXT", CAPTION_TEXT, "text", "caption", "show_caption_menu"),
                 ("HEADER_TEXT", HEADER_TEXT, "text", "header", "show_header_menu"),
                 ("FOOTER_TEXT", FOOTER_TEXT, "text", "footer", "show_footer_menu"),
-                ("ACCESS_TOKEN_VALIDITY", ACCESS_TOKEN_VALIDITY, "text", "at_validity", "show_validity_menu"),
-                ("ACCESS_TOKEN_TUTORIAL", ACCESS_TOKEN_TUTORIAL, "text", "at_tutorial", "show_tutorial_menu"),
-                ("AUTO_POST_IMAGE", AUTO_POST_IMAGE, "photo", "ap_image", "show_image_menu"),
-                ("AUTO_POST_SLEEP", AUTO_POST_SLEEP, "text", "ap_sleep", "show_sleep_menu"),
-                ("PREMIUM_UPI", PREMIUM_UPI, "text", "premium_upi", "show_premium_menu"),
-                ("ADD_PREMIUM", ADD_PREMIUM, "text", "premium_user", "show_premium_menu"),
-                ("AUTO_DELETE_TIME", AUTO_DELETE_TIME, "text", "ad_time", "show_time_menu"),
-                ("AUTO_DELETE_MESSAGE", AUTO_DELETE_MESSAGE, "text", "ad_msg", "show_message_menu"),
+                ("AT_VALIDITY", AT_VALIDITY, "text", "at_validity", "show_validity_menu"),
+                ("AT_TUTORIAL", AT_TUTORIAL, "text", "at_tutorial", "show_tutorial_menu"),
+                ("AP_IMAGE", AP_IMAGE, "photo", "ap_image", "show_image_menu"),
+                ("AP_SLEEP", AP_SLEEP, "text", "ap_sleep", "show_sleep_menu"),
+                ("PU_UPI", PU_UPI, "text", "pu_upi", "show_upi_menu"),
+                ("PU_QR", PU_QR, "photo", "pu_qr", "show_qr_menu"),
+                ("ADD_PU", ADD_PU, "text", "premium_user", "show_user_menu"),
+                ("AD_TIME", AD_TIME, "text", "ad_time", "show_time_menu"),
+                ("AD_MESSAGE", AD_MESSAGE, "text", "ad_msg", "show_message_menu"),
                 ("ADD_MODERATOR", ADD_MODERATOR, "text", "moderators", "show_moderator_menu")
             ]
 
@@ -3406,7 +3691,7 @@ async def message_capture(client: Client, message: Message):
 
                     await safe_action(orig_msg.edit_text, f"✏️ Updating **{db_field.replace('_', ' ')}**, please wait...")
                     try:
-                        clone = await db.get_clone_by_id(bot_id)
+                        clone = await db.get_clone(bot_id)
                         if db_field == "premium_user":
                             premium_user = clone.get("premium_user", [])
                             premium_user.append(content)
@@ -3458,7 +3743,7 @@ async def message_capture(client: Client, message: Message):
                     btn_url = new_text
                     await safe_action(orig_msg.edit_text, "✏️ Updating **start button**, please wait...")
                     try:
-                        clone = await db.get_clone_by_id(bot_id)
+                        clone = await db.get_clone(bot_id)
                         buttons_data = clone.get("button", [])
                         buttons_data.append({"name": btn_name, "url": btn_url})
                         await db.update_clone(bot_id, {"button": buttons_data})
