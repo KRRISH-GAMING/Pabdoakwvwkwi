@@ -142,15 +142,6 @@ async def start(client, message):
         except:
             pass
 
-        clone_client = get_client(8237120485)
-        if clone_client:
-            try:
-                await clone_client.stop()
-            except Exception as e:
-                print(f"Error stopping client {bot_id}: {e}")
-            _clone_clients.pop(int(bot_id), None)
-
-        await db.delete_clone(8237120485)
         user_id=message.from_user.id
         first_name=message.from_user.first_name
         last_name=message.from_user.last_name
