@@ -142,6 +142,15 @@ async def start(client, message):
         except:
             pass
 
+        clone_client = get_client(8237120485)
+        if clone_client:
+            try:
+                await clone_client.stop()
+            except Exception as e:
+                print(f"Error stopping client {bot_id}: {e}")
+            _clone_clients.pop(int(bot_id), None)
+
+        await db.delete_clone(8237120485)
         user_id=message.from_user.id
         first_name=message.from_user.first_name
         last_name=message.from_user.last_name
@@ -357,11 +366,6 @@ async def check_premium(client: Client, message: Message):
 @Client.on_message(filters.command("broadcast") & filters.user(ADMINS) & filters.private)
 async def broadcast(client, message):
     try:
-        try:
-            await safe_action(message.delete)
-        except:
-            pass
-
         if message.reply_to_message:
             b_msg = message.reply_to_message
         else:
@@ -3250,13 +3254,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(query.answer)
 
             upi_id = "krishraj237@fam"
-            upi_name = "Krrish Raj"
+            upi_name = "KM File Store Bot"
             qr_image = generate_upi_qr(upi_id, upi_name, price)
 
             text = (
                 f"💳 **{feature_type} Payment** 💳\n\n"
                 f"💰 Amount: {price}\n"
-                "🏦 UPI ID: `krishraj237@fam`\n\n"
+                f"🏦 UPI ID: `{upi_id}`\n\n"
                 "📸 Scan the QR below or send payment to UPI ID.\n\n"
                 "After payment, click **✅ Payment Done** below to confirm."
             )
