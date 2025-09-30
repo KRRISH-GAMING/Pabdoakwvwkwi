@@ -1,4 +1,5 @@
-import asyncio, re, random, aiohttp, requests, string, traceback
+import asyncio, re, random, aiohttp, requests, string, traceback, qrcode
+from io import BytesIO
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -19,15 +20,6 @@ def set_client(bot_id: int, client):
 def get_client(bot_id: int):
     return _clone_clients.get(int(bot_id))
 
-def get_size(size):
-    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
-    size = float(size)
-    i = 0
-    while size >= 1024.0 and i < len(units):
-        i += 1
-        size /= 1024.0
-    return "%.2f %s" % (size, units[i])
-
 async def safe_action(coro_func, *args, **kwargs):
     while True:
         try:
@@ -36,8 +28,44 @@ async def safe_action(coro_func, *args, **kwargs):
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
         except Exception as e:
-            print(f"❌ Error in safe_action: {e}")
+            await safe_action(client.send_message,
+                LOG_CHANNEL,
+                f"⚠️ Error in safe_action:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+            )
+            print(f"⚠️ Error in safe_action: {e}")
+            print(traceback.format_exc())
             return None
+
+async def is_subscribedx(client, query):
+    if REQUEST_TO_JOIN_MODE == True and JoinReqs().isActive():
+        try:
+            user = await JoinReqs().get_user(query.from_user.id)
+            if user and user["user_id"] == query.from_user.id:
+                return True
+            else:
+                try:
+                    user_data = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
+                except UserNotParticipant:
+                    pass
+                except Exception as e:
+                    logger.exception(e)
+                else:
+                    if user_data.status != enums.ChatMemberStatus.BANNED:
+                        return True
+        except Exception as e:
+            logger.exception(e)
+            return False
+    else:
+        try:
+            user = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
+        except UserNotParticipant:
+            pass
+        except Exception as e:
+            logger.exception(e)
+        else:
+            if user.status != enums.ChatMemberStatus.BANNED:
+                return True
+        return False
 
 async def fetch_fampay_payments():
     try:
@@ -126,36 +154,18 @@ async def fetch_fampay_payments():
         print(traceback.format_exc())
         return []
 
-async def is_subscribedx(client, query):
-    if REQUEST_TO_JOIN_MODE == True and JoinReqs().isActive():
-        try:
-            user = await JoinReqs().get_user(query.from_user.id)
-            if user and user["user_id"] == query.from_user.id:
-                return True
-            else:
-                try:
-                    user_data = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-                except UserNotParticipant:
-                    pass
-                except Exception as e:
-                    logger.exception(e)
-                else:
-                    if user_data.status != enums.ChatMemberStatus.BANNED:
-                        return True
-        except Exception as e:
-            logger.exception(e)
-            return False
-    else:
-        try:
-            user = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-        except UserNotParticipant:
-            pass
-        except Exception as e:
-            logger.exception(e)
-        else:
-            if user.status != enums.ChatMemberStatus.BANNED:
-                return True
-        return False
+def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
+    upi_url = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&cu=INR"
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(upi_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    bio = BytesIO()
+    bio.name = "upi_qr.png"
+    img.save(bio, "PNG")
+    bio.seek(0)
+    return bio
 
 async def broadcast_messagesx(user_id, message):
     try:
@@ -186,22 +196,6 @@ def broadcast_progress_bar(done: int, total: int) -> str:
     except Exception as e:
         return f"[Error building bar: {e}] {done}/{total}"
 
-async def get_me_safe(client):
-    if client in CLONE_ME and CLONE_ME[client]:
-        return CLONE_ME[client]
-
-    while True:
-        try:
-            me = await client.get_me()
-            CLONE_ME[client] = me
-            return me
-        except FloodWait as e:
-            print(f"⏳ FloodWait: waiting {e.value}s for get_me()...")
-            await asyncio.sleep(e.value)
-        except Exception as ex:
-            print(f"⚠️ get_me() failed: {ex}")
-            return None
-
 def parse_time(value: str) -> int:
     if not value:
         return 3600
@@ -218,8 +212,57 @@ def parse_time(value: str) -> int:
     else:
         return int(value) * 3600
 
+async def get_me_safe(client):
+    if client in CLONE_ME and CLONE_ME[client]:
+        return CLONE_ME[client]
+
+    while True:
+        try:
+            me = await client.get_me()
+            CLONE_ME[client] = me
+            return me
+        except FloodWait as e:
+            print(f"⏳ FloodWait: waiting {e.value}s for get_me()...")
+            await asyncio.sleep(e.value)
+        except Exception as ex:
+            print(f"⚠️ get_me() failed: {ex}")
+            return None
+
+async def is_admin(client, chat_id: int, user_id: int) -> bool:
+    try:
+        member = await client.get_chat_member(chat_id, user_id)
+        return member.status in [
+            enums.ChatMemberStatus.ADMINISTRATOR,
+            enums.ChatMemberStatus.OWNER
+        ]
+    except UserNotParticipant:
+        return False
+    except ChatAdminRequired:
+        print(f"⚠️ Bot is not admin in chat {chat_id}, cannot check admin status.")
+        return False
+    except Exception as e:
+        print(f"⚠️ is_admin() failed for user {user_id} in chat {chat_id}: {e}")
+        return False
+
+def mask_partial(word):
+    if len(word) <= 2:
+        return word[0] + "*"
+    mid = len(word) // 2
+    return word[:1] + "*" + word[2:]
+
+def clean_text(text: str) -> str:
+    cleaned = text
+    for word in script.BAD_WORDS:
+        cleaned = re.sub(
+            re.escape(word), 
+            mask_partial(word), 
+            cleaned, 
+            flags=re.IGNORECASE
+        )
+    return cleaned
+
 async def is_subscribedy(client, user_id: int, bot_id: int):
-    clone = await db.get_bot(bot_id)
+    clone = await db.get_clone(bot_id)
     if not clone:
         return True
 
@@ -250,12 +293,15 @@ async def is_subscribedy(client, user_id: int, bot_id: int):
 
     return True
 
+def random_code(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
 async def get_verify_shorted_link(client, link):
     me = await get_me_safe(client)
     if not me:
         return
 
-    clone = await db.get_bot(me.id)
+    clone = await db.get_clone(me.id)
     if not clone:
         return link
 
@@ -312,7 +358,7 @@ async def verify_user(client, userid, token):
     if not me:
         return
 
-    clone = await db.get_bot(me.id)
+    clone = await db.get_clone(me.id)
     if not clone:
         return
 
@@ -334,6 +380,15 @@ async def check_verification(client, userid):
         del VERIFIED[userid]
         return False
     return True
+
+def get_size(size):
+    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
+    size = float(size)
+    i = 0
+    while size >= 1024.0 and i < len(units):
+        i += 1
+        size /= 1024.0
+    return "%.2f %s" % (size, units[i])
 
 async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, reload_url):
     try:
@@ -385,50 +440,6 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
 
     await db.delete_scheduled_deletes(message_ids)"""
 
-def random_code(length=8):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-
-async def get_short_link(user, link):
-    base_site = user["base_site"]
-    api_key = user["shortener_api"]
-    response = requests.get(f"https://{base_site}/api?api={api_key}&url={link}")
-    data = response.json()
-    if data["status"] == "success" or rget.status_code == 200:
-        return data["shortenedUrl"]
-
-async def is_admin(client, chat_id: int, user_id: int) -> bool:
-    try:
-        member = await client.get_chat_member(chat_id, user_id)
-        return member.status in [
-            enums.ChatMemberStatus.ADMINISTRATOR,
-            enums.ChatMemberStatus.OWNER
-        ]
-    except UserNotParticipant:
-        return False
-    except ChatAdminRequired:
-        print(f"⚠️ Bot is not admin in chat {chat_id}, cannot check admin status.")
-        return False
-    except Exception as e:
-        print(f"⚠️ is_admin() failed for user {user_id} in chat {chat_id}: {e}")
-        return False
-
-def mask_partial(word):
-    if len(word) <= 2:
-        return word[0] + "*"
-    mid = len(word) // 2
-    return word[:1] + "*" + word[2:]
-
-def clean_text(text: str) -> str:
-    cleaned = text
-    for word in script.BAD_WORDS:
-        cleaned = re.sub(
-            re.escape(word), 
-            mask_partial(word), 
-            cleaned, 
-            flags=re.IGNORECASE
-        )
-    return cleaned
-
 def batch_progress_bar(done, total, length=20):
     if total == 0:
         return "[░" * length + "] 0%"
@@ -465,3 +476,11 @@ async def broadcast_messagesy(bot_id, user_id, message):
     except Exception:
         await clonedb.delete_user(bot_id, user_id)
         return False, "Error"
+
+async def get_short_link(user, link):
+    base_site = user["base_site"]
+    api_key = user["shortener_api"]
+    response = requests.get(f"https://{base_site}/api?api={api_key}&url={link}")
+    data = response.json()
+    if data["status"] == "success" or rget.status_code == 200:
+        return data["shortenedUrl"]

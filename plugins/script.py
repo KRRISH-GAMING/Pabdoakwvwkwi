@@ -373,6 +373,10 @@ This controls how long the bot waits before sending another auto post to users."
 
 Premium users can access all your clone shareable links without restrictions."""
 
+    EDIT_PU_QR = """🖼️ Please upload the new qr you would like to use.
+
+ℹ️ This image will be shown in your buy premium."""
+
     DELETE_TXT = """<u>**✨ AUTO DELETE**</u>
 
 You can enable or disable automatic message deletion.
