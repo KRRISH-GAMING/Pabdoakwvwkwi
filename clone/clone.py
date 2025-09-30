@@ -553,31 +553,26 @@ from pyrogram import Client, filters
 
 API_KEY = "52545313-736b632f7ae2504eff62a7678"
 prompts = [
+    "indian model",
     "indian actress",
-    "indian bhabhi",
-    "indian aunty",
     "indian girl",
-    "indian girls"
+    "indian girls",
+    "desi model",
     "desi actress",
-    "desi bhabhi",
-    "desi aunty",
-    "desi girl",
-    "desi girls"
-    "onlyfans bhabhi",
-    "onlyfans aunty",
+    "desi girls",
+    "onlyfans model",
     "onlyfans actress",
     "onlyfans girl",
     "onlyfans girls",
+    "hot model",
     "hot actress",
-    "hot bhabhi",
-    "hot aunty",
     "hot girl",
     "hot girls",
-    "sexy bhabhi",
-    "sexy aunty",
+    "sexy model",
+    "sexy actress",
     "sexy girl",
     "sexy girls",
-    "sexy actress"
+    "selfie mirror image face hidden with phone"
 ]
 
 @Client.on_message(filters.command("gen"))
