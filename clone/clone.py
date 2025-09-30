@@ -644,7 +644,8 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if footer:
                     text += f"\n\n<blockquote>{footer}</blockquote>"
 
-                await clone_client.send_photo(
+                
+                await safe_action(clone_client.send_photo,
                     chat_id=target_channel,
                     photo=fresh.get("ap_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
                     caption=text,
@@ -669,7 +670,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 print(f"⚠️ Clone Auto-post error for @{username}: {e}")
                 try:
-                    await clone_client.send_message(
+                    await safe_action(clone_client.send_message,
                         LOG_CHANNEL,
                         f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
                     )
@@ -1255,43 +1256,34 @@ async def cb_handler(client: Client, query: CallbackQuery):
             days = int(parts[1])
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
-            premium_upi = clone.get("pu_upi", None)
 
             buttons = [
                 [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="remove_ads")]
             ]
 
+            upi_id = clone.get("pu_upi", None)
+            upi_name = "KM File Store Bot"
+            qr_image = generate_upi_qr(upi_id, upi_name, price)
+
             text=(
                 f"💎 Premium Plan Details:\n\n"
                 f"🗓 Duration: {days} days\n"
                 f"💰 Price: {price}\n"
-                f"📲 UPI ID: `{premium_upi}`\n\n"
-                f"📝 Steps to complete payment:\n"
-                f"1️⃣ Use the UPI ID above to make the payment\n"
-                f"2️⃣ Make payment of {price}\n"
-                f"3️⃣ Take a screenshot of the payment\n"
-                f"4️⃣ Click '✅ Payment Done' below\n"
-                f"5️⃣ Send a screenshot through contact command\n\n"
-                f"⏳ Once payment is confirmed, your premium access will be activated."
+                f"📲 UPI ID: `{upi_id}`\n\n"
+                "📸 Scan the QR below or send payment to UPI ID.\n\n"
+                "After payment, click **✅ Payment Done** below to confirm."
             )
 
             await safe_action(query.message.delete)
 
-            premium_user_qr = clone.get("pu_qr", None)
-            if premium_user_qr:
-                await safe_action(client.send_photo,
-                    chat_id=query.message.chat.id,
-                    photo=premium_user_qr,
-                    caption=text,
-                    reply_markup=InlineKeyboardMarkup(buttons),
-                    parse_mode=enums.ParseMode.MARKDOWN
-                )
-            else:
-                await safe_action(query.message.edit_text,
-                    text,
-                    reply_markup=InlineKeyboardMarkup(buttons)
-                )
+            await safe_action(client.send_photo,
+                chat_id=query.message.chat.id,
+                photo=qr_image,
+                caption=text,
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
 
         # User clicked Payment Done
         elif data.startswith("premium_done_"):
