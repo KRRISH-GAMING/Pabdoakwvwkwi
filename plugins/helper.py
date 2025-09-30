@@ -170,12 +170,51 @@ def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     bio.seek(0)
     return bio
 
-prompts = ["desi", "onlyfans", "fantasy mountain"]
+# ✅ Better prompts (desi girls only, avoids black screens)
+prompts = [
+    "desi actress",
+    "desi bhabhi",
+    "desi aunty",
+    "desi girl",
+    "desi girls"
+    "onlyfans bhabhi",
+    "onlyfans aunty",
+    "onlyfans actress",
+    "onlyfans girl",
+    "onlyfans girls",
+    "hot actress",
+    "hot bhabhi",
+    "hot aunty",
+    "hot girl",
+    "hot girls",
+    "sexy bhabhi",
+    "sexy aunty",
+    "sexy girl",
+    "sexy girls",
+    "sexy actress"
+]
 
-def pollination_img():
-    prompt = random.choice(prompts)
-    url = f"https://image.pollinations.ai/prompt/{prompt.replace(' ', '%20')}"
-    return url, prompt
+async def pollination_img(max_retries=5):
+    """Generates a valid Pollinations image with retries for black/blank images"""
+    for _ in range(max_retries):
+        prompt = random.choice(prompts)
+        seed = random.randint(1000, 999999)
+        url = f"https://image.pollinations.ai/prompt/{prompt.replace(' ', '%20')}?seed={seed}&t={int(time.time())}"
+
+        # Check if image is valid (not black/blank)
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        data = await resp.read()
+                        # Pollinations black images are usually very small (<5 KB)
+                        if len(data) > 5000:
+                            return url, prompt  # ✅ Good image
+            except Exception:
+                continue  # If network error, retry
+
+    # If all retries fail, return None with last prompt
+    return None, prompt
 
 async def broadcast_messagesx(user_id, message):
     try:
