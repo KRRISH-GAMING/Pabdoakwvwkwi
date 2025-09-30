@@ -67,7 +67,7 @@ async def promote(bot_username: str):
             )
         )
 
-        await safe_action(lassistant.send_message,
+        await safe_action(assistant.send_message,
             LOG_CHANNEL,
             f"✅ Clone bot @{bot_username} promoted as admin"
         )
@@ -1468,7 +1468,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 start_photo = clone.get("start_photo", None)
                 if start_photo:
-                    await client.send_photo(
+                    await safe_action(client.send_photo,
                         chat_id=query.message.chat.id,
                         photo=start_photo,
                         caption="📌 This is the current start photo for this clone."
@@ -2418,7 +2418,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 auto_post_image = clone.get("ap_image", None)
                 if auto_post_image:
-                    await client.send_photo(
+                    await safe_action(client.send_photo,
                         chat_id=query.message.chat.id,
                         photo=auto_post_image,
                         caption="📌 This is the current auto post image for this clone."
@@ -3082,7 +3082,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                users = await clonedb.get_all_users(me.id)
+                users = await clonedb.total_users_count(me.id)
                 banned_users = len(clone.get("banned_users", []))
 
                 uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
