@@ -3401,8 +3401,7 @@ async def message_capture(client: Client, message: Message):
                         bot_token=token,
                         plugins={"root": "clone"},
                         workers=20,
-                        in_memory=True,
-                        no_updates=True
+                        in_memory=True
                     )
 
                     await xd.start()
