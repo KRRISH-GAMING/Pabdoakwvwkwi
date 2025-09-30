@@ -20,6 +20,9 @@ def set_client(bot_id: int, client):
 def get_client(bot_id: int):
     return _clone_clients.get(int(bot_id))
 
+def remove_client(bot_id: int):
+    _clone_clients.pop(int(bot_id), None)
+
 async def safe_action(coro_func, *args, **kwargs):
     while True:
         try:
