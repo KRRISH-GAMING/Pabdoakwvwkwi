@@ -1,4 +1,4 @@
-import asyncio, re, random, aiohttp, requests, string, traceback, qrcode
+import asyncio, re, random, aiohttp, requests, string, traceback, qrcode, imaplib, email, pytz
 from io import BytesIO
 from datetime import *
 from pyrogram import *
@@ -369,7 +369,7 @@ async def verify_user(client, userid, token):
     renew_log = clone.get("at_renew_log", {})
     renew_log[today] = renew_log.get(today, 0) + 1
 
-    await db.update_bot(me.id, {"at_renew_log": renew_log})
+    await db.update_clone(me.id, {"at_renew_log": renew_log})
 
 async def check_verification(client, userid):
     userid = int(userid)
