@@ -23,21 +23,22 @@ async def start(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
-        start_text = clone.get("wlc", script.START_TXT) 
-        start_pic = clone.get("pics", None)
+        start_text = clone.get("start_text", script.START_TXT) 
+        start_pic = clone.get("start_photo", None)
         caption = clone.get("caption", None)
         buttons_data = clone.get("button", [])
         fsub_data = clone.get("force_subscribe", [])
         access_token = clone.get("access_token", False)
         tutorial_url = clone.get("at_tutorial", None)
         premium = [int(p["user_id"]) if isinstance(p, dict) else int(p) for p in clone.get("premium_user", [])]
-        premium_upi = clone.get("premium_upi", None)
+        premium_upi = clone.get("pu_upi", None)
+        premium_qr = clone.get("pu_qr", None)
         auto_delete = clone.get("auto_delete", False)
         auto_delete_time = str(clone.get("ad_time", "1h"))
         auto_delete_time2 = parse_time(clone.get("ad_time", "1h"))
@@ -61,7 +62,6 @@ async def start(client, message):
         # --- Track new users ---
         if not await clonedb.is_user_exist(me.id, user_id):
             await clonedb.add_user(me.id, user_id)
-            await db.increment_users_count(me.id)
 
         # --- Fsub Handler ---
         if not await is_subscribedy(client, user_id, me.id) and user_id != owner_id and user_id not in moderators and user_id not in premium:
@@ -241,9 +241,6 @@ async def start(client, message):
                 media_type = file.get("media_type", "document")
                 original_caption = file.get("caption") or ""
 
-                if file_size and isinstance(file_size, int):
-                    await db.add_storage_used(me.id, file_size)
-
                 f_caption = original_caption
                 if caption:
                     try:
@@ -354,9 +351,6 @@ async def start(client, message):
                         file_size = file.get("file_size")
                         media_type = file.get("media_type", "document")
                         original_caption = file.get("caption") or ""
-
-                        if file_size and isinstance(file_size, int):
-                            await db.add_storage_used(me.id, file_size)
 
                         if caption:
                             try:
@@ -479,9 +473,6 @@ async def start(client, message):
                 file_name = getattr(file, "file_name", None) or "None"
                 file_size = getattr(file, "file_size", None)
 
-                if file_size and isinstance(file_size, int):
-                    await db.add_storage_used(me.id, file_size)
-
                 original_caption = msg.caption or ""
                 if caption:
                     try:
@@ -541,7 +532,7 @@ async def start(client, message):
 async def help(client, message):
     try:
         me = await client.get_me()
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -559,8 +550,7 @@ async def help(client, message):
 
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
-        bot_id = int(bot_id)
-        clone = await db.get_clone_by_id(bot_id)
+        clone = await db.get_clone(bot_id)
         if not clone or not clone.get("auto_post", False):
             return
 
@@ -576,7 +566,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
         while True:
             try:
-                fresh = await db.get_clone_by_id(bot_id)
+                fresh = await db.get_clone(bot_id)
                 if not fresh or not fresh.get("auto_post", False):
                     return
 
@@ -700,7 +690,7 @@ async def genlink(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -771,7 +761,7 @@ async def batch(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -915,7 +905,7 @@ async def shorten_handler(client: Client, message: Message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -971,7 +961,7 @@ async def broadcast(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -1079,7 +1069,7 @@ async def stats(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -1090,20 +1080,15 @@ async def stats(client, message):
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
             return await safe_action(message.reply, "❌ You are not authorized to use this bot.")
 
-        users_count = clone.get("users_count", 0)
-        storage_used = clone.get("storage_used", 0)
-        storage_limit = clone.get("storage_limit", 536870912)
-        storage_free = storage_limit - storage_used
+        users = await clonedb.get_all_users(me.id)
         banned_users = len(clone.get("banned_users", []))
 
         uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{clone.get('username')}\n\n"
-            f"👤 Users: {users_count}\n"
+            f"👤 Users: {users}\n"
             f"🚫 Banned: {banned_users}\n"
-            f"💾 Used: {get_size(storage_used)} / {get_size(storage_limit)}\n"
-            f"💽 Free: {get_size(storage_free)}\n"
             f"⏱ Uptime: {uptime}\n",
         )
     except Exception as e:
@@ -1121,7 +1106,7 @@ async def contact(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -1181,7 +1166,7 @@ async def reply(client, message):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -1226,7 +1211,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -1237,6 +1222,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         data = query.data
 
         if data.startswith("checksub"):
+            await safe_action(query.answer)
             if not await is_subscribedy(client, query):
                 await safe_action(query.answer, "Join our channel first.", show_alert=True)
                 return
@@ -1246,6 +1232,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Remove Ads / Premium Plan Menu
         elif data == "remove_ads":
+            await safe_action(query.answer)
             premium_btns = [
                 [InlineKeyboardButton("7 Days", callback_data="premium_7")],
                 [InlineKeyboardButton("1 Month", callback_data="premium_30")],
@@ -1260,6 +1247,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # User clicked a specific plan
         elif data.startswith("premium_") and not data.startswith("premium_done_"):
+            await safe_action(query.answer)
             parts = data.split("_")
             if len(parts) < 2 or not parts[1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid plan.", show_alert=True)
@@ -1267,12 +1255,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
             days = int(parts[1])
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
-            premium_upi = clone.get("premium_upi", None)
+            premium_upi = clone.get("pu_upi", None)
+
             buttons = [
                 [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="remove_ads")]
             ]
-            await safe_action(query.message.edit_text,
+
+            text=(
                 f"💎 Premium Plan Details:\n\n"
                 f"🗓 Duration: {days} days\n"
                 f"💰 Price: {price}\n"
@@ -1283,12 +1273,29 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f"3️⃣ Take a screenshot of the payment\n"
                 f"4️⃣ Click '✅ Payment Done' below\n"
                 f"5️⃣ Send a screenshot through contact command\n\n"
-                f"⏳ Once payment is confirmed, your premium access will be activated.",
-                reply_markup=InlineKeyboardMarkup(buttons)
+                f"⏳ Once payment is confirmed, your premium access will be activated."
             )
+
+            await safe_action(query.message.delete)
+
+            premium_user_qr = clone.get("pu_qr", None)
+            if premium_user_qr:
+                await safe_action(client.send_photo,
+                    chat_id=query.message.chat.id,
+                    photo=premium_user_qr,
+                    caption=text,
+                    reply_markup=InlineKeyboardMarkup(buttons),
+                    parse_mode=enums.ParseMode.MARKDOWN
+                )
+            else:
+                await safe_action(query.message.edit_text,
+                    text,
+                    reply_markup=InlineKeyboardMarkup(buttons)
+                )
 
         # User clicked Payment Done
         elif data.startswith("premium_done_"):
+            await safe_action(query.answer)
             parts = data.split("_")
             if len(parts) < 3 or not parts[-1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid premium data.", show_alert=True)
@@ -1333,6 +1340,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Admin approves premium
         elif data.startswith("approve_"):
+            await safe_action(query.answer)
             try:
                 parts = data.split("_")
                 if len(parts) < 3:
@@ -1377,6 +1385,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Admin rejects premium
         elif data.startswith("reject_"):
+            await safe_action(query.answer)
             try:
                 parts = data.split("_")
                 if len(parts) < 3:
@@ -1417,40 +1426,41 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Start Menu
         elif data == "start":
+            await safe_action(query.answer)
             buttons = [
                 [InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
                  InlineKeyboardButton('ℹ️ About', callback_data='about')],
                 [InlineKeyboardButton('🤖 Create Your Own Clone', url=f'https://t.me/{BOT_USERNAME}?start')],
                 [InlineKeyboardButton('🔒 Close', callback_data='close')]
             ]
-            start_text = clone.get("wlc", script.START_TXT)
+            start_text = clone.get("start_text", script.START_TXT)
             await safe_action(query.message.edit_text,
                 text=start_text.format(user=query.from_user.mention, bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
-            await safe_action(query.answer)
 
         # Help
         elif data == "help":
+            await safe_action(query.answer)
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
             await safe_action(query.message.edit_text,
                 text=script.HELP_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
-            await safe_action(query.answer)
 
         # About
         elif data == "about":
+            await safe_action(query.answer)
             buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
             ownerid = int(clone['user_id'])
             await safe_action(query.message.edit_text,
                 text=script.CABOUT_TXT.format(bot=me.mention, developer=ownerid),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
-            await safe_action(query.answer)
 
         # Close
         elif data == "close":
+            await safe_action(query.answer)
             await safe_action(query.message.delete)
 
         else:
@@ -1540,7 +1550,7 @@ async def message_capture(client: Client, message: Message):
             if not me:
                 return
 
-            clone = await db.get_bot(me.id)
+            clone = await db.get_clone(me.id)
             if not clone:
                 return
 
@@ -1708,7 +1718,7 @@ async def member_updated_handler(client, event):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
@@ -1755,7 +1765,7 @@ async def join_request_handler(client, request):
         if not me:
             return
 
-        clone = await db.get_bot(me.id)
+        clone = await db.get_clone(me.id)
         if not clone:
             return
 
