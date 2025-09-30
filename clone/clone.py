@@ -1081,7 +1081,7 @@ async def stats(client, message):
         if message.from_user.id != owner_id and message.from_user.id not in moderators:
             return await safe_action(message.reply, "❌ You are not authorized to use this bot.")
 
-        users = await clonedb.get_all_users(me.id)
+        users = await clonedb.total_users_count(me.id)
         banned_users = len(clone.get("banned_users", []))
 
         uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
