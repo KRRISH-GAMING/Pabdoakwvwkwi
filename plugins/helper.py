@@ -170,7 +170,7 @@ def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     bio.seek(0)
     return bio
 
-# ✅ Better prompts (desi girls only, avoids black screens)
+"""# ✅ Better prompts (desi girls only, avoids black screens)
 prompts = [
     "desi actress",
     "desi bhabhi",
@@ -195,7 +195,6 @@ prompts = [
 ]
 
 async def pollination_img(max_retries=5):
-    """Generates a valid Pollinations image with retries for black/blank images"""
     for _ in range(max_retries):
         prompt = random.choice(prompts)
         seed = random.randint(1000, 999999)
@@ -214,7 +213,7 @@ async def pollination_img(max_retries=5):
                 continue  # If network error, retry
 
     # If all retries fail, return None with last prompt
-    return None, prompt
+    return None, prompt"""
 
 async def broadcast_messagesx(user_id, message):
     try:
