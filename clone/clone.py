@@ -555,24 +555,18 @@ API_KEY = "52545313-736b632f7ae2504eff62a7678"
 prompts = [
     "indian model",
     "indian actress",
-    "indian girl",
-    "indian girls",
-    "desi model",
+    "indian woman",
     "desi actress",
-    "desi girls",
+    "desi woman",
     "onlyfans model",
     "onlyfans actress",
-    "onlyfans girl",
-    "onlyfans girls",
+    "onlyfans woman",
     "hot model",
-    "hot actress",
-    "hot girl",
-    "hot girls",
+    "hot woman",
     "sexy model",
     "sexy actress",
-    "sexy girl",
-    "sexy girls",
-    "selfie mirror image face hidden with phone"
+    "sexy woman",
+    "female selfie mirror image face hidden with phone"
 ]
 
 @Client.on_message(filters.command("gen"))
