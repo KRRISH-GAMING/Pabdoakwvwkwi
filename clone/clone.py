@@ -548,30 +548,24 @@ async def help(client, message):
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
 
+import requests, random
 from pyrogram import Client, filters
-import random
-import time
 
-# Keyword list
-prompts = [
-    "desi girl",
-    "indian girl",
-    "beautiful indian girl",
-    "indian fashion",
-    "indian portrait"
-]
+API_KEY = "52545313-736b632f7ae2504eff62a7678"
+prompts = ["indian girl", "desi girl", "fashion", "portrait"]
 
 @Client.on_message(filters.command("gen"))
 async def gen_img(client, message):
     query = random.choice(prompts)
+    response = requests.get(
+        f"https://pixabay.com/api/?key={API_KEY}&q={query.replace(' ', '+')}&image_type=photo"
+    ).json()
     
-    # Add random query param to force Unsplash to return a new image
-    url = f"https://source.unsplash.com/800x800/?{query.replace(' ', '%20')}&sig={random.randint(1000,9999)}"
-    
-    await message.reply_photo(
-        photo=url,
-        caption=f"✨ Random image for: **{query}**"
-    )
+    if response["hits"]:
+        image = random.choice(response["hits"])["webformatURL"]
+        await message.reply_photo(photo=image, caption=f"✨ Random image for: **{query}**")
+    else:
+        await message.reply_text(f"⚠️ No image found for: {query}")
 
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
