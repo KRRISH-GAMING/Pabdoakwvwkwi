@@ -80,6 +80,7 @@ class Database:
     # ---------------- CLONE ----------------
     async def add_clone_bot(self, bot_id, user_id, first_name, username, bot_token):
         add = {
+            'is_bot': True,
             'bot_id': bot_id,
             'user_id': user_id,
             'name': first_name,
