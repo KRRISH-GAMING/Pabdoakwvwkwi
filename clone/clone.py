@@ -548,14 +548,6 @@ async def help(client, message):
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("gen"))
-async def gen_img(client, message):
-    url, prompt = await pollination_img()
-    await message.reply_photo(
-        photo=url,
-        caption=f"🎨 Generated: **{prompt}**"
-    )
-
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
         clone = await db.get_clone(bot_id)
@@ -652,10 +644,10 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if footer:
                     text += f"\n\n<blockquote>{footer}</blockquote>"
 
-                url, prompt = pollination_img()
+                
                 await safe_action(clone_client.send_photo,
                     chat_id=target_channel,
-                    photo=fresh.get("ap_image", None) or url,
+                    photo=fresh.get("ap_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
                     caption=text,
                     parse_mode=enums.ParseMode.HTML
                 )
