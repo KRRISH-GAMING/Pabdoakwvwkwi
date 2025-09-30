@@ -31,10 +31,13 @@ async def safe_action(coro_func, *args, **kwargs):
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
         except Exception as e:
-            await safe_action(client.send_message,
-                LOG_CHANNEL,
-                f"⚠️ Error in safe_action:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-            )
+            try:
+                await coro_func(
+                    LOG_CHANNEL,
+                    f"⚠️ Error in safe_action:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                )
+            except Exception as inner_e:
+                print(f"⚠️ Failed logging: {inner_e}")
             print(f"⚠️ Error in safe_action: {e}")
             print(traceback.format_exc())
             return None
@@ -169,51 +172,6 @@ def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     img.save(bio, "PNG")
     bio.seek(0)
     return bio
-
-"""# ✅ Better prompts (desi girls only, avoids black screens)
-prompts = [
-    "desi actress",
-    "desi bhabhi",
-    "desi aunty",
-    "desi girl",
-    "desi girls"
-    "onlyfans bhabhi",
-    "onlyfans aunty",
-    "onlyfans actress",
-    "onlyfans girl",
-    "onlyfans girls",
-    "hot actress",
-    "hot bhabhi",
-    "hot aunty",
-    "hot girl",
-    "hot girls",
-    "sexy bhabhi",
-    "sexy aunty",
-    "sexy girl",
-    "sexy girls",
-    "sexy actress"
-]
-
-async def pollination_img(max_retries=5):
-    for _ in range(max_retries):
-        prompt = random.choice(prompts)
-        seed = random.randint(1000, 999999)
-        url = f"https://image.pollinations.ai/prompt/{prompt.replace(' ', '%20')}?seed={seed}&t={int(time.time())}"
-
-        # Check if image is valid (not black/blank)
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        data = await resp.read()
-                        # Pollinations black images are usually very small (<5 KB)
-                        if len(data) > 5000:
-                            return url, prompt  # ✅ Good image
-            except Exception:
-                continue  # If network error, retry
-
-    # If all retries fail, return None with last prompt
-    return None, prompt"""
 
 async def broadcast_messagesx(user_id, message):
     try:
