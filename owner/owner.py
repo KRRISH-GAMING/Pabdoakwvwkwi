@@ -3186,7 +3186,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         await clone_client.stop()
                     except Exception as e:
                         print(f"Error stopping client {bot_id}: {e}")
-                    _clone_clients.pop(int(bot_id), None)
+                    remove_client(bot_id)
 
                 await db.delete_clone(bot_id)
                 await safe_action(query.message.edit_text, "✅ Clone deleted successfully.")
