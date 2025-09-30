@@ -1063,7 +1063,7 @@ async def show_qr_menu(client, message, bot_id):
         print(f"⚠️ Show Qr Menu Error: {e}")
         print(traceback.format_exc())
 
-async def show_user_menu(client, message, bot_id):
+async def show_premium_menu(client, message, bot_id):
     try:
         clone = await db.get_clone(bot_id)
         if not clone:
@@ -2610,150 +2610,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
-            """# Premium User Upi Menu
-            elif action == "puupi":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                await show_photo_menu(client, query.message, bot_id)
-        
-            # Add Premium User Upi
-            elif action == "add_puupi":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                PU_UPI[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
-                await safe_action(query.message.edit_text,
-                    text="🔗 Please provide the updated **Upi I'd**:",
-                    reply_markup=InlineKeyboardMarkup(buttons)
-                )
-
-            # Cancel Premium User Upi
-            elif action == "cancel_addpuupi":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                PU_UPI.pop(user_id, None)
-                await show_upi_menu(client, query.message, bot_id)
-        
-            # See Premium User Upi
-            elif action == "see_puupi":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                premium_user_upi = clone.get("pu_upi", None)
-                if premium_user_upi:
-                    await safe_action(query.answer, f"📝 Current Upi:\n\n{at_tutorial}", show_alert=True)
-                else:
-                    await safe_action(query.answer, "❌ No upi set for this clone.", show_alert=True)
-
-            # Delete Premium User Upi
-            elif action == "delete_puupi":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                premium_user_upi = clone.get("pu_upi", None)
-                if premium_user_upi:
-                    await db.update_clone(bot_id, {"pu_upi": None})
-                    await safe_action(query.answer, "✨ Successfully deleted your clone upi.", show_alert=True)
-                else:
-                    await safe_action(query.answer, "❌ No upi set for this clone.", show_alert=True)
-
-            # Premium User Qr Menu
-            elif action == "puqr":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                await show_qr_menu(client, query.message, bot_id)
-        
-            # Add Premium User Qr
-            elif action == "add_puqr":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                PU_QR[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
-                await safe_action(query.message.edit_text,
-                    text=script.EDIT_PU_QR,
-                    reply_markup=InlineKeyboardMarkup(buttons)
-                )
-
-            # Cancel Premium User Qr
-            elif action == "cancel_addpuqr":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                PU_QR.pop(user_id, None)
-                await show_photo_menu(client, query.message, bot_id)
-        
-            # See Premium User Qr
-            elif action == "see_puqr":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                premium_user_qr = clone.get("pu_qr", None)
-                if premium_user_qr:
-                    await client.send_photo(
-                        chat_id=query.message.chat.id,
-                        photo=premium_user_qr,
-                        caption="📌 This is the current qr for this clone."
-                    )
-                else:
-                    await safe_action(query.answer, "❌ No qr set for this clone.", show_alert=True)
-
-            # Delete Premium User Qr
-            elif action == "delete_puqr":
-                await safe_action(query.answer)
-                if not clone:
-                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-                if not active:
-                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
-
-                premium_user_qr = clone.get("pu_qr", None)
-                if premium_user_qr:
-                    await db.update_clone(bot_id, {"pu_qr": None})
-                    await safe_action(query.answer, "✨ Successfully deleted your clone qr.", show_alert=True)
-                else:
-                    await safe_action(query.answer, "❌ No qr set for this clone.", show_alert=True)"""
-
             # Add Premium User
             elif action == "add_pu":
                 await safe_action(query.answer)
@@ -3643,7 +3499,7 @@ async def message_capture(client: Client, message: Message):
                 ("AP_SLEEP", AP_SLEEP, "text", "ap_sleep", "show_sleep_menu"),
                 ("PU_UPI", PU_UPI, "text", "pu_upi", "show_upi_menu"),
                 ("PU_QR", PU_QR, "photo", "pu_qr", "show_qr_menu"),
-                ("ADD_PU", ADD_PU, "text", "premium_user", "show_user_menu"),
+                ("ADD_PU", ADD_PU, "text", "premium_user", "show_premium_menu"),
                 ("AD_TIME", AD_TIME, "text", "ad_time", "show_time_menu"),
                 ("AD_MESSAGE", AD_MESSAGE, "text", "ad_msg", "show_message_menu"),
                 ("ADD_MODERATOR", ADD_MODERATOR, "text", "moderators", "show_moderator_menu")
