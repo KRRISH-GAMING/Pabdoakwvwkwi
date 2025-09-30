@@ -170,6 +170,13 @@ def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     bio.seek(0)
     return bio
 
+prompts = ["desi", "onlyfans", "fantasy mountain"]
+
+def pollination_img():
+    prompt = random.choice(prompts)
+    url = f"https://image.pollinations.ai/prompt/{prompt.replace(' ', '%20')}"
+    return url, prompt
+
 async def broadcast_messagesx(user_id, message):
     try:
         await message.copy(chat_id=user_id)
