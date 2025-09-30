@@ -550,23 +550,23 @@ async def help(client, message):
 
 from pyrogram import Client, filters
 import random
+import time
 
-# Your keyword list
+# Keyword list
 prompts = [
-    "desi girl", 
-    "indian girl", 
-    "beautiful indian girl", 
+    "desi girl",
+    "indian girl",
+    "beautiful indian girl",
     "indian fashion",
     "indian portrait"
 ]
 
 @Client.on_message(filters.command("gen"))
 async def gen_img(client, message):
-    # Pick a random keyword
     query = random.choice(prompts)
     
-    # Unsplash source API URL (random image for the query)
-    url = f"https://source.unsplash.com/800x800/?{query.replace(' ', '%20')}"
+    # Add random query param to force Unsplash to return a new image
+    url = f"https://source.unsplash.com/800x800/?{query.replace(' ', '%20')}&sig={random.randint(1000,9999)}"
     
     await message.reply_photo(
         photo=url,
