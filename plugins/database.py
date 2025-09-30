@@ -114,7 +114,6 @@ class Database:
             # Premium User
             'premium_user': [],
             'pu_upi': None,
-            'pu_qr': None,
             # Auto Delete
             'auto_delete': False,
             'ad_time': '1h',
