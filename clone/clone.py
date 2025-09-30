@@ -548,25 +548,19 @@ async def help(client, message):
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
 
-import requests, random
-from pyrogram import Client, filters
-
-API_KEY = "52545313-736b632f7ae2504eff62a7678"
+"""API_KEY = "52545313-736b632f7ae2504eff62a7678"
 prompts = [
     "indian model",
     "indian actress",
     "indian woman",
     "desi actress",
-    "desi woman",
     "onlyfans model",
     "onlyfans actress",
     "onlyfans woman",
     "hot model",
-    "hot woman",
     "sexy model",
     "sexy actress",
     "sexy woman",
-    "female selfie mirror image face hidden with phone"
 ]
 
 @Client.on_message(filters.command("gen"))
@@ -580,7 +574,7 @@ async def gen_img(client, message):
         image = random.choice(response["hits"])["webformatURL"]
         await message.reply_photo(photo=image, caption=f"✨ Random image for: **{query}**")
     else:
-        await message.reply_text(f"⚠️ No image found for: {query}")
+        await message.reply_text(f"⚠️ No image found for: {query}")"""
 
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
