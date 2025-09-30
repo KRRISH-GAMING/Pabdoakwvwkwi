@@ -27,6 +27,7 @@ AT_TUTORIAL = {}
 AUTO_POST = {}
 AP_IMAGE = {}
 AP_SLEEP = {}
+PU_UPI = {}
 ADD_PU = {}
 AD_TIME = {}
 AD_MESSAGE = {}
@@ -3082,7 +3083,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
-                users = await clonedb.total_users_count(me.id)
+                users = await clonedb.total_users_count(bot_id)
                 banned_users = len(clone.get("banned_users", []))
 
                 uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
@@ -3350,6 +3351,7 @@ async def message_capture(client: Client, message: Message):
                 or user_id in AUTO_POST
                 or user_id in AP_IMAGE
                 or user_id in AP_SLEEP
+                or user_id in PU_UPI
                 or user_id in ADD_PU
                 or user_id in AD_TIME
                 or user_id in AD_MESSAGE
@@ -3447,6 +3449,7 @@ async def message_capture(client: Client, message: Message):
                 ("AT_TUTORIAL", AT_TUTORIAL, "text", "at_tutorial", "show_tutorial_menu"),
                 ("AP_IMAGE", AP_IMAGE, "photo", "ap_image", "show_image_menu"),
                 ("AP_SLEEP", AP_SLEEP, "text", "ap_sleep", "show_sleep_menu"),
+                ("PU_UPI", PU_UPI, "text", "pu_upi", "show_premium_menu"),
                 ("ADD_PU", ADD_PU, "text", "premium_user", "show_premium_menu"),
                 ("AD_TIME", AD_TIME, "text", "ad_time", "show_time_menu"),
                 ("AD_MESSAGE", AD_MESSAGE, "text", "ad_msg", "show_message_menu"),
