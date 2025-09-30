@@ -548,6 +548,31 @@ async def help(client, message):
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
 
+from pyrogram import Client, filters
+import random
+
+# Your keyword list
+prompts = [
+    "desi girl", 
+    "indian girl", 
+    "beautiful indian girl", 
+    "indian fashion",
+    "indian portrait"
+]
+
+@Client.on_message(filters.command("gen"))
+async def gen_img(client, message):
+    # Pick a random keyword
+    query = random.choice(prompts)
+    
+    # Unsplash source API URL (random image for the query)
+    url = f"https://source.unsplash.com/800x800/?{query.replace(' ', '%20')}"
+    
+    await message.reply_photo(
+        photo=url,
+        caption=f"✨ Random image for: **{query}**"
+    )
+
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
         clone = await db.get_clone(bot_id)
