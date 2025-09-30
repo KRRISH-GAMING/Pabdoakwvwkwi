@@ -550,7 +550,7 @@ async def help(client, message):
 
 @Client.on_message(filters.command("gen"))
 async def gen_img(client, message):
-    url, prompt = pollination_img()
+    url, prompt = await pollination_img()
     await message.reply_photo(
         photo=url,
         caption=f"🎨 Generated: **{prompt}**"
