@@ -1,4 +1,4 @@
-import os, logging, asyncio, re, time, shutil, sys, traceback, imaplib, email, pytz
+import os, logging, asyncio, re, time, shutil, sys, traceback
 from datetime import *
 from pyrogram import *
 from pyrogram.types import *
@@ -27,8 +27,6 @@ AT_TUTORIAL = {}
 AUTO_POST = {}
 AP_IMAGE = {}
 AP_SLEEP = {}
-PU_UPI = {}
-PU_QR = {}
 ADD_PU = {}
 AD_TIME = {}
 AD_MESSAGE = {}
@@ -1021,46 +1019,6 @@ async def show_sleep_menu(client, message, bot_id):
             f"⚠️ Show Sleep Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Sleep Menu Error: {e}")
-        print(traceback.format_exc())
-
-async def show_upi_menu(client, message, bot_id):
-    try:
-        buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_pu_upi_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_pu_upi_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_pu_upi_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'premium_user_{bot_id}')]
-        ]
-        await safe_action(message.edit_text,
-            text=script.PU_UPI_TXT,
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-    except Exception as e:
-        await safe_action(client.send_message,
-            LOG_CHANNEL,
-            f"⚠️ Show Upi Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Show Upi Menu Error: {e}")
-        print(traceback.format_exc())
-
-async def show_qr_menu(client, message, bot_id):
-    try:
-        buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_pu_qr_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_pu_qr_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_pu_qr_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'premium_user_{bot_id}')]
-        ]
-        await safe_action(message.edit_text,
-            text=script.PU_IMG_TXT,
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
-    except Exception as e:
-        await safe_action(client.send_message,
-            LOG_CHANNEL,
-            f"⚠️ Show Qr Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Show Qr Menu Error: {e}")
         print(traceback.format_exc())
 
 async def show_premium_menu(client, message, bot_id):
@@ -3397,8 +3355,6 @@ async def message_capture(client: Client, message: Message):
                 or user_id in AUTO_POST
                 or user_id in AP_IMAGE
                 or user_id in AP_SLEEP
-                or user_id in PU_UPI
-                or user_id in PU_QR
                 or user_id in ADD_PU
                 or user_id in AD_TIME
                 or user_id in AD_MESSAGE
@@ -3497,8 +3453,6 @@ async def message_capture(client: Client, message: Message):
                 ("AT_TUTORIAL", AT_TUTORIAL, "text", "at_tutorial", "show_tutorial_menu"),
                 ("AP_IMAGE", AP_IMAGE, "photo", "ap_image", "show_image_menu"),
                 ("AP_SLEEP", AP_SLEEP, "text", "ap_sleep", "show_sleep_menu"),
-                ("PU_UPI", PU_UPI, "text", "pu_upi", "show_upi_menu"),
-                ("PU_QR", PU_QR, "photo", "pu_qr", "show_qr_menu"),
                 ("ADD_PU", ADD_PU, "text", "premium_user", "show_premium_menu"),
                 ("AD_TIME", AD_TIME, "text", "ad_time", "show_time_menu"),
                 ("AD_MESSAGE", AD_MESSAGE, "text", "ad_msg", "show_message_menu"),
@@ -3529,26 +3483,30 @@ async def message_capture(client: Client, message: Message):
                             handler_dict.pop(user_id, None)
                             return
 
-                        try:
-                            storage_dir = "storage"
-                            os.makedirs(storage_dir, exist_ok=True)
-                            content = os.path.join(storage_dir, f"{bot_id}_photo.jpg")
-                            main_photo_file_id = message.photo.file_id
-                            temp_file = await client.download_media(main_photo_file_id)
-                            if os.path.exists(content):
-                                os.remove(content)
-                            shutil.move(temp_file, content)
-                        except Exception as e:
-                            await safe_action(orig_msg.edit_text, f"❌ Failed to save photo: {e}")
-                            await asyncio.sleep(2)
-                            await globals()[menu_func](client, orig_msg, bot_id)
-                            handler_dict.pop(user_id, None)
-                            return
+                    random_code()
 
                     await safe_action(orig_msg.edit_text, f"✏️ Updating **{db_field.replace('_', ' ')}**, please wait...")
                     try:
                         clone = await db.get_clone(bot_id)
-                        if db_field == "premium_user":
+                        if db_field == "start_photo":
+                            storage_dir = "storage"
+                            os.makedirs(storage_dir, exist_ok=True)
+                            content = os.path.join(storage_dir, f"{code}_photo.jpg")
+                            fileid = message.photo.file_id
+                            temp_file = await client.download_media(fileid)
+                            if os.path.exists(content):
+                                os.remove(content)
+                            shutil.move(temp_file, content)
+                        elif db_field == "ap_image":
+                            storage_dir = "storage"
+                            os.makedirs(storage_dir, exist_ok=True)
+                            content = os.path.join(storage_dir, f"{code}_photo.jpg")
+                            fileid = message.photo.file_id
+                            temp_file = await client.download_media(fileid)
+                            if os.path.exists(content):
+                                os.remove(content)
+                            shutil.move(temp_file, content)
+                        elif db_field == "premium_user":
                             premium_user = clone.get("premium_user", [])
                             premium_user.append(content)
                             await db.update_clone(bot_id, {db_field: premium_user})
