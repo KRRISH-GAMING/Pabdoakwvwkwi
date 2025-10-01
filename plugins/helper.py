@@ -161,6 +161,8 @@ async def fetch_fampay_payments():
             }
             transactions.append(txn)
 
+            mail.store(email_id, '+FLAGS', '\\Seen')
+
         mail.logout()
         return transactions
 
