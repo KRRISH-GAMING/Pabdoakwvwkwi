@@ -36,7 +36,7 @@ class TokenParser:
     def parse_from_env(self) -> Dict[int, str]:
         return {
             i+1: t for i, (_, t) in enumerate(
-                filter(lambda x: x[0].startswith("MULTI_TOKEN"), sorted(environ.items()))
+                filter(lambda x: x[0].startswith("MULTI_TOKEN"), sorted(os.environ.items()))
             )
         }
 
