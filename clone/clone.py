@@ -261,14 +261,10 @@ async def start(client, message):
                 if sent_msg:
                     if buttons_data:
                         buttons = [[InlineKeyboardButton(btn["name"], url=btn["url"])] for btn in buttons_data]
-                        try:
-                            if sent_msg.caption is not None:
-                                await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
-                            else:
-                                await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
-                        except Exception as e:
-                            if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-                                raise
+                        if sent_msg.caption is not None:
+                            await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                        else:
+                            await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
 
                 notice = None
                 if sent_msg and auto_delete:
@@ -372,20 +368,14 @@ async def start(client, message):
                             buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
 
                         if buttons:
-                            try:
-                                if sent_msg and sent_msg.caption is not None:
-                                    await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
-                                else:
-                                    await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
-                            except Exception as e:
-                                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-                                    raise
+                            if sent_msg and sent_msg.caption is not None:
+                                await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                            else:
+                                await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
 
                         sent_files.append(sent_msg)
                         await asyncio.sleep(1.5)
                     except Exception as e:
-                        if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-                            raise
                         if "INPUT_USER_DEACTIVATED" in str(e):
                             print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
                             return
@@ -411,8 +401,6 @@ async def start(client, message):
                 await asyncio.sleep(5)
                 await safe_action(sts.delete)
             except Exception as e:
-                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-                    raise
                 await safe_action(client.send_message,
                     LOG_CHANNEL,
                     f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -489,8 +477,6 @@ async def start(client, message):
                     asyncio.create_task(auto_delete_message(client, [msg], notice, auto_delete_time2, reload_url))
                 return
             except Exception as e:
-                if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-                    raise
                 await safe_action(client.send_message,
                     LOG_CHANNEL,
                     f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1511,8 +1497,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
             await safe_action(query.answer, "⚠️ Unknown action.", show_alert=True)
     except Exception as e:
-        if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
-            raise
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
