@@ -290,8 +290,13 @@ async def is_subscribedy(client, user_id: int, bot_id: int):
                 return False
 
         except UserNotParticipant:
-            pending_requests = await client.get_chat_join_requests(channel_id)
-            if any(req.from_user.id == user_id for req in pending_requests):
+            is_pending = False
+            async for req in client.get_chat_join_requests(channel_id):
+            if req.from_user.id == user_id:
+                is_pending = True
+                break
+
+            if is_pending:
                 continue
             else:
                 return False
