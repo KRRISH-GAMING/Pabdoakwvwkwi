@@ -1,9 +1,4 @@
-import os, logging, asyncio, re, time, shutil, sys, traceback
-from datetime import *
-from pyrogram import *
-from pyrogram.types import *
-from pyrogram.errors import *
-from pyrogram.errors.exceptions.bad_request_400 import *
+from imports import *
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
