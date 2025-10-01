@@ -1,4 +1,3 @@
-import time
 from imports import *
 from plugins.config import *
 from plugins.database import *
