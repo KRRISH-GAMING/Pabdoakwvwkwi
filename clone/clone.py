@@ -1251,7 +1251,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         data = query.data
 
         if data.startswith("checksub"):
-            await safe_action(query.answer)
             if not await is_subscribedy(client, query):
                 await safe_action(query.answer, "Join our channel first.", show_alert=True)
                 return
@@ -1276,7 +1275,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # User clicked a specific plan
         elif data.startswith("premium_") and not data.startswith("premium_done_"):
-            await safe_action(query.answer)
             parts = data.split("_")
             if len(parts) < 2 or not parts[1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid plan.", show_alert=True)
@@ -1314,9 +1312,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
 
         # User clicked Payment Done
-        elif data.startswith("premium_done_"):
-            await safe_action(query.answer)
-            
+        elif data.startswith("premium_done_"):            
             parts = data.split("_")
             if len(parts) < 3 or not parts[-1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid premium data.", show_alert=True)
@@ -1328,7 +1324,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             amount_expected = int(str(price).replace("₹", "").strip())
 
             payments = await fetch_fampay_payments()
-            print(payments)
 
             if clone.get("pu_upi", None) == "krishraj237@fam":
                 matched_payment = None
@@ -1402,7 +1397,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Admin approves premium
         elif data.startswith("approve_"):
-            await safe_action(query.answer)
             try:
                 parts = data.split("_")
                 if len(parts) < 3:
@@ -1447,7 +1441,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Admin rejects premium
         elif data.startswith("reject_"):
-            await safe_action(query.answer)
             try:
                 parts = data.split("_")
                 if len(parts) < 3:
