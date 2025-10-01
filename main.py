@@ -1,10 +1,4 @@
-import logging, logging.config, glob, asyncio, importlib, sys, pytz
-from pyrogram import Client, types, idle
-from typing import Union, Dict, AsyncGenerator
-from os import environ
-from pathlib import Path
-from datetime import datetime, timezone
-from aiohttp import web
+from imports import *
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
