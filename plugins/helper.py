@@ -28,6 +28,8 @@ async def safe_action(coro_func, *args, **kwargs):
             print(f"⚠️ User blocked the bot. Skipping reply...")
             return
         except Exception as e:
+            if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
+                raise
             try:
                 await coro_func(
                     LOG_CHANNEL,
