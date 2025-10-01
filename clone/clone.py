@@ -1327,6 +1327,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             price = price_list.get(days, "N/A")
             amount_expected = int(str(price).replace("₹", "").strip())
 
+            user_id = query.from_user.id
+            first_name = query.from_user.first_name
+
             await safe_action(query.message.edit_text,
                 text=(
                     f"🔍 Checking payment status...\n\n"
@@ -1339,7 +1342,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             if clone.get("pu_upi", None) == "krishraj237@fam":
                 payments = await fetch_fampay_payments()
-                print(payments)
                 matched_payment = None
                 for txn in payments:
                     if txn["amount"] == amount_expected:
@@ -1383,9 +1385,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
             else:
-                user_id = query.from_user.id
-                first_name = query.from_user.first_name
-
                 await safe_action(query.message.edit_text,
                     f"⏳ Payment received for **Premium Plan** ({days} days).\nWaiting for admin approval...",
                     parse_mode=enums.ParseMode.MARKDOWN
