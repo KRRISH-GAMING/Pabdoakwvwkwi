@@ -1334,7 +1334,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 matched_payment = None
                 for txn in payments:
-                    if txn["amount"] == amount_expected:
+                    if txn["amount"] == price:
                         matched_payment = txn
                         break
 
