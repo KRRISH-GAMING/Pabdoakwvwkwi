@@ -31,7 +31,7 @@ from bson import ObjectId
 from io import BytesIO
 
 # Pyrogram
-from pyrogram import Client
+from pyrogram import *
 from pyrogram.types import *
 from pyrogram.errors import *
 from pyrogram.errors.exceptions.bad_request_400 import *
