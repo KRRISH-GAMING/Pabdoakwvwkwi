@@ -98,7 +98,6 @@ async def fetch_fampay_payments():
         mail.select("inbox")
 
         status, email_ids = mail.search(None, '(UNSEEN FROM "no-reply@famapp.in")')
-        print(email_ids)
 
         if status != "OK" or not email_ids or not email_ids[0]:
             return []
