@@ -290,15 +290,19 @@ async def is_subscribedy(client, user_id: int, bot_id: int):
                 return False
 
         except UserNotParticipant:
-            is_pending = False
-            async for req in client.get_chat_join_requests(channel_id):
-            if req.from_user.id == user_id:
-                is_pending = True
-                break
+            try:
+                is_pending = False
+                async for req in client.get_chat_join_requests(channel_id):
+                    if req.from_user.id == user_id:
+                        is_pending = True
+                        break
 
-            if is_pending:
-                continue
-            else:
+                if is_pending:
+                    continue
+                else:
+                    return False
+            except Exception as e:
+                print(f"⚠️ Error fetching join requests for {channel_id}: {e}")
                 return False
 
         except Exception as e:
