@@ -290,7 +290,11 @@ async def is_subscribedy(client, user_id: int, bot_id: int):
                 return False
 
         except UserNotParticipant:
-            return False
+            pending_requests = await client.get_chat_join_requests(channel_id)
+            if any(req.from_user.id == user_id for req in pending_requests):
+                continue
+            else:
+                return False
 
         except Exception as e:
             print(f"⚠️ Clone is_subscribed Error {channel_id}: {e}")
