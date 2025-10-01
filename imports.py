@@ -1,13 +1,42 @@
-import logging, logging.config, glob, asyncio, importlib, sys, pytz, re, traceback, motor.motor_asyncio, shutil, qrcode, imaplib, email, random, string, requests, base64
-import time as pytime
-from typing import *
-from datetime import *
-from aiohttp import *
-from os import *
-from pathlib import *
-from bson import *
-from io import *
-from pyrogram import *
+# Standard Library
+import logging
+import logging.config
+import glob
+import asyncio
+import importlib
+import sys
+import re
+import traceback
+import shutil
+import random
+import string
+import time as pytime  # time module for timestamps
+from datetime import datetime, date, time as dtime, timedelta, timezone
+
+# Third-party libraries
+import pytz
+import motor.motor_asyncio
+import qrcode
+import imaplib
+import email
+import requests
+import base64
+
+# OS & Path
+import os
+from pathlib import Path
+
+# BSON & IO
+from bson import ObjectId
+from io import BytesIO
+
+# Pyrogram
+from pyrogram import Client
 from pyrogram.types import *
 from pyrogram.errors import *
 from pyrogram.errors.exceptions.bad_request_400 import *
+
+# aiohttp
+from aiohttp import ClientSession, web, ClientTimeout, TCPConnector
+from aiohttp.web_request import Request
+from aiohttp.web_response import Response, json_response
