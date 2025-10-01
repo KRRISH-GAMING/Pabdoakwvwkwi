@@ -138,11 +138,6 @@ async def set_clone_menu(xd):
 @Client.on_message(filters.command("start") & filters.private & filters.incoming)
 async def start(client, message):
     try:
-        try:
-            await safe_action(message.delete)
-        except:
-            pass
-
         user_id=message.from_user.id
         first_name=message.from_user.first_name
         last_name=message.from_user.last_name
@@ -1226,7 +1221,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         # Clone Manage Menu
         elif data.startswith("manage_"):
-            await safe_action(query.answer)
             bot_id = data.split("_", 1)[1]
             clone = await db.get_clone(bot_id)
             if not clone:
@@ -1334,7 +1328,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Start Message Menu
             if action == "start_message":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1355,7 +1348,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Start Text Menu
             elif action == "start_text":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1366,7 +1358,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Text
             elif action == "edit_text":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1382,7 +1373,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Edit Text
             elif action == "cancel_edit":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1394,7 +1384,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Start Text
             elif action == "see_text":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1409,7 +1398,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Start Text
             elif action == "default_text":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1421,7 +1409,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Start Photo Menu
             elif action == "start_photo":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1432,7 +1419,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # Add Start Photo
             elif action == "add_photo":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1448,7 +1434,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Photo
             elif action == "cancel_addphoto":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1460,7 +1445,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # See Start Photo
             elif action == "see_photo":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1479,7 +1463,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Start Photo
             elif action == "delete_photo":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1495,7 +1478,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Caption Menu
             elif action == "start_caption":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1506,7 +1488,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Caption
             elif action == "add_caption":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1522,7 +1503,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Caption
             elif action == "cancel_addcaption":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1534,7 +1514,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Caption
             elif action == "see_caption":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1549,7 +1528,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Caption
             elif action == "delete_caption":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1565,7 +1543,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Button Menu
             elif action == "start_button":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1576,7 +1553,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Button
             elif action == "add_button":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1600,7 +1576,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Button
             elif action == "cancel_addbutton":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1612,7 +1587,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Button
             elif action == "remove_button":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1631,7 +1605,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Link Message Menu
             elif action == "link_message":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1652,7 +1625,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Word Filter
             elif action == "word_filter":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1675,7 +1647,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Word Filter Status
             elif action == "wf_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1698,7 +1669,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Media Filter
             elif action == "media_filter":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1721,7 +1691,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Offensive Media Filter Status
             elif action == "mf_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1744,7 +1713,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Random Caption
             elif action == "random_caption":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1775,7 +1743,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Random Caption Status
             elif action == "rc_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1798,7 +1765,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Header Menu
             elif action == "header":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1809,7 +1775,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Header
             elif action == "add_header":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1825,7 +1790,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Header
             elif action == "cancel_addheader":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1837,7 +1801,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Header
             elif action == "see_header":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1852,7 +1815,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Header
             elif action == "delete_header":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1868,7 +1830,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Footer Menu
             elif action == "footer":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1879,7 +1840,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Footer
             elif action == "add_footer":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1895,7 +1855,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Footer
             elif action == "cancel_addfooter":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1907,7 +1866,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Footer
             elif action == "see_footer":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1922,7 +1880,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Footer
             elif action == "delete_footer":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1938,7 +1895,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Force Subscribe Menu
             elif action == "force_subscribe":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1949,7 +1905,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Force Subscribe
             elif action == "add_fsub":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -1973,7 +1928,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 )
 
             elif action == "fsub_mode":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2033,7 +1987,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Force Subscribe
             elif action == "cancel_addfsub":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2045,7 +1998,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Force Subscribe
             elif action == "remove_fsub":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2064,7 +2016,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token
             elif action == "access_token":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2075,7 +2026,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token Status
             elif action == "at_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2112,7 +2062,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Access Token
             elif action == "cancel_at":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2125,7 +2074,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token Validity Menu
             elif action == "at_validty":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2136,7 +2084,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Access Token Validity
             elif action == "edit_atvalidity":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2152,7 +2099,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Access Token Validity
             elif action == "cancel_editatvalidity":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2164,7 +2110,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Access Token Validity
             elif action == "see_atvalidity":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2188,7 +2133,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Access Token Validity
             elif action == "default_atvalidity":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2200,7 +2144,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Access Token Tutorial
             elif action == "at_tutorial":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2211,7 +2154,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Access Token Tutorial
             elif action == "add_attutorial":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2227,7 +2169,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Access Token Tutorial
             elif action == "cancel_addattutorial":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2239,7 +2180,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Access Token Tutorial
             elif action == "see_attutorial":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2254,7 +2194,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Access Token Tutorial
             elif action == "delete_attutorial":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2270,7 +2209,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post
             elif action == "auto_post":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2298,7 +2236,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Status
             elif action == "ap_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2327,7 +2264,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Post
             elif action == "cancel_autopost":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2340,7 +2276,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Mode
             elif action == "ap_mode":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2371,7 +2306,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Image Menu
             elif action == "apimage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2382,7 +2316,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # Add Auto Post Image
             elif action == "add_apimage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2398,7 +2331,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Auto Post Image
             elif action == "cancel_addapimage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2410,7 +2342,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
             # See Auto Post Image
             elif action == "see_apimage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2429,7 +2360,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Auto Post Image
             elif action == "delete_apimage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2445,7 +2375,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Post Sleep Menu
             elif action == "ap_sleep":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2456,7 +2385,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Auto Post Sleep
             elif action == "edit_apsleep":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2472,7 +2400,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Post Sleep
             elif action == "cancel_editapsleep":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2484,7 +2411,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Auto Post Sleep
             elif action == "see_apsleep":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2508,7 +2434,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Auto Post Sleep
             elif action == "default_apsleep":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2520,7 +2445,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Premium User
             elif action == "premium_user":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2548,7 +2472,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Premium User
             elif action == "cancel_pu":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2566,7 +2489,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Premium User
             elif action == "add_pu":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2582,7 +2504,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Add Premium User
             elif action == "cancel_addpu":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2594,7 +2515,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Premium User Menu
             elif action == "remove_premium_user":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2642,7 +2562,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Premium User Action
             elif action == "remove_pu":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2668,7 +2587,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Menu
             elif action == "auto_delete":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2718,7 +2636,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Status
             elif action == "ad_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2741,7 +2658,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Time Menu
             elif action == "ad_time":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2752,7 +2668,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Auto Delete Time
             elif action == "edit_adtime":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2768,7 +2683,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Delete Time
             elif action == "cancel_editadtime":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2780,7 +2694,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Auto Delete Time
             elif action == "see_adtime":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2804,7 +2717,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Auto Delete Time
             elif action == "default_adtime":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2816,7 +2728,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Auto Delete Message Menu
             elif action == "ad_message":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2827,7 +2738,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Edit Auto Delete Message
             elif action == "edit_admessage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2843,7 +2753,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Auto Delete Message
             elif action == "cancel_editadmessage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2855,7 +2764,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # See Auto Delete Message
             elif action == "see_admessage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2867,7 +2775,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Default Auto Delete Message
             elif action == "default_admessage":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2879,7 +2786,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Forward Protect
             elif action == "forward_protect":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2902,7 +2808,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Forward Protect Status
             elif action == "fp_status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2925,7 +2830,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Moderator Menu
             elif action == "moderator":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2936,7 +2840,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Add Moderator
             elif action == "add_moderator":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2952,7 +2855,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Cancel Moderator
             elif action == "cancel_addmoderator":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2964,7 +2866,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Moderator Menu
             elif action == "remove_moderator":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -2996,7 +2897,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Remove Moderator
             elif action == "remove_mod":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3013,7 +2913,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Transfer Moderator Menu
             elif action == "transfer_moderator":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3045,7 +2944,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Transfer Moderator
             elif action == "transfer_mod":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3076,7 +2974,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Status
             elif action == "status":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3098,7 +2995,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Activate/Deactivate
             elif action == "activate_deactivate":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3120,7 +3016,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Restart
             elif action == "restart":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3154,7 +3049,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Menu
             elif action == "delete":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
@@ -3172,7 +3066,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             # Delete Clone
             elif action == "delete_clone":
-                await safe_action(query.answer)
                 if not clone:
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
