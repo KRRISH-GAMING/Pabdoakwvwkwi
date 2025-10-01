@@ -1255,6 +1255,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_action(query.answer, "Join our channel first.", show_alert=True)
                 return
             
+            await safe_action(query.answer)
             _, kk, file_id = data.split("#")
             await safe_action(query.answer,url=f"https://t.me/{me.username}?start={kk}_{file_id}")
 
@@ -1279,6 +1280,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if len(parts) < 2 or not parts[1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid plan.", show_alert=True)
                 return
+
+            await safe_action(query.answer)
             days = int(parts[1])
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
@@ -1318,12 +1321,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_action(query.answer, "⚠️ Invalid premium data.", show_alert=True)
                 return
 
+            await safe_action(query.answer)
             days = int(parts[-1])
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
             amount_expected = int(str(price).replace("₹", "").strip())
 
             payments = await fetch_fampay_payments()
+            print(payments)
 
             if clone.get("pu_upi", None) == "krishraj237@fam":
                 matched_payment = None
@@ -1411,6 +1416,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_action(query.answer, "⚠️ Invalid approve data.", show_alert=True)
                 return
 
+            await safe_action(query.answer)
             premium_users = clone.get("premium_user", [])
             normalized = []
 
@@ -1455,6 +1461,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_action(query.answer, "⚠️ Invalid reject data.", show_alert=True)
                 return
 
+            await safe_action(query.answer)
             premium_users = clone.get("premium_user", [])
             normalized = []
 
