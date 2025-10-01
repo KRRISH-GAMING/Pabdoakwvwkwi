@@ -1,9 +1,4 @@
-import logging, asyncio, re, base64, random, string, time, traceback
-from datetime import *
-from pyrogram import *
-from pyrogram.types import *
-from pyrogram.errors import *
-from pyrogram.errors.exceptions.bad_request_400 import *
+from imports import *
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
@@ -142,9 +137,6 @@ async def start(client, message):
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
                     return
-            except UserIsBlocked:
-                print(f"⚠️ User {user_id} blocked the bot. Skipping fsub...")
-                return
             except Exception as e:
                 if "INPUT_USER_DEACTIVATED" in str(e):
                     print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
@@ -287,9 +279,6 @@ async def start(client, message):
                     
                     reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
                     asyncio.create_task(auto_delete_message(client, [sent_msg], notice, auto_delete_time2, reload_url))
-            except UserIsBlocked:
-                print(f"⚠️ User {user_id} blocked the bot. Skipping single...")
-                return
             except Exception as e:
                 await safe_action(client.send_message,
                     LOG_CHANNEL,
@@ -394,9 +383,6 @@ async def start(client, message):
 
                         sent_files.append(sent_msg)
                         await asyncio.sleep(1.5)
-                    except UserIsBlocked:
-                        print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
-                        return
                     except Exception as e:
                         if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                             raise
@@ -427,15 +413,12 @@ async def start(client, message):
             except Exception as e:
                 if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                     raise
-                if isinstance(e, UserIsBlocked):
-                    print(f"⚠️ User {user_id} blocked the bot. Ignoring.")
-                else:
-                    await safe_action(client.send_message,
-                        LOG_CHANNEL,
-                        f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-                    )
-                    print(f"⚠️ Clone Batch File Handler Error: {e}")
-                    print(traceback.format_exc())
+                await safe_action(client.send_message,
+                    LOG_CHANNEL,
+                    f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                )
+                print(f"⚠️ Clone Batch File Handler Error: {e}")
+                print(traceback.format_exc())
 
         # --- Auto Post Handler ---
         if data.startswith("AUTO-"):
@@ -505,9 +488,6 @@ async def start(client, message):
                     reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
                     asyncio.create_task(auto_delete_message(client, [msg], notice, auto_delete_time2, reload_url))
                 return
-            except UserIsBlocked:
-                print(f"⚠️ User {user_id} blocked the bot. Skipping auto post...")
-                return
             except Exception as e:
                 if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
                     raise
@@ -517,9 +497,6 @@ async def start(client, message):
                 )
                 print(f"⚠️ Clone Auto Post Handler Error: {e}")
                 print(traceback.format_exc())
-    except UserIsBlocked:
-        print(f"⚠️ User {user_id} blocked the bot. Skipping batch...")
-        return
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -537,9 +514,6 @@ async def help(client, message):
             return
 
         await safe_action(message.reply_text, script.HELP_TXT)
-    except UserIsBlocked:
-        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping fsub...")
-        return
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1222,9 +1196,6 @@ async def reply(client, message):
             await safe_action(client.send_message, user_id, "📩 **Reply from Admin**")
 
         await safe_action(message.reply, "✅ Reply delivered!")
-    except UserIsBlocked:
-        print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping reply...")
-        return
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1539,9 +1510,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 f"⚠️ Clone Unknown Callback Data Received:\n\n{data}\n\nUser: {query.from_user.id}\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
             )
             await safe_action(query.answer, "⚠️ Unknown action.", show_alert=True)
-    except UserIsBlocked:
-        print(f"⚠️ User {query.from_user.id} blocked the bot. Skipping callback...")
-        return
     except Exception as e:
         if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e):
             raise
