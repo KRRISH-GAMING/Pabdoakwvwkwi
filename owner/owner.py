@@ -1,4 +1,3 @@
-import time
 from imports import *
 from plugins.config import *
 from plugins.database import *
@@ -29,7 +28,7 @@ AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
-START_TIME = time.time()
+START_TIME = pytime.time()
 
 if SESSION_STRING and len(SESSION_STRING) > 30:
     assistant = Client(
@@ -361,7 +360,7 @@ async def broadcast(client, message):
                 return await safe_action(message.reply, '🚫 Broadcast cancelled.')
 
         sts = await safe_action(message.reply_text, "⏳ Broadcast starting...")
-        start_time = time.time()
+        start_time = pytime.time()
         total_users = await db.total_users_count()
 
         done = blocked = deleted = failed = success = 0
@@ -385,7 +384,7 @@ async def broadcast(client, message):
                     if done % 10 == 0 or done == total_users:
                         progress = broadcast_progress_bar(done, total_users)
                         percent = (done / total_users) * 100
-                        elapsed = time.time() - start_time
+                        elapsed = pytime.time() - start_time
                         speed = done / elapsed if elapsed > 0 else 0
                         remaining = total_users - done
                         eta = timedelta(seconds=int(remaining / speed)) if speed > 0 else "∞"
@@ -415,8 +414,8 @@ async def broadcast(client, message):
                 done += 1
                 continue
 
-        time_taken = timedelta(seconds=int(time.time() - start_time))
-        #speed = round(done / (time.time()-start_time), 2) if done > 0 else 0
+        time_taken = timedelta(seconds=int(pytime.time() - start_time))
+        #speed = round(done / (pytime.time()-start_time), 2) if done > 0 else 0
         final_progress = broadcast_progress_bar(total_users, total_users)
         final_text = f"""
 ✅ <b>Broadcast Completed</b> ✅
@@ -451,7 +450,7 @@ async def stats(client, message):
         username = client.me.username
         users_count = await db.total_users_count()
 
-        uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
+        uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{username}\n\n"
@@ -1223,8 +1222,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
             await safe_action(query.answer)
-            last_active = clone.get("last_active", int(time.time()))
-            if time.time() - last_active > 7 * 24 * 60 * 60:
+            last_active = clone.get("last_active", int(pytime.time()))
+            if pytime.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
                 await safe_action(message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
@@ -1313,15 +1312,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if not clone:
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
-            last_active = clone.get("last_active", int(time.time()))
-            if time.time() - last_active > 7 * 24 * 60 * 60:
+            last_active = clone.get("last_active", int(pytime.time()))
+            if pytime.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
                 await safe_action(message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
 
             active = clone.get("active", True)
 
-            await db.update_clone(bot_id, {"last_active": int(time.time())})
+            await db.update_clone(bot_id, {"last_active": int(pytime.time())})
 
             # Start Message Menu
             if action == "start_message":
@@ -3048,7 +3047,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 users = await clonedb.total_users_count(bot_id)
                 banned_users = len(clone.get("banned_users", []))
 
-                uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
+                uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
 
                 await safe_action(query.answer,
                     f"📊 Status for @{clone.get('username')}\n\n"
@@ -3064,7 +3063,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
                 new_status = not clone.get("active", True)
-                await db.update_clone(bot_id, {"active": new_status, "last_active": int(time.time())})
+                await db.update_clone(bot_id, {"active": new_status, "last_active": int(pytime.time())})
 
                 status_text = "✅ Activated" if new_status else "❌ Deactivated"
                 await safe_action(query.answer, f"Bot is now {status_text}", show_alert=True)
