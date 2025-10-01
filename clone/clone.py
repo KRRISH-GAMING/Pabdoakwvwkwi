@@ -1,4 +1,3 @@
-import time
 from imports import *
 from plugins.config import *
 from plugins.database import *
@@ -10,7 +9,7 @@ logger.setLevel(logging.INFO)
 
 SHORTEN_STATE = {}
 
-START_TIME = time.time()
+START_TIME = pytime.time()
 
 @Client.on_message(filters.command("start") & filters.private & filters.incoming)
 async def start(client, message):
@@ -992,7 +991,7 @@ async def broadcast(client, message):
         sts = await safe_action(message.reply_text, "⏳ Broadcast starting...")
 
         done = blocked = deleted = failed = success = 0
-        start_time = time.time()
+        start_time = pytime.time()
 
         async for user in users:
             if 'user_id' in user:
@@ -1011,7 +1010,7 @@ async def broadcast(client, message):
                 if done % 10 == 0 or done == total_users:
                     progress = broadcast_progress_bar(done, total_users)
                     percent = (done / total_users) * 100
-                    elapsed = time.time() - start_time
+                    elapsed = pytime.time() - start_time
                     speed = done / elapsed if elapsed > 0 else 0
                     remaining = total_users - done
                     eta = timedelta(seconds=int(remaining / speed)) if speed > 0 else "∞"
@@ -1037,7 +1036,7 @@ async def broadcast(client, message):
                 done += 1
                 failed += 1
 
-        time_taken = timedelta(seconds=int(time.time() - start_time))
+        time_taken = timedelta(seconds=int(pytime.time() - start_time))
         final_progress = broadcast_progress_bar(total_users, total_users)
         final_text = f"""
 ✅ <b>Broadcast Completed</b> ✅
@@ -1087,7 +1086,7 @@ async def stats(client, message):
         users = await clonedb.total_users_count(me.id)
         banned_users = len(clone.get("banned_users", []))
 
-        uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
+        uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{clone.get('username')}\n\n"
