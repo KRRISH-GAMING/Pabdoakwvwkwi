@@ -1376,10 +1376,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     )
                 else:
                     await safe_action(query.message.edit_text,
-                        f"⏳ Payment request received for **{days} days Premium Plan**.\n\n"
-                        f"💰 Amount: {price}\n"
-                        f"⏳ Waiting for payment confirmation via UPI...\n\n"
-                        f"⚡ As soon as we receive your transaction, your plan will be auto-activated.",
+                        f"❌ No payment received for **{days} days Premium Plan**.\n\n"
+                        f"💰 Expected Amount: {price}\n"
+                        f"⚠️ We couldn’t find any matching UPI transaction.\n\n"
+                        f"📩 If you already paid, please contact the admin for help.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
             else:
