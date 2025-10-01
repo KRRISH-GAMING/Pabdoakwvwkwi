@@ -3244,6 +3244,17 @@ async def cb_handler(client: Client, query: CallbackQuery):
             feature_type = data.replace("paid_", "").replace("_", " ")
             amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
 
+            await safe_action(query.message.edit_text,
+                await safe_action(query.message.edit_text,
+                text=(
+                    f"🔍 Checking payment status...\n\n"
+                    f"Feature: **{feature_type}**\n"
+                    f"💰 Amount: ₹{amount_expected}\n"
+                    f"⚡ Please wait while we verify your transaction."
+                ),
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
+
             payments = await fetch_fampay_payments()
 
             matched_payment = None
