@@ -1286,7 +1286,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             price = price_list.get(days, "N/A")
 
             buttons = [
-                [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}_{price}")],
+                [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="remove_ads")]
             ]
 
@@ -1316,14 +1316,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # User clicked Payment Done
         elif data.startswith("premium_done_"):
             await safe_action(query.answer)
+            
             parts = data.split("_")
-            if len(parts) < 4 or not parts[1].isdigit():
+            if len(parts) < 3 or not parts[-1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid premium data.", show_alert=True)
                 return
 
-            days = int(parts[2])
-            price = parts[3]
-            amount_expected = int(price.replace("₹", ""))
+            days = int(parts[-1])
+            price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
+            price = price_list.get(days, "N/A")
 
             user_id = query.from_user.id
             first_name = query.from_user.first_name
@@ -1360,7 +1361,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await safe_action(query.message.edit_text,
                         f"✅ Payment confirmed!\n"
                         f"Plan: **{days} days Premium**\n"
-                        f"Amount: ₹{amount_expected}\n"
+                        f"Amount: {price}\n"
                         f"Transaction ID: `{matched_payment['txn_id']}`\n"
                         "Your plan is now active.",
                         parse_mode=enums.ParseMode.MARKDOWN
