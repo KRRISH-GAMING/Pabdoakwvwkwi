@@ -1323,22 +1323,29 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 return
 
             days = int(parts[-1])
+            print(days)
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
+            print(price)
             amount_expected = int(str(price).replace("₹", "").strip())
+            print(amount_expected)
 
             user_id = query.from_user.id
             first_name = query.from_user.first_name
 
             if clone.get("pu_upi", None) == "krishraj237@fam":
                 payments = await fetch_fampay_payments()
+                print(payments)
 
                 matched_payment = None
                 for txn in payments:
                     if txn["amount"] == amount_expected:
+                        print(txn)
                         matched_payment = txn
+                        print(matched_payment)
                         break
 
+                print(matched_payment)
                 if matched_payment:
                     premium_users = clone.get("premium_user", [])
                     normalized = []
