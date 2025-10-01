@@ -3245,7 +3245,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
 
             await safe_action(query.message.edit_text,
-                await safe_action(query.message.edit_text,
                 text=(
                     f"🔍 Checking payment status...\n\n"
                     f"Feature: **{feature_type}**\n"
