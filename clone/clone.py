@@ -1286,7 +1286,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             price = price_list.get(days, "N/A")
 
             buttons = [
-                [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}")],
+                [InlineKeyboardButton("✅ Payment Done", callback_data=f"premium_done_{days}_{price}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="remove_ads")]
             ]
 
@@ -1324,6 +1324,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             days = int(parts[2])
             price = parts[3]
             amount_expected = int(price.replace("₹", ""))
+
             user_id = query.from_user.id
             first_name = query.from_user.first_name
 
