@@ -1226,6 +1226,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if not clone:
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
+            await safe_action(query.answer)
             last_active = clone.get("last_active", int(time.time()))
             if time.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
@@ -1334,6 +1335,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 buttons = [
                     [InlineKeyboardButton('✏️ Start Text', callback_data=f'start_text_{bot_id}'),
                      InlineKeyboardButton('🖼️ Start Photo', callback_data=f'start_photo_{bot_id}')],
@@ -1354,6 +1356,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_text_menu(client, query.message, bot_id)
 
             # Edit Text
@@ -1364,6 +1367,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 START_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_edit_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -1379,6 +1383,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 START_TEXT.pop(user_id, None)
                 await show_text_menu(client, query.message, bot_id)
 
@@ -1415,6 +1420,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_photo_menu(client, query.message, bot_id)
         
             # Add Start Photo
@@ -1425,6 +1431,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 START_PHOTO[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -1440,6 +1447,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 START_PHOTO.pop(user_id, None)
                 await show_photo_menu(client, query.message, bot_id)
         
@@ -1484,6 +1492,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_caption_menu(client, query.message, bot_id)
 
             # Add Caption
@@ -1494,6 +1503,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 CAPTION_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addcaption_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -1509,6 +1519,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 CAPTION_TEXT.pop(user_id, None)
                 await show_caption_menu(client, query.message, bot_id)
 
@@ -1549,6 +1560,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_button_menu(client, query.message, bot_id)
 
             # Add Button
@@ -1582,6 +1594,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_BUTTON.pop(user_id, None)
                 await show_button_menu(client, query.message, bot_id)
 
@@ -1611,6 +1624,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 buttons = [
                     [InlineKeyboardButton('🚫 Word Filter', callback_data=f'word_filter_{bot_id}'),
                      InlineKeyboardButton('🎲 Random Caption', callback_data=f'random_caption_{bot_id}')],
@@ -1631,6 +1645,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 current = clone.get("word_filter", False)
                 if current:
                     buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"wf_status_{bot_id}")]]
@@ -1653,6 +1668,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("word_filter", False)
                 await db.update_clone(bot_id, {"word_filter": new_value})
 
@@ -1675,6 +1691,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 current = clone.get("media_filter", False)
                 if current:
                     buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"mf_status_{bot_id}")]]
@@ -1697,6 +1714,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("media_filter", False)
                 await db.update_clone(bot_id, {"media_filter": new_value})
 
@@ -1727,6 +1745,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         show_alert=True
                     )
 
+                await safe_action(query.answer)
                 current = clone.get("random_caption", False)
                 if current:
                     buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"rc_status_{bot_id}")]]
@@ -1749,6 +1768,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("random_caption", False)
                 await db.update_clone(bot_id, {"random_caption": new_value})
 
@@ -1771,6 +1791,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_header_menu(client, query.message, bot_id)
 
             # Add Header
@@ -1781,6 +1802,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 HEADER_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addheader_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -1796,6 +1818,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 HEADER_TEXT.pop(user_id, None)
                 await show_header_menu(client, query.message, bot_id)
 
@@ -1836,6 +1859,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_footer_menu(client, query.message, bot_id)
 
             # Add Footer
@@ -1846,6 +1870,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 FOOTER_TEXT[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addfooter_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -1861,6 +1886,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 FOOTER_TEXT.pop(user_id, None)
                 await show_footer_menu(client, query.message, bot_id)
 
@@ -1901,6 +1927,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_fsub_menu(client, query.message, bot_id)
 
             # Add Force Subscribe
@@ -1916,6 +1943,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     if len(fsub_data) >= 4:
                         return await safe_action(query.answer, "❌ You can only add up to 4 channel.", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_FSUB[user_id] = {
                     "orig_msg": query.message,
                     "bot_id": bot_id,
@@ -1938,6 +1966,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not data:
                     return await safe_action(query.answer, "Session expired. Please try again.", show_alert=True)
 
+                await safe_action(query.answer)
                 mode = mode
                 data["mode"] = mode
                 bot_id = data["bot_id"]
@@ -1993,6 +2022,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_FSUB.pop(user_id, None)
                 await show_fsub_menu(client, query.message, bot_id)
 
@@ -2022,6 +2052,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_token_menu(client, query.message, bot_id)
 
             # Access Token Status
@@ -2032,6 +2063,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("access_token", False)
                 await db.update_clone(bot_id, {"access_token": new_value})
 
@@ -2068,6 +2100,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ACCESS_TOKEN.pop(user_id, None)
                 await db.update_clone(bot_id, {"access_token": False})
                 await show_token_menu(client, query.message, bot_id)
@@ -2080,6 +2113,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_validity_menu(client, query.message, bot_id)
 
             # Edit Access Token Validity
@@ -2090,6 +2124,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AT_VALIDITY[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editatvalidity_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2105,6 +2140,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AT_VALIDITY.pop(user_id, None)
                 await show_validity_menu(client, query.message, bot_id)
 
@@ -2150,6 +2186,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_tutorial_menu(client, query.message, bot_id)
 
             # Add Access Token Tutorial
@@ -2160,6 +2197,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AT_TUTORIAL[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2175,6 +2213,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AT_TUTORIAL.pop(user_id, None)
                 await show_tutorial_menu(client, query.message, bot_id)
 
@@ -2232,6 +2271,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         show_alert=True
                     )
 
+                await safe_action(query.answer)
                 await show_post_menu(client, query.message, bot_id)
 
             # Auto Post Status
@@ -2242,6 +2282,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("auto_post", False)
                 await db.update_clone(bot_id, {"auto_post": new_value})
 
@@ -2270,6 +2311,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AUTO_POST.pop(user_id, None)
                 await db.update_clone(bot_id, {"auto_post": False})
                 await show_post_menu(client, query.message, bot_id)
@@ -2282,6 +2324,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await safe_action(query.message.edit_text, "✏️ Updating **auto post**, please wait...")
                 try:
                     await db.update_clone(bot_id, {
@@ -2312,6 +2355,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_image_menu(client, query.message, bot_id)
         
             # Add Auto Post Image
@@ -2322,6 +2366,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AP_IMAGE[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2337,6 +2382,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AP_IMAGE.pop(user_id, None)
                 await show_image_menu(client, query.message, bot_id)
         
@@ -2381,6 +2427,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_sleep_menu(client, query.message, bot_id)
 
             # Edit Auto Post Sleep
@@ -2391,6 +2438,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AP_SLEEP[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editapsleep_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2406,6 +2454,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AP_SLEEP.pop(user_id, None)
                 await show_sleep_menu(client, query.message, bot_id)
 
@@ -2459,6 +2508,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         show_alert=True
                     )
 
+                await safe_action(query.answer)
                 premium_upi = clone.get("pu_upi", None)
                 if premium_upi:
                     await show_premium_menu(client, query.message, bot_id)
@@ -2478,6 +2528,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 PU_UPI.pop(user_id, None)
                 await db.update_clone(bot_id, {"pu_upi": None})
 
@@ -2495,6 +2546,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_PU[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addpu_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2510,6 +2562,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_PU.pop(user_id, None)
                 await show_premium_menu(client, query.message, bot_id)
 
@@ -2525,6 +2578,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not premium_user:
                     return await safe_action(query.answer, "❌ No premium user found!", show_alert=True)
 
+                await safe_action(query.answer)
                 buttons = []
 
                 for pu in premium_user:
@@ -2593,6 +2647,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 current = clone.get("auto_delete", False)
                 time_set = str(clone.get("ad_time", "1h"))
                 msg_set = clone.get("ad_msg", script.AD_TXT)
@@ -2642,6 +2697,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("auto_delete", False)
                 await db.update_clone(bot_id, {"auto_delete": new_value})
 
@@ -2664,6 +2720,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_time_menu(client, query.message, bot_id)
 
             # Edit Auto Delete Time
@@ -2674,6 +2731,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AD_TIME[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadtime_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2689,6 +2747,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AD_TIME.pop(user_id, None)
                 await show_time_menu(client, query.message, bot_id)
 
@@ -2734,6 +2793,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_message_menu(client, query.message, bot_id)
 
             # Edit Auto Delete Message
@@ -2744,6 +2804,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AD_MESSAGE[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2759,6 +2820,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 AD_MESSAGE.pop(user_id, None)
                 await show_message_menu(client, query.message, bot_id)
 
@@ -2792,6 +2854,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 current = clone.get("forward_protect", False)
                 if current:
                     buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"fp_status_{bot_id}")]]
@@ -2814,6 +2877,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 new_value = not clone.get("forward_protect", False)
                 await db.update_clone(bot_id, {"forward_protect": new_value})
 
@@ -2836,6 +2900,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await show_moderator_menu(client, query.message, bot_id)
 
             # Add Moderator
@@ -2846,6 +2911,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_MODERATOR[user_id] = (query.message, bot_id)
                 buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addmoderator_{bot_id}')]]
                 await safe_action(query.message.edit_text,
@@ -2861,6 +2927,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 ADD_MODERATOR.pop(user_id, None)
                 await show_moderator_menu(client, query.message, bot_id)
 
@@ -2876,6 +2943,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not moderators:
                     return await safe_action(query.answer, "❌ No moderators found!", show_alert=True)
 
+                await safe_action(query.answer)
                 buttons = []
 
                 for mod in moderators:
@@ -2923,6 +2991,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not moderators:
                     return await safe_action(query.answer, "❌ No moderators found!", show_alert=True)
 
+                await safe_action(query.answer)
                 buttons = []
 
                 for mod in moderators:
@@ -3004,6 +3073,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 status_text = "✅ Activated" if new_status else "❌ Deactivated"
                 await safe_action(query.answer, f"Bot is now {status_text}", show_alert=True)
 
+                await safe_action(query.answer)
                 manage_buttons = query.message.reply_markup.inline_keyboard
                 for row in manage_buttons:
                     for btn in row:
@@ -3022,6 +3092,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await safe_action(query.message.edit_text, f"🔄 Restarting clone bot `@{clone['username']}`...\n[░░░░░░░░░░] 0%")
 
                 for i in range(1, 11):
@@ -3055,6 +3126,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 buttons = [
                     [InlineKeyboardButton('✅ Yes, Sure', callback_data=f'delete_clone_{bot_id}')],
                     [InlineKeyboardButton('❌ No, Go Back', callback_data=f'manage_{bot_id}')]
@@ -3072,6 +3144,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                await safe_action(query.answer)
                 await safe_action(query.message.edit_text, "🗑 Deleting clone, please wait...")
 
                 clone_client = get_client(bot_id)
