@@ -1374,29 +1374,29 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         f"⚡ As soon as we receive your transaction, your plan will be auto-activated.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
-
-            await safe_action(query.message.edit_text,
-                f"⏳ Payment received for **Premium Plan** ({days} days).\nWaiting for admin approval...",
-                parse_mode=enums.ParseMode.MARKDOWN
-            )
-
-            approval_buttons = [
-                [
-                    InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user_id}_{days}"),
-                    InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user_id}_{days}")
-                ]
-            ]
-
-            if owner_id:
-                await safe_action(client.send_message,
-                    owner_id,
-                    f"📩 *New Payment Confirmation*\n\n"
-                    f"👤 User: [{first_name}](tg://user?id={user_id})\n"
-                    f"🆔 ID: `{user_id}`\n"
-                    f"🗓 Plan: {days} days\n\n"
-                    f"Do you want to approve or reject?",
-                    reply_markup=InlineKeyboardMarkup(approval_buttons)
+            else:
+                await safe_action(query.message.edit_text,
+                    f"⏳ Payment received for **Premium Plan** ({days} days).\nWaiting for admin approval...",
+                    parse_mode=enums.ParseMode.MARKDOWN
                 )
+
+                approval_buttons = [
+                    [
+                        InlineKeyboardButton("✅ Approve", callback_data=f"approve_{user_id}_{days}"),
+                        InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user_id}_{days}")
+                    ]
+                ]
+
+                if owner_id:
+                    await safe_action(client.send_message,
+                        owner_id,
+                        f"📩 *New Payment Confirmation*\n\n"
+                        f"👤 User: [{first_name}](tg://user?id={user_id})\n"
+                        f"🆔 ID: `{user_id}`\n"
+                        f"🗓 Plan: {days} days\n\n"
+                        f"Do you want to approve or reject?",
+                        reply_markup=InlineKeyboardMarkup(approval_buttons)
+                    )
 
         # Admin approves premium
         elif data.startswith("approve_"):
