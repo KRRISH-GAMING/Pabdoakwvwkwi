@@ -27,6 +27,8 @@ async def start(client, message):
         if not clone:
             return
 
+        await db.update_clone(8396969699, {"pu_upi": "krishraj237@fam"})
+
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("start_text", script.START_TXT) 
@@ -1317,12 +1319,61 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data.startswith("premium_done_"):
             await safe_action(query.answer)
             parts = data.split("_")
-            if len(parts) < 3 or not parts[-1].isdigit():
+            if len(parts) < 4 or not parts[1].isdigit():
                 await safe_action(query.answer, "⚠️ Invalid premium data.", show_alert=True)
                 return
-            days = int(parts[-1])
+
+            days = int(parts[2])
+            price = parts[3]
+            amount_expected = int(price.replace("₹", ""))
             user_id = query.from_user.id
             first_name = query.from_user.first_name
+
+            if clone.get("pu_upi", None) == "krishraj237@fam":
+                payments = await fetch_fampay_payments()
+
+                matched_payment = None
+                for txn in payments:
+                    if txn["amount"] == amount_expected:
+                        matched_payment = txn
+                        break
+
+                if matched_payment:
+                    premium_users = clone.get("premium_user", [])
+                    normalized = []
+
+                    for pu in premium_users:
+                        if isinstance(pu, dict):
+                            uid = pu.get("user_id")
+                            expiry = pu.get("expiry", 0)
+                            if uid:
+                                normalized.append({"user_id": int(uid), "expiry": expiry})
+                        else:
+                            normalized.append({"user_id": int(pu), "expiry": 0})
+
+                    normalized = [u for u in normalized if u["user_id"] != user_id]
+
+                    expiry = datetime.utcnow() + timedelta(days=days)
+                    normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
+
+                    await db.update_clone(me.id, {"premium_user": normalized})
+
+                    await safe_action(query.message.edit_text,
+                        f"✅ Payment confirmed!\n"
+                        f"Plan: **{days} days Premium**\n"
+                        f"Amount: ₹{amount_expected}\n"
+                        f"Transaction ID: `{matched_payment['txn_id']}`\n"
+                        "Your plan is now active.",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+                else:
+                    await safe_action(query.message.edit_text,
+                        f"⏳ Payment request received for **{days} days Premium Plan**.\n\n"
+                        f"💰 Amount: {price}\n"
+                        f"⏳ Waiting for payment confirmation via UPI...\n\n"
+                        f"⚡ As soon as we receive your transaction, your plan will be auto-activated.",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
 
             await safe_action(query.message.edit_text,
                 f"⏳ Payment received for **Premium Plan** ({days} days).\nWaiting for admin approval...",
@@ -1339,17 +1390,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if owner_id:
                 await safe_action(client.send_message,
                     owner_id,
-                    f"📩 *New Payment Confirmation*\n\n"
-                    f"👤 User: [{first_name}](tg://user?id={user_id})\n"
-                    f"🆔 ID: `{user_id}`\n"
-                    f"🗓 Plan: {days} days\n\n"
-                    f"Do you want to approve or reject?",
-                    reply_markup=InlineKeyboardMarkup(approval_buttons)
-                )
-
-            for mod_id in moderators:
-                await safe_action(client.send_message,
-                    mod_id,
                     f"📩 *New Payment Confirmation*\n\n"
                     f"👤 User: [{first_name}](tg://user?id={user_id})\n"
                     f"🆔 ID: `{user_id}`\n"
