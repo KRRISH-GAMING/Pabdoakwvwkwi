@@ -1,10 +1,4 @@
-import asyncio, re, random, aiohttp, requests, string, traceback, qrcode, imaplib, email, pytz
-from io import BytesIO
-from datetime import *
-from pyrogram import *
-from pyrogram.types import *
-from pyrogram.errors import *
-from pyrogram.errors.exceptions.bad_request_400 import *
+from imports import *
 from plugins.config import *
 from plugins.database import *
 from plugins.script import *
@@ -31,7 +25,7 @@ async def safe_action(coro_func, *args, **kwargs):
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
         except UserIsBlocked:
-            print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping reply...")
+            print(f"⚠️ User blocked the bot. Skipping reply...")
             return
         except Exception as e:
             try:
@@ -321,7 +315,7 @@ async def get_verify_shorted_link(client, link):
         url = f"https://{shortlink_url}/api"
         params = {"api": shortlink_api, "url": link}
         try:
-            async with aiohttp.ClientSession() as session:
+            async with ClientSession() as session:
                 async with session.get(url, params=params, ssl=False) as response:
                     text = await response.text()
 

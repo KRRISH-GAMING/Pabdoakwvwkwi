@@ -1,6 +1,4 @@
-import motor.motor_asyncio, time
-from datetime import datetime, timedelta
-from bson import ObjectId
+from imports import *
 from plugins.config import *
 from plugins.script import script
 
