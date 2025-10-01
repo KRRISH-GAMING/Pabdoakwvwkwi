@@ -1325,6 +1325,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             days = int(parts[-1])
             price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
+            amount_expected = int(str(price).replace("₹", "").strip())
 
             user_id = query.from_user.id
             first_name = query.from_user.first_name
@@ -1334,7 +1335,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 matched_payment = None
                 for txn in payments:
-                    if txn["amount"] == price:
+                    if txn["amount"] == amount_expected:
                         matched_payment = txn
                         break
 
