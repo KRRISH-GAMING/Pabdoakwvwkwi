@@ -73,6 +73,19 @@ async def is_subscribedx(client, query):
                 return True
         return False
 
+def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
+    upi_url = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&cu=INR"
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(upi_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    bio = BytesIO()
+    bio.name = "upi_qr.png"
+    img.save(bio, "PNG")
+    bio.seek(0)
+    return bio
+
 async def fetch_fampay_payments():
     try:
         IMAP_HOST = "imap.gmail.com"
@@ -84,7 +97,8 @@ async def fetch_fampay_payments():
 
         mail.select("inbox")
 
-        status, email_ids = mail.search(None, 'UNSEEN')
+        status, email_ids = mail.search(None, '(UNSEEN FROM "no-reply@famapp.in")')
+        print(email_ids)
 
         if status != "OK" or not email_ids or not email_ids[0]:
             return []
@@ -156,22 +170,9 @@ async def fetch_fampay_payments():
             LOG_CHANNEL,
             f"⚠️ IMAP Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
-        print(f"❌ IMAP Error: {e}")
+        print(f"⚠️ IMAP Error: {e}")
         print(traceback.format_exc())
         return []
-
-def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
-    upi_url = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&cu=INR"
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(upi_url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    bio = BytesIO()
-    bio.name = "upi_qr.png"
-    img.save(bio, "PNG")
-    bio.seek(0)
-    return bio
 
 async def broadcast_messagesx(user_id, message):
     try:
