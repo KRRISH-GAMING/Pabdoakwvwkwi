@@ -1337,9 +1337,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-            payments = await fetch_fampay_payments()
-
             if clone.get("pu_upi", None) == "krishraj237@fam":
+                payments = await fetch_fampay_payments()
                 matched_payment = None
                 for txn in payments:
                     if txn["amount"] == amount_expected:
