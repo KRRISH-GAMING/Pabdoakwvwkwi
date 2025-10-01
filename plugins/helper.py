@@ -30,6 +30,9 @@ async def safe_action(coro_func, *args, **kwargs):
         except FloodWait as e:
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
+        except UserIsBlocked:
+            print(f"⚠️ User {message.from_user.id} blocked the bot. Skipping reply...")
+            return
         except Exception as e:
             try:
                 await coro_func(
@@ -157,8 +160,6 @@ async def fetch_fampay_payments():
                 "txn_id": txn_id
             }
             transactions.append(txn)
-
-            mail.store(email_id, '+FLAGS', '\\Seen')
 
         mail.logout()
         return transactions
