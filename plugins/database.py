@@ -1,3 +1,4 @@
+import time
 from imports import *
 from plugins.config import *
 from plugins.script import script
