@@ -3277,10 +3277,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 )
             else:
                 await safe_action(query.message.edit_text,
-                    f"✅ Your payment request for **{feature_type}** has been recorded.\n\n"
-                    f"💰 Amount: ₹{amount_expected}\n"
-                    f"⏳ Waiting for payment confirmation via UPI...\n\n"
-                    f"⚡ As soon as we receive your transaction, your plan will be auto-activated.",
+                    f"❌ No payment received for **{feature_type}**.\n\n"
+                    f"💰 Expected Amount: ₹{amount_expected}\n"
+                    f"⚠️ We couldn’t find any matching UPI transaction.\n\n"
+                    f"📩 If you already paid, please contact the admin for help.",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
 
