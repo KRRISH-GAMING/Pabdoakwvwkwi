@@ -1,4 +1,3 @@
-import time
 from imports import *
 from plugins.config import *
 from plugins.script import script
@@ -125,7 +124,7 @@ class Database:
             'banned_users': [],
             # Activate/Deactivate
             'active': True,
-            'last_active': int(time.time())
+            'last_active': int(pytime.time())
         }
         await self.bot.insert_one(add)
 
