@@ -138,16 +138,12 @@ async def start(client, message):
                     )
                     return
             except Exception as e:
-                if "INPUT_USER_DEACTIVATED" in str(e):
-                    print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
-                    return
-                else:
-                    await safe_action(client.send_message,
-                        LOG_CHANNEL,
-                        f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-                    )
-                    print(f"⚠️ Clone Fsub Handler Error: {e}")
-                    print(traceback.format_exc())
+                await safe_action(client.send_message,
+                    LOG_CHANNEL,
+                    f"⚠️ Clone Fsub Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                )
+                print(f"⚠️ Clone Fsub Handler Error: {e}")
+                print(traceback.format_exc())
 
         # --- Start Handler ---
         if len(message.command) == 1:
@@ -376,16 +372,12 @@ async def start(client, message):
                         sent_files.append(sent_msg)
                         await asyncio.sleep(1.5)
                     except Exception as e:
-                        if "INPUT_USER_DEACTIVATED" in str(e):
-                            print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
-                            return
-                        else:
-                            await safe_action(client.send_message,
-                                LOG_CHANNEL,
-                                f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-                            )
-                            print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
-                            continue
+                        await safe_action(client.send_message,
+                            LOG_CHANNEL,
+                            f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                        )
+                        print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
+                        continue
 
                 notice = None
                 if sent_files and auto_delete:
@@ -1670,7 +1662,7 @@ async def message_capture(client: Client, message: Message):
 
             media_file_id = None
             media_type = None
-            if message.chat.id in [-1003015483271, -1002768686427]:
+            if message.chat.id in [-1003015483271, -1002757972110]:
                 if not await db.is_premium(owner_id):
                     return
 
