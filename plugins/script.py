@@ -79,6 +79,8 @@ Then I’ll create a clone bot for you 😌"""
     CUSTOMIZEC_TXT = """<u>**✨ CUSTOMIZE CLONE**</u>
 
 🖍️ Username: {username}
+💎 Premium Status: {premium_status} ({plan_type})
+⏰ Premium Expiry: {expiry}
 
 Modify and customize your clone bot from here."""
 
