@@ -1247,8 +1247,24 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_{bot_id}')],
                 [InlineKeyboardButton('⬅️ Back', callback_data='clone')]
             ]
+            
+            premium_user = await db.get_premium_user(user_id)
+            if premium_user:
+                expiry_time = premium_user.get("expiry_time")
+                plan_type = premium_user.get("plan_type", "normal")
+                if expiry_time and expiry_time > datetime.utcnow():
+                    premium_status = "Active ✅"
+                    expiry_str = expiry_time.strftime("%d %b %Y %H:%M UTC")
+                else:
+                    premium_status = "Inactive ❌"
+                    expiry_str = "N/A"
+            else:
+                premium_status = "Inactive ❌"
+                plan_type = "free"
+                expiry_str = "N/A"
+
             await safe_action(query.message.edit_text,
-                text=script.CUSTOMIZEC_TXT.format(username=f"@{clone['username']}"),
+                text=script.CUSTOMIZEC_TXT.format(username=f"@{clone['username']}", premium_status=premium_status, plan_type=plan_type.title(), expiry=expiry_str),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
