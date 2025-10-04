@@ -7,7 +7,6 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
-PREMIUM_STATE = {}
 CLONE_TOKEN = {}
 START_TEXT = {}
 START_PHOTO = {}
@@ -605,8 +604,23 @@ async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="start")])
 
+        premium_user = await db.get_premium_user(user_id)
+        if premium_user:
+            expiry_time = premium_user.get("expiry_time")
+            plan_type = premium_user.get("plan_type", "normal")
+            if expiry_time and expiry_time > datetime.utcnow():
+                premium_status = "Active ✅"
+                expiry_str = expiry_time.strftime("%d %b %Y %H:%M UTC")
+            else:
+                premium_status = "Inactive ❌"
+                expiry_str = "N/A"
+        else:
+            premium_status = "Inactive ❌"
+            plan_type = "free"
+            expiry_str = "N/A"
+
         await safe_action(message.edit_text,
-            script.MANAGEC_TXT,
+            script.MANAGEC_TXT.format(username=f"@{message.from_user.username}", premium_status=premium_status, plan_type=plan_type.title(), expiry=expiry_str),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
 
@@ -3222,7 +3236,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await safe_action(query.answer)
 
-            upi_id = "krishraj237@fam"
+            upi_id = "Krrishmehta@airtel"
             upi_name = "KM File Store Bot"
             qr_image = generate_upi_qr(upi_id, upi_name, price)
 
@@ -3265,33 +3279,52 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-            payments = await fetch_fampay_payments()
+            recent_payments = await fetch_payments()
+            now = datetime.utcnow()
 
             matched_payment = None
-            for txn in payments:
-                if txn["amount"] == amount_expected:
+            for txn in recent_payments:
+                if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                     matched_payment = txn
                     break
 
             if matched_payment:
-                days=30
-                expiry_date = datetime.utcnow() + timedelta(days=days)
-                plan_type = feature_type.lower().split()[0]
-                await db.add_premium_user(user_id, days, plan_type)
                 await safe_action(query.message.edit_text,
-                    f"✅ Payment confirmed!\n"
-                    f"Feature: **{feature_type}**\n"
-                    f"Amount: ₹{amount_expected}\n"
-                    f"Transaction ID: `{matched_payment['txn_id']}`\n"
-                    "Your plan is now active.",
+                    f"✅ Payment detected for ₹{amount_expected}!\n\n"
+                    "Please reply with your **Transaction ID (Txn ID)** to confirm your payment.",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
+
+                reply = await client.listen.Message(filters.user(user_id), timeout=120)
+                txn_id = reply.text.strip()
+
+                if txn_id == matched_payment["txn_id"]:
+                    days = 30
+                    expiry_date = datetime.utcnow() + timedelta(days=days)
+                    plan_type = feature_type.lower().split()[0]
+                    await db.add_premium_user(user_id, days, plan_type)
+
+                    await safe_action(query.message.edit_text,
+                        f"✅ Payment confirmed!\n"
+                        f"Feature: **{feature_type}**\n"
+                        f"💰 Amount: ₹{amount_expected}\n"
+                        f"🧾 Txn ID: `{matched_payment['txn_id']}`\n"
+                        f"📅 Plan Validity: {days} days\n\n"
+                        f"🎉 Premium activated successfully!",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+                else:
+                    await safe_action(query.message.edit_text,
+                        f"❌ Invalid Txn ID.\n"
+                        f"Expected: `{matched_payment['txn_id']}`\n"
+                        f"Entered: `{txn_id}`\n\n"
+                        "Please try again or contact admin.",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
             else:
                 await safe_action(query.message.edit_text,
-                    f"❌ No payment received for **{feature_type}**.\n\n"
-                    f"💰 Expected Amount: ₹{amount_expected}\n"
-                    f"⚠️ We couldn’t find any matching UPI transaction.\n\n"
-                    f"📩 If you already paid, please contact the admin for help.",
+                    f"❌ No new payment found for ₹{amount_expected}.\n\n"
+                    "Make sure your transaction is completed and try again after 1 minute.",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
 
@@ -3323,7 +3356,6 @@ async def message_capture(client: Client, message: Message):
             user_id = message.from_user.id if message.from_user else None
 
             if not (
-                user_id in PREMIUM_STATE
                 or user_id in CLONE_TOKEN
                 or user_id in START_TEXT
                 or user_id in START_PHOTO
