@@ -61,6 +61,10 @@ Once set up, you can store your files using the commands below and access them v
 
     MANAGEC_TXT = """<u>**✨ MANAGE CLONE**</u>
 
+🖍️ Username: {username}
+💎 Premium Status: {premium_status} ({plan_type})
+⏰ Premium Expiry: {expiry}
+
 Manage and create your very own clone bot, identical to me, with all the same awesome features.  
 
 Use the buttons below to get started."""
@@ -79,8 +83,6 @@ Then I’ll create a clone bot for you 😌"""
     CUSTOMIZEC_TXT = """<u>**✨ CUSTOMIZE CLONE**</u>
 
 🖍️ Username: {username}
-💎 Premium Status: {premium_status} ({plan_type})
-⏰ Premium Expiry: {expiry}
 
 Modify and customize your clone bot from here."""
 
