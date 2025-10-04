@@ -214,6 +214,8 @@ async def start():
     bot_info = await StreamBot.get_me()
     StreamBot.username = bot_info.username
 
+    self.uptime = get_indian_time()
+
     await set_auto_menu(StreamBot)
 
     await assistant.start()
