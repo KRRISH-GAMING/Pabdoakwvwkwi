@@ -3803,7 +3803,7 @@ async def message_capture(client: Client, message: Message):
             if message.chat.id in [-1003178595762]:
 
                 text = message.text or ""
-                if ["Sender", "Amount", "Txn ID", ] not in text:
+                if ["Sender", "Amount", "Txn ID"] not in text:
                     return
 
                 amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
