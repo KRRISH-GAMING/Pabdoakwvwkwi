@@ -600,7 +600,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 await safe_action(clone_client.send_photo,
                     chat_id=target_channel,
-                    photo=fresh.get("ap_image", None) or random.choice(list_image),
+                    photo=fresh.get("ap_image", None) or random.choice(script.list_image),
                     caption=text,
                     parse_mode=enums.ParseMode.HTML
                 )
