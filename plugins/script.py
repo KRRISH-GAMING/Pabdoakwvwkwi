@@ -61,7 +61,6 @@ Once set up, you can store your files using the commands below and access them v
 
     MANAGEC_TXT = """<u>**✨ MANAGE CLONE**</u>
 
-🖍️ Username: {username}
 💎 Premium Status: {premium_status} ({plan_type})
 ⏰ Premium Expiry: {expiry}
 
