@@ -598,10 +598,9 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if footer:
                     text += f"\n\n<blockquote>{footer}</blockquote>"
 
-                
                 await safe_action(clone_client.send_photo,
                     chat_id=target_channel,
-                    photo=fresh.get("ap_image", None) or "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
+                    photo=fresh.get("ap_image", None) or random.choice(list_image),
                     caption=text,
                     parse_mode=enums.ParseMode.HTML
                 )
