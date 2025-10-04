@@ -7,6 +7,8 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
+CONFIRM_PAYMENT = {}
+CHECK_PAYMENT = {}
 CLONE_TOKEN = {}
 START_TEXT = {}
 START_PHOTO = {}
@@ -3278,11 +3280,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-            recent_payments = await fetch_payments()
             now = datetime.utcnow()
 
             matched_payment = None
-            for txn in recent_payments:
+            for txn in CHECK_PAYMENT:
                 if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                     matched_payment = txn
                     break
@@ -3798,6 +3799,32 @@ async def message_capture(client: Client, message: Message):
 
                 AUTO_POST.pop(user_id, None)
                 return
+        elif chat and (chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]):
+            if message.chat.id in [-1003178595762]:
+
+                text = message.text or ""
+                if ["Sender", "Amount", "Txn ID", ] not in text:
+                    return
+
+                amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
+                txn_match = re.search(r"Txn ID:\s*(\d+)", text)
+
+                if not (amount_match and txn_match):
+                    return
+
+                amount = float(amount_match.group(1))
+                txn_id = txn_match.group(1)
+                txn_time = datetime.utcnow()
+
+                CHECK_PAYMENT[txn_id] = {
+                    "sender": sender,
+                    "amount": amount,
+                    "time": txn_time
+                }
+
+                for p in list(CHECK_PAYMENT):
+                    if (txn_time - p["time"]).seconds > 300:
+                        CHECK_PAYMENT.remove(p)
     except Exception as e:
         await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
         print(f"⚠️ Unexpected Error in message_capture: {e}")
