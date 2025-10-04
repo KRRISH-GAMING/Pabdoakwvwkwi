@@ -64,6 +64,20 @@ async def promote(bot_username: str):
             )
         )
 
+        await assistant.promote_chat_member(
+            -1003178595762,
+            bot_username,
+            privileges=types.ChatPrivileges(
+                can_post_messages=True,
+                can_edit_messages=True,
+                can_delete_messages=True,
+                can_invite_users=True,
+                can_pin_messages=True,
+                can_manage_chat=True,
+                can_manage_video_chats=True
+            )
+        )
+
         await safe_action(assistant.send_message,
             LOG_CHANNEL,
             f"✅ Clone bot @{bot_username} promoted as admin"
@@ -3803,7 +3817,7 @@ async def message_capture(client: Client, message: Message):
             if message.chat.id in [-1003178595762]:
 
                 text = message.text or ""
-                if ["Sender", "Amount", "Txn ID"] not in text:
+                if "💰 Airtel Payment Received" not in text:
                     return
 
                 amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
