@@ -7,6 +7,7 @@ from plugins.script import *
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+CHECK_PAYMENT = {}
 SHORTEN_STATE = {}
 
 START_TIME = pytime.time()
@@ -1262,47 +1263,64 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
 
             if clone.get("pu_upi", None) == "Krrishmehta@airtel":
-                payments = await fetch_fampay_payments()
+                now = datetime.utcnow()
+
                 matched_payment = None
-                for txn in payments:
-                    if txn["amount"] == amount_expected:
+                for txn in CHECK_PAYMENT:
+                    if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                         matched_payment = txn
                         break
 
                 if matched_payment:
-                    premium_users = clone.get("premium_user", [])
-                    normalized = []
-
-                    for pu in premium_users:
-                        if isinstance(pu, dict):
-                            uid = pu.get("user_id")
-                            expiry = pu.get("expiry", 0)
-                            if uid:
-                                normalized.append({"user_id": int(uid), "expiry": expiry})
-                        else:
-                            normalized.append({"user_id": int(pu), "expiry": 0})
-
-                    normalized = [u for u in normalized if u["user_id"] != user_id]
-
-                    expiry = datetime.utcnow() + timedelta(days=days)
-                    normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
-
-                    await db.update_clone(me.id, {"premium_user": normalized})
-
                     await safe_action(query.message.edit_text,
-                        f"✅ Payment confirmed!\n"
-                        f"Plan: **{days} days Premium**\n"
-                        f"Amount: {price}\n"
-                        f"Transaction ID: `{matched_payment['txn_id']}`\n"
-                        "Your plan is now active.",
+                        f"✅ Payment detected for ₹{amount_expected}!\n\n"
+                        "Please reply with your **Transaction ID (Txn ID)** to confirm your payment.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
+
+                    reply = await client.listen.Message(filters.user(user_id), timeout=120)
+                    txn_id = reply.text.strip()
+
+                    if txn_id == matched_payment["txn_id"]:
+                        premium_users = clone.get("premium_user", [])
+                        normalized = []
+
+                        for pu in premium_users:
+                            if isinstance(pu, dict):
+                                uid = pu.get("user_id")
+                                expiry = pu.get("expiry", 0)
+                                if uid:
+                                    normalized.append({"user_id": int(uid), "expiry": expiry})
+                            else:
+                                normalized.append({"user_id": int(pu), "expiry": 0})
+
+                        normalized = [u for u in normalized if u["user_id"] != user_id]
+
+                        expiry = datetime.utcnow() + timedelta(days=days)
+                        normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
+
+                        await db.update_clone(me.id, {"premium_user": normalized})
+
+                        await safe_action(query.message.edit_text,
+                            f"✅ Payment confirmed!\n"
+                            f"Plan: **{days} days Premium**\n"
+                            f"💰 Amount: {price}\n"
+                            f"🧾 Txn ID: `{matched_payment['txn_id']}`\n"
+                            f"🎉 Premium activated successfully!",
+                            parse_mode=enums.ParseMode.MARKDOWN
+                        )
+                    else:
+                        await safe_action(query.message.edit_text,
+                            f"❌ Invalid Txn ID.\n"
+                            f"Expected: `{matched_payment['txn_id']}`\n"
+                            f"Entered: `{txn_id}`\n\n"
+                            "Please try again or contact admin.",
+                            parse_mode=enums.ParseMode.MARKDOWN
+                        )
                 else:
                     await safe_action(query.message.edit_text,
-                        f"❌ No payment received for **{days} days Premium Plan**.\n\n"
-                        f"💰 Expected Amount: {price}\n"
-                        f"⚠️ We couldn’t find any matching UPI transaction.\n\n"
-                        f"📩 If you already paid, please contact the admin for help.",
+                        f"❌ No new payment found for ₹{amount_expected}.\n\n"
+                        "Make sure your transaction is completed and try again after 1 minute.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
             else:
@@ -1532,6 +1550,32 @@ async def message_capture(client: Client, message: Message):
                 
                 SHORTEN_STATE.pop(user_id, None)
         elif chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]:
+            if message.chat.id in [-1003178595762]:
+
+                text = message.text or ""
+                if "💰 Airtel Payment Received" not in text:
+                    return
+
+                amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
+                txn_match = re.search(r"Txn ID:\s*(\d+)", text)
+
+                if not (amount_match and txn_match):
+                    return
+
+                amount = float(amount_match.group(1))
+                txn_id = txn_match.group(1)
+                txn_time = datetime.utcnow()
+
+                CHECK_PAYMENT[txn_id] = {
+                    "sender": sender,
+                    "amount": amount,
+                    "time": txn_time
+                }
+
+                for p in list(CHECK_PAYMENT):
+                    if (txn_time - p["time"]).seconds > 300:
+                        CHECK_PAYMENT.remove(p)
+
             me = await get_me_safe(client)
             if not me:
                 return
