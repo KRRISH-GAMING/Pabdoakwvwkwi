@@ -10,7 +10,6 @@ class Database:
         self.col = self.db.users
         self.premium = self.db.premium_users
         self.bot = self.db.clone_bots
-        self.settings = self.db.bot_settings
         self.media = self.db.media_files
         self.batches = self.db.batches
         self.scheduled_deletes = self.db.scheduled_deletes
@@ -36,7 +35,7 @@ class Database:
     async def delete_user(self, user_id):
         await self.col.delete_many({'id': int(user_id)})
 
-    # ---------------- PREMIUM USERS ----------------
+    # ---------------- PREMIUM ----------------
     async def add_premium_user(self, user_id: int, days: int, plan_type: str = "normal"):
         expiry_time = datetime.utcnow() + timedelta(days=days)
         await self.premium.update_one(
@@ -174,6 +173,10 @@ class Database:
     async def get_banned_users(self, bot_id):
         clone = await self.bot.find_one({'bot_id': int(bot_id)})
         return clone.get("banned_users", []) if clone else []
+
+    async def is_user_banned(self, bot_id: int, user_id: int) -> bool:
+        data = await self.bot.find_one({"bot_id": int(bot_id), "banned_users": int(user_id)}, {"_id": 1})
+        return bool(data)
 
     # ---------------- MEDIA ----------------
     async def add_media(self, bot_id: int, file_id: str, caption: str, media_type: str, date):
@@ -314,6 +317,7 @@ class CloneDatabase:
         self._client = motor.motor_asyncio.AsyncIOMotorClient(uri)
         self.db = self._client[database_name]
 
+    # ---------------- USERS ----------------
     async def add_user(self, bot_id, user_id):
         user = {'user_id': int(user_id)}
         await self.db[str(bot_id)].insert_one(user)
@@ -332,6 +336,7 @@ class CloneDatabase:
         count = await self.db[str(bot_id)].count_documents({})
         return count
 
+    # ---------------- SETTING ----------------
     async def get_user(self, user_id):
         user_id = int(user_id)
         user = await self.db.users.find_one({"user_id": user_id})

@@ -35,12 +35,15 @@ If your channel or group is private, please make me an admin first.
 Once set up, you can store your files using the commands below and access them via shareable links.
 
 📚 Available Commands:
-🔻 /start - Check if I am alive.  
-🔻 /help - View help menu.  
-🔻 /genlink - Store a single message or file.  
-🔻 /batch - Store multiple messages from a channel.  
-🔻 /broadcast - Broadcast a message to all users.  
-🔻 /stats - View bot statistics.  
+🔻 /start - Check if I am alive.
+🔻 /help - View help menu.
+🔻 /genlink - Store a single message or file.
+🔻 /batch - Store multiple messages from a channel.
+🔻 /broadcast - Broadcast a message to all users.
+🔻 /ban - Ban a user.
+🔻 /unban - Unban a user.
+🔻 /list_ban - Show all ban users.
+🔻 /stats - View bot statistics.
 🔻 /contact - Message the admin."""
 
     ABOUT_TXT = """<u>**✨ ABOUT ME**</u>
