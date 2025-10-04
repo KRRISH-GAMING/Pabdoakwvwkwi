@@ -3356,7 +3356,7 @@ async def message_capture(client: Client, message: Message):
             user_id = message.from_user.id if message.from_user else None
 
             if not (
-                or user_id in CLONE_TOKEN
+                user_id in CLONE_TOKEN
                 or user_id in START_TEXT
                 or user_id in START_PHOTO
                 or user_id in CAPTION_TEXT
