@@ -88,25 +88,6 @@ def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     bio.seek(0)
     return bio
 
-async def fetch_payments():
-    payments = []
-    async for msg in client.get_chat_history(chat_id=-1003178595762, limit=10):
-        print(msg.text)
-        if ["💰 Airtel Payment Received"] in msg.text:
-            text = msg.text
-            amount = float(text.split("₹")[1].split("\n")[0].strip())
-            txn_id = text.split("Txn ID:")[1].strip()
-            txn_time = datetime.utcnow()
-            payments.append({
-                "amount": amount,
-                "txn_id": txn_id,
-                "time": txn_time
-            })
-            for p in list(payments):
-                if (txn_time - p["time"]).seconds > 300:
-                    payments.remove(p)
-    return payments
-
 async def fetch_fampay_payments():
     try:
         IMAP_HOST = "imap.gmail.com"
