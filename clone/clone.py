@@ -500,42 +500,6 @@ async def help(client, message):
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
 
-from diffusers import StableDiffusionPipeline
-import torch, random
-
-# Hugging Face setup
-HF_MODEL = "runwayml/stable-diffusion-v1-5"
-HF_TOKEN = "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"
-
-# Load Stable Diffusion model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-pipe = StableDiffusionPipeline.from_pretrained(
-    HF_MODEL,
-    use_auth_token=HF_TOKEN,
-    torch_dtype=torch.float16 if device == "cuda" else torch.float32
-)
-pipe = pipe.to(device)
-
-# Random prompt generator
-tops = ["crop top", "tank top", "sports bra", "t-shirt", "hoodie"]
-bottoms = ["jeans", "shorts", "leggings", "skirt", "sweatpants"]
-styles = ["mirror selfie", "indoor photo", "casual streetwear photo", "bedroom selfie", "fitting room photo"]
-
-def random_prompt():
-    return f"A realistic {random.choice(styles)} of a young woman wearing a {random.choice(tops)} with {random.choice(bottoms)}, natural photography, high quality"
-
-# Telegram command
-@Client.on_message(filters.command("gen"))
-async def gen_img(client, message):
-    query = random_prompt()
-    await message.reply_text(f"✨ Generating: {query}")
-    
-    # Generate image
-    image = pipe(query).images[0]
-    image.save("gen.png")
-
-    await message.reply_photo("gen.png", caption=f"✨ Generated image for: **{query}**")
-
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
         clone = await db.get_clone(bot_id)
