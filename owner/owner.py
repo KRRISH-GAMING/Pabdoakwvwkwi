@@ -467,7 +467,7 @@ async def stats(client, message):
         users_count = await db.total_users_count()
 
         now = datetime.now()
-        delta = now - bot.uptime
+        delta = now - client.uptime
         time = get_readable_time(delta.seconds)
 
         await safe_action(message.reply,
@@ -3102,7 +3102,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 banned_users = len(clone.get("banned_users", []))
 
                 now = datetime.now()
-                delta = now - bot.uptime
+                delta = now - client.uptime
                 time = get_readable_time(delta.seconds)
 
                 await safe_action(query.answer,
