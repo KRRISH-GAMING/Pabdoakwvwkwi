@@ -1140,7 +1140,7 @@ async def stats(client, message):
         banned_users = len(clone.get("banned_users", []))
 
         now = datetime.now()
-        delta = now - bot.uptime
+        delta = now - client.uptime
         time = get_readable_time(delta.seconds)
 
         await safe_action(message.reply,
