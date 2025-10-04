@@ -163,20 +163,20 @@ async def restart_bots():
                 set_client(bot_me.id, xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-            """fresh = await db.get_clone(bot_me.id)
+            fresh = await db.get_clone(bot_me.id)
             if fresh and fresh.get("auto_post", False):
                 auto_post_channel = fresh.get("ap_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot_me.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")"""
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
         except Exception as e:
-            if "SESSION_REVOKED" in str(e):
-                print(f"⚠️ Token revoked for bot {bot_id}, removing from DB...")
+            if "SESSION_REVOKED" in str(e) or "ACCESS_TOKEN_EXPIRED" in str(e):
+                print(f"⚠️ Token expired or revoked for bot {bot_id}, removing from DB...")
                 await db.delete_clone_by_id(bot_id)
             else:
                 print(f"❌ Error restarting bot {bot_id}: {e}")
