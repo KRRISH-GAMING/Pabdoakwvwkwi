@@ -620,10 +620,9 @@ async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int
             expiry_str = "N/A"
 
         await safe_action(message.edit_text,
-            script.MANAGEC_TXT.format(username=f"@{message.from_user.username}", premium_status=premium_status, plan_type=plan_type.title(), expiry=expiry_str),
+            script.MANAGEC_TXT.format(premium_status=premium_status, plan_type=plan_type.title(), expiry=expiry_str),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
-
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
