@@ -90,7 +90,8 @@ def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
 
 async def fetch_payments():
     payments = []
-    async for msg in client.get_chat_history(-1003178595762, limit=10):
+    async for msg in client.get_chat_history(chat_id=-1003178595762, limit=10):
+        print(msg.text)
         if ["💰 Airtel Payment Received"] in msg.text:
             text = msg.text
             amount = float(text.split("₹")[1].split("\n")[0].strip())
