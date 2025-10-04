@@ -363,8 +363,8 @@ async def start(client, message):
                         for btn in buttons_data:
                             buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
 
-                        if buttons:
-                            if sent_msg and sent_msg.caption is not None:
+                        if sent_msg and buttons:
+                            if sent_msg.caption is not None:
                                 await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
                             else:
                                 await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
@@ -500,33 +500,41 @@ async def help(client, message):
         print(f"⚠️ Clone Help Error: {e}")
         print(traceback.format_exc())
 
-"""API_KEY = "52545313-736b632f7ae2504eff62a7678"
-prompts = [
-    "indian model",
-    "indian actress",
-    "indian woman",
-    "desi actress",
-    "onlyfans model",
-    "onlyfans actress",
-    "onlyfans woman",
-    "hot model",
-    "sexy model",
-    "sexy actress",
-    "sexy woman",
-]
+from diffusers import StableDiffusionPipeline
+import torch, random
 
+# Hugging Face setup
+HF_MODEL = "runwayml/stable-diffusion-v1-5"
+HF_TOKEN = "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"
+
+# Load Stable Diffusion model
+device = "cuda" if torch.cuda.is_available() else "cpu"
+pipe = StableDiffusionPipeline.from_pretrained(
+    HF_MODEL,
+    use_auth_token=HF_TOKEN,
+    torch_dtype=torch.float16 if device == "cuda" else torch.float32
+)
+pipe = pipe.to(device)
+
+# Random prompt generator
+tops = ["crop top", "tank top", "sports bra", "t-shirt", "hoodie"]
+bottoms = ["jeans", "shorts", "leggings", "skirt", "sweatpants"]
+styles = ["mirror selfie", "indoor photo", "casual streetwear photo", "bedroom selfie", "fitting room photo"]
+
+def random_prompt():
+    return f"A realistic {random.choice(styles)} of a young woman wearing a {random.choice(tops)} with {random.choice(bottoms)}, natural photography, high quality"
+
+# Telegram command
 @Client.on_message(filters.command("gen"))
 async def gen_img(client, message):
-    query = random.choice(prompts)
-    response = requests.get(
-        f"https://pixabay.com/api/?key={API_KEY}&q={query.replace(' ', '+')}&image_type=photo"
-    ).json()
+    query = random_prompt()
+    await message.reply_text(f"✨ Generating: {query}")
     
-    if response["hits"]:
-        image = random.choice(response["hits"])["webformatURL"]
-        await message.reply_photo(photo=image, caption=f"✨ Random image for: **{query}**")
-    else:
-        await message.reply_text(f"⚠️ No image found for: {query}")"""
+    # Generate image
+    image = pipe(query).images[0]
+    image.save("gen.png")
+
+    await message.reply_photo("gen.png", caption=f"✨ Generated image for: **{query}**")
 
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
@@ -1289,7 +1297,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-            if clone.get("pu_upi", None) == "krishraj237@fam":
+            if clone.get("pu_upi", None) == "Krrishmehta@airtel":
                 payments = await fetch_fampay_payments()
                 matched_payment = None
                 for txn in payments:
