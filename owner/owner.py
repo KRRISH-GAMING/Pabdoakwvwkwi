@@ -29,8 +29,6 @@ AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
-START_TIME = pytime.time()
-
 if SESSION_STRING and len(SESSION_STRING) > 30:
     assistant = Client(
         "assistant",
@@ -132,6 +130,9 @@ async def set_clone_menu(xd):
             BotCommand("batch", "Store multiple messages from a channel"),
             BotCommand("shortener", "Shorten any shareable links"),
             BotCommand("broadcast", "Broadcast a message to users"),
+            BotCommand("ban", "Ban a user"),
+            BotCommand("unban", "Unban a user"),
+            BotCommand("list_ban", "Show all ban users"),
             BotCommand("stats", "View bot statistics"),
             BotCommand("contact", "Message to admin"),
         ]
@@ -145,7 +146,7 @@ async def set_clone_menu(xd):
         print(f"⚠️ Clone Bot Menu Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("start") & filters.private & filters.incoming)
+@Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
         user_id=message.from_user.id
@@ -200,7 +201,7 @@ async def start(client, message):
         print(f"⚠️ Start Handler Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("help") & filters.private & filters.incoming)
+@Client.on_message(filters.command("help") & filters.private)
 async def help(client, message):
     try:
         await safe_action(message.reply_text, script.HELP_TXT)
@@ -212,7 +213,7 @@ async def help(client, message):
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("add_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
+@Client.on_message(filters.command("add_premium") & filters.user(ADMINS) & filters.private)
 async def add_premium(client: Client, message: Message):
     try:
         ask_id = await safe_action(client.ask,
@@ -255,7 +256,7 @@ async def add_premium(client: Client, message: Message):
         print(f"⚠️ Add Premium Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("remove_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
+@Client.on_message(filters.command("remove_premium") & filters.user(ADMINS) & filters.private)
 async def remove_premium(client: Client, message: Message):
     try:
         ask_id = await safe_action(client.ask,
@@ -279,7 +280,7 @@ async def remove_premium(client: Client, message: Message):
         print(f"⚠️ Remove Premium Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("list_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
+@Client.on_message(filters.command("list_premium") & filters.user(ADMINS) & filters.private)
 async def list_premium(client: Client, message: Message):
     try:
         users = await db.list_premium_users()
@@ -321,7 +322,7 @@ async def list_premium(client: Client, message: Message):
         print(f"⚠️ List Premium Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("check_premium") & filters.user(ADMINS) & filters.private & filters.incoming)
+@Client.on_message(filters.command("check_premium") & filters.user(ADMINS) & filters.private)
 async def check_premium(client: Client, message: Message):
     try:
         if len(message.command) < 2:
@@ -459,18 +460,20 @@ async def broadcast(client, message):
         print(f"⚠️ Broadcast Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("stats") & filters.user(ADMINS) & filters.private & filters.incoming)
+@Client.on_message(filters.command("stats") & filters.user(ADMINS) & filters.private)
 async def stats(client, message):
     try:
         username = client.me.username
         users_count = await db.total_users_count()
 
-        uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
+        now = datetime.now()
+        delta = now - bot.uptime
+        time = get_readable_time(delta.seconds)
 
         await safe_action(message.reply,
             f"📊 Status for @{username}\n\n"
             f"👤 Users: {users_count}\n"
-            f"⏱ Uptime: {uptime}\n",
+            f"⏱ Uptime: {time}\n",
         )
     except Exception as e:
         await safe_action(client.send_message,
@@ -499,7 +502,7 @@ async def restart(client, message):
             f"❌ Failed to restart the server.\n\nError: {e}"
         )
 
-@Client.on_message(filters.command("contact") & filters.private & filters.incoming)
+@Client.on_message(filters.command("contact") & filters.private)
 async def contact(client, message):
     try:
         if message.reply_to_message:
@@ -718,10 +721,16 @@ async def show_button_menu(client, message, bot_id):
             url = btn.get("url", "").strip()
             name = btn.get("name", "Unnamed")
 
-            buttons.append(
-                [InlineKeyboardButton(name, url=url),
-                  InlineKeyboardButton("❌", callback_data=f"remove_button_{i}_{bot_id}")]
-            )
+            if url:
+                buttons.append(
+                    [InlineKeyboardButton(name, url=url),
+                      InlineKeyboardButton("❌", callback_data=f"remove_button_{i}_{bot_id}")]
+                )
+            else:
+                buttons.append(
+                    [InlineKeyboardButton(name, url=url),
+                      InlineKeyboardButton("❌", callback_data=f"noop")]
+                )
 
         is_premium_user = await db.is_premium(owner_id)
 
@@ -3092,13 +3101,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 users = await clonedb.total_users_count(bot_id)
                 banned_users = len(clone.get("banned_users", []))
 
-                uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
+                now = datetime.now()
+                delta = now - bot.uptime
+                time = get_readable_time(delta.seconds)
 
                 await safe_action(query.answer,
                     f"📊 Status for @{clone.get('username')}\n\n"
                     f"👤 Users: {users}\n"
                     f"🚫 Banned: {banned_users}\n"
-                    f"⏱ Uptime: {uptime}\n",
+                    f"⏱ Uptime: {time}\n",
                     show_alert=True
                 )
 
@@ -3831,8 +3842,8 @@ async def message_capture(client: Client, message: Message):
                 txn_time = datetime.utcnow()
 
                 CHECK_PAYMENT[txn_id] = {
-                    "sender": sender,
                     "amount": amount,
+                    "txn_id": txn_id,
                     "time": txn_time
                 }
 
