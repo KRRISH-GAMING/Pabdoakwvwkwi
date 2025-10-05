@@ -29,6 +29,8 @@ AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
+START_TIME = pytime.time()
+
 if SESSION_STRING and len(SESSION_STRING) > 30:
     assistant = Client(
         "assistant",
@@ -466,14 +468,12 @@ async def stats(client, message):
         username = client.me.username
         users_count = await db.total_users_count()
 
-        now = datetime.now()
-        delta = now - client.uptime
-        time = get_readable_timex(delta.seconds)
+        uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{username}\n\n"
             f"👤 Users: {users_count}\n"
-            f"⏱ Uptime: {time}\n",
+            f"⏱ Uptime: {uptime}\n",
         )
     except Exception as e:
         await safe_action(client.send_message,
@@ -3101,15 +3101,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 users = await clonedb.total_users_count(bot_id)
                 banned_users = len(clone.get("banned_users", []))
 
-                now = datetime.now()
-                delta = now - client.uptime
-                time = get_readable_timex(delta.seconds)
+                uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
                 await safe_action(query.answer,
                     f"📊 Status for @{clone.get('username')}\n\n"
                     f"👤 Users: {users}\n"
                     f"🚫 Banned: {banned_users}\n"
-                    f"⏱ Uptime: {time}\n",
+                    f"⏱ Uptime: {uptime}\n",
                     show_alert=True
                 )
 
