@@ -432,8 +432,6 @@ This controls how long the bot waits before sending another auto post to users."
         "https://i.ibb.co/qY5J9R1S/IMG-20251004-203935-785.jpg",
         "https://i.ibb.co/G4QKv9Vb/IMG-20251004-203937-218.jpg",
         "https://i.ibb.co/xSktNqbj/IMG-20251004-203939-172.jpg",
-        "https://i.ibb.co/GSWm1vT/IMG-20251004-203941-380.jpg",
-        "https://i.ibb.co/hRmw7TdJ/IMG-20251004-203939-893.jpg"
         "https://i.ibb.co/99Zn9Pzs/IMG-20251004-203930-104.jpg",
         "https://i.ibb.co/KjFyh87H/IMG-20251004-203928-542.jpg",
         "https://i.ibb.co/YTZhfdLD/IMG-20251004-203915-408.jpg",
@@ -453,6 +451,17 @@ This controls how long the bot waits before sending another auto post to users."
         "https://i..ibb.co/DHGc5Dz0/IMG-20251004-203842-547.jpg",
         "https://i..ibb.co/Rp3Zy7mq/IMG-20251004-203840-118.jpg",
         "https://i..ibb.co/tTNk7S0X/IMG-20251004-203838-470.jpg",
+        "https://i.ibb.co/fV5HKnWy/IMG-20251004-203836-534.jpg",
+        "https://i.ibb.co/GfGWS5jd/IMG-20251004-203835-039.jpg",
+        "https://i.ibb.co/yBNhCShB/IMG-20251004-203832-704.jpg",
+        "https://i.ibb.co/bgSd4Q0w/IMG-20251004-203830-892.jpg",
+        "https://i.ibb.co/9mFmVcKX/IMG-20251004-203827-202.jpg",
+        "https://i.ibb.co/73bJccx/IMG-20251004-203825-140.jpg",
+        "https://i.ibb.co/t6SBYFD/IMG-20251004-203823-445.jpg",
+        "https://i.ibb.co/WWYNycMq/IMG-20251004-203821-384.jpg",
+        "https://i.ibb.co/Mktp8wzY/IMG-20251004-203819-497.jpg",
+        "https://i.ibb.co/ynx0H6Mt/IMG-20251004-203817-878.jpg",
+        "https://i.ibb.co/7Jsh9xLm/IMG-20251004-203815-543.jpg",
     ]
 
     PREMIUM_TXT = """<u>**✨ PREMIUM USERS**</u>

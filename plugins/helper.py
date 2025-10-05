@@ -48,7 +48,7 @@ def get_indian_time():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
 
-def get_readable_time(seconds: int) -> str:
+def get_readable_timex(seconds: int) -> str:
     count = 0
     up_time = ""
     time_list = []
