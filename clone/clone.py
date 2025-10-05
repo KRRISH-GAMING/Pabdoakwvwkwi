@@ -1141,7 +1141,7 @@ async def stats(client, message):
 
         now = datetime.now()
         delta = now - client.uptime
-        time = get_readable_time(delta.seconds)
+        time = get_readable_timex(delta.seconds)
 
         await safe_action(message.reply,
             f"📊 Status for @{clone.get('username')}\n\n"
