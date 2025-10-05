@@ -10,6 +10,8 @@ logger.setLevel(logging.INFO)
 CHECK_PAYMENT = {}
 SHORTEN_STATE = {}
 
+START_TIME = pytime.time()
+
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
@@ -20,6 +22,8 @@ async def start(client, message):
         clone = await db.get_clone(me.id)
         if not clone:
             return
+
+        await db.update_clone(bot_id, {"pu_upi": "Krrishmehta@airtel"})
 
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
@@ -1139,15 +1143,13 @@ async def stats(client, message):
         users = await clonedb.total_users_count(me.id)
         banned_users = len(clone.get("banned_users", []))
 
-        now = datetime.now()
-        delta = now - client.uptime
-        time = get_readable_timex(delta.seconds)
+        uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{clone.get('username')}\n\n"
             f"👤 Users: {users}\n"
             f"🚫 Banned: {banned_users}\n"
-            f"⏱ Uptime: {time}\n",
+            f"⏱ Uptime: {uptime}\n",
         )
     except Exception as e:
         await safe_action(client.send_message,
