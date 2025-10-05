@@ -468,7 +468,7 @@ async def stats(client, message):
         username = client.me.username
         users_count = await db.total_users_count()
 
-        uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
+        uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{username}\n\n"
@@ -3101,7 +3101,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 users = await clonedb.total_users_count(bot_id)
                 banned_users = len(clone.get("banned_users", []))
 
-                uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
+                uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
 
                 await safe_action(query.answer,
                     f"📊 Status for @{clone.get('username')}\n\n"
