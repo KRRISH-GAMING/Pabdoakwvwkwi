@@ -165,14 +165,14 @@ async def restart_bots():
                 set_client(bot_me.id, xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-            """fresh = await db.get_clone(bot_me.id)
+            fresh = await db.get_clone(bot_me.id)
             if fresh and fresh.get("auto_post", False):
                 auto_post_channel = fresh.get("ap_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot_me.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")"""
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
@@ -215,6 +215,7 @@ async def start():
     await StreamBot.start()
     bot_info = await StreamBot.get_me()
     StreamBot.username = bot_info.username
+    StreamBot.uptime = get_indian_time()
 
     await set_auto_menu(StreamBot)
 
