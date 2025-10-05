@@ -23,8 +23,6 @@ async def start(client, message):
         if not clone:
             return
 
-        await db.update_clone(me.id, {"ap_sleep": "1h"})
-
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("start_text", script.START_TXT) 
@@ -1143,7 +1141,7 @@ async def stats(client, message):
         users = await clonedb.total_users_count(me.id)
         banned_users = len(clone.get("banned_users", []))
 
-        uptime = str(timedelta(seconds=int(time.time() - START_TIME)))
+        uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
 
         await safe_action(message.reply,
             f"📊 Status for @{clone.get('username')}\n\n"
