@@ -151,6 +151,10 @@ async def set_clone_menu(xd):
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
+        me = await get_me_safe(client)
+        if not me:
+            return
+
         user_id=message.from_user.id
         first_name=message.from_user.first_name
         last_name=message.from_user.last_name
@@ -192,7 +196,7 @@ async def start(client, message):
                 [InlineKeyboardButton('🔒 Close', callback_data='close')]
             ]
             return await safe_action(message.reply_text,
-                script.START_TXT.format(user=message.from_user.mention, bot=client.me.mention),
+                script.START_TXT.format(user=message.from_user.mention, bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
     except Exception as e:
@@ -465,7 +469,11 @@ async def broadcast(client, message):
 @Client.on_message(filters.command("stats") & filters.user(ADMINS) & filters.private)
 async def stats(client, message):
     try:
-        username = client.me.username
+        me = await get_me_safe(client)
+        if not me:
+            return
+
+        username = me.username
         users_count = await db.total_users_count()
 
         uptime = str(timedelta(seconds=int(pytime.time() - START_TIME)))
@@ -1370,7 +1378,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if pytime.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
-                await safe_action(message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
+                await safe_action(query.message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
 
             active = clone.get("active", True)
 
