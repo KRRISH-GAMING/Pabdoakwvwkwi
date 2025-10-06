@@ -220,7 +220,7 @@ async def help(client, message):
         print(traceback.format_exc())
 
 @Client.on_message(filters.command("add_premium") & filters.user(ADMINS) & filters.private)
-async def add_premium(client: Client, message: Message):
+async def add_premium(client, message):
     try:
         ask_id = await safe_action(client.ask,
             chat_id=message.chat.id,
@@ -263,7 +263,7 @@ async def add_premium(client: Client, message: Message):
         print(traceback.format_exc())
 
 @Client.on_message(filters.command("remove_premium") & filters.user(ADMINS) & filters.private)
-async def remove_premium(client: Client, message: Message):
+async def remove_premium(client, message):
     try:
         ask_id = await safe_action(client.ask,
             chat_id=message.chat.id,
@@ -287,7 +287,7 @@ async def remove_premium(client: Client, message: Message):
         print(traceback.format_exc())
 
 @Client.on_message(filters.command("list_premium") & filters.user(ADMINS) & filters.private)
-async def list_premium(client: Client, message: Message):
+async def list_premium(client, message):
     try:
         users = await db.list_premium_users()
         if not users:
@@ -329,7 +329,7 @@ async def list_premium(client: Client, message: Message):
         print(traceback.format_exc())
 
 @Client.on_message(filters.command("check_premium") & filters.user(ADMINS) & filters.private)
-async def check_premium(client: Client, message: Message):
+async def check_premium(client, message):
     try:
         if len(message.command) < 2:
             return await safe_action(message.reply_text, "❌ Usage: /check_premium <user_id>")
@@ -343,7 +343,7 @@ async def check_premium(client: Client, message: Message):
         plan = user.get("plan_type", "normal").title()
         expiry = user.get("expiry_time")
 
-        if expiry and expiry > datetime.utcnow():ghh
+        if expiry and expiry > datetime.utcnow():
             remaining = expiry - datetime.utcnow()
             days_left = remaining.days
             exp_str = expiry.strftime("%Y-%m-%d %H:%M")
@@ -3380,7 +3380,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         await safe_action(query.answer, "❌ An error occurred. The admin has been notified.", show_alert=True)
 
 @Client.on_message(filters.all)
-async def message_capture(client: Client, message: Message):
+async def message_capture(client, message):
     try:
         chat = message.chat
         if chat and (chat.type == enums.ChatType.PRIVATE):
