@@ -3,7 +3,7 @@ from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
 from plugins.script import *
-from clone.clone import *
+from clone.command import *
 
 logger = logging.getLogger(__name__)
 
