@@ -17,8 +17,6 @@ StartTime = datetime.utcnow()
 __version__ = 1.5
 routes = web.RouteTableDef()
 
-uptime = None
-
 class StreamXBot(Client):
     async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
         async for message in self.get_chat_history(chat_id, limit=limit):
