@@ -600,19 +600,16 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if footer:
                     text += f"\n\n<blockquote>{footer}</blockquote>"
 
-                if "ap_index" not in fresh:
-                    fresh["ap_index"] = 0
+                shuffled_images = script.list_image.copy()
+                random.shuffle(shuffled_images)
 
-                image_to_send = fresh.get("ap_image") or script.list_image[fresh["ap_index"]]
-
-                await safe_action(clone_client.send_photo,
-                    chat_id=target_channel,
-                    photo=image_to_send,
-                    caption=text,
-                    parse_mode=enums.ParseMode.HTML
-                )
-
-                fresh["ap_index"] = (fresh["ap_index"] + 1) % len(script.list_image)
+                for image in shuffled_images:
+                    await safe_action(clone_client.send_photo,
+                        chat_id=target_channel,
+                        photo=image,
+                        caption=text,
+                        parse_mode=enums.ParseMode.HTML
+                    )
 
                 if mode == "single":
                     await db.mark_media_posted(bot_id, item["_id"])
