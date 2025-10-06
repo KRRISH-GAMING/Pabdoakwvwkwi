@@ -602,14 +602,14 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 shuffled_images = script.list_image.copy()
                 random.shuffle(shuffled_images)
+                image_to_send = shuffled_images[0]
 
-                for image in shuffled_images:
-                    await safe_action(clone_client.send_photo,
-                        chat_id=target_channel,
-                        photo=image,
-                        caption=text,
-                        parse_mode=enums.ParseMode.HTML
-                    )
+                await safe_action(clone_client.send_photo,
+                    chat_id=target_channel,
+                    photo=fresh.get("ap_image", None) or image_to_send,
+                    caption=text,
+                    parse_mode=enums.ParseMode.HTML
+                )
 
                 if mode == "single":
                     await db.mark_media_posted(bot_id, item["_id"])
