@@ -8,8 +8,6 @@ CLONE_ME = {}
 TOKENS = {}
 VERIFIED = {}
 
-START_TIME = pytime.time()
-
 def set_client(bot_id: int, client):
     _clone_clients[int(bot_id)] = client
 
@@ -176,6 +174,25 @@ async def fetch_fampay_payments():
         print(f"⚠️ IMAP Error: {e}")
         print(traceback.format_exc())
         return []
+
+async def broadcast_messagesx(user_id, message):
+    try:
+        await message.copy(chat_id=user_id)
+        return True, "Success"
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        return await broadcast_messages(user_id, message)
+    except InputUserDeactivated:
+        await db.delete_user(int(user_id))
+        return False, "Deleted"
+    except UserIsBlocked:
+        await db.delete_user(int(user_id))
+        return False, "Blocked"
+    except PeerIdInvalid:
+        await db.delete_user(int(user_id))
+        return False, "Error"
+    except Exception as e:
+        return False, f"Error: {str(e)}"
 
 def broadcast_progress_bar(done: int, total: int) -> str:
     try:
@@ -430,6 +447,43 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
     await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
 
     await db.delete_scheduled_deletes(message_ids)"""
+
+def batch_progress_bar(done, total, length=20):
+    if total == 0:
+        return "[░" * length + "] 0%"
+    
+    percent = int((done / total) * 100)
+    filled = int((done / total) * length)
+    empty = length - filled
+    bar = "▓" * filled + "░" * empty
+
+    percent_str = f"{percent}%"
+    bar_list = list(bar)
+    start_pos = max((length - len(percent_str)) // 2, 0)
+    for i, c in enumerate(percent_str):
+        if start_pos + i < length:
+            bar_list[start_pos + i] = c
+    return f"[{''.join(bar_list)}]"
+
+async def broadcast_messagesy(bot_id, user_id, message):
+    try:
+        await message.copy(chat_id=user_id)
+        return True, "Success"
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        return await broadcast_messages(bot_id, user_id, message)
+    except InputUserDeactivated:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Deleted"
+    except UserIsBlocked:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Blocked"
+    except PeerIdInvalid:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Error"
+    except Exception:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Error"
 
 async def get_short_link(user, link):
     base_site = user["base_site"]
