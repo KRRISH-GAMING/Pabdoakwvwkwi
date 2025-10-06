@@ -343,7 +343,7 @@ async def check_premium(client: Client, message: Message):
         plan = user.get("plan_type", "normal").title()
         expiry = user.get("expiry_time")
 
-        if expiry and expiry > datetime.utcnow():
+        if expiry and expiry > datetime.utcnow():ghh
             remaining = expiry - datetime.utcnow()
             days_left = remaining.days
             exp_str = expiry.strftime("%Y-%m-%d %H:%M")
