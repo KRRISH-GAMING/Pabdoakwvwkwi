@@ -1264,7 +1264,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             if pytime.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
-                await safe_action(message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
+                await safe_action(query.message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
 
             active = clone.get("active", True)
             activate_text = "✅ Activate" if active else "❌ Deactivated"
@@ -1285,7 +1285,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_{bot_id}')],
                 [InlineKeyboardButton('⬅️ Back', callback_data='clone')]
             ]
-            
+
             premium_user = await db.get_premium_user(user_id)
             if premium_user:
                 expiry_time = premium_user.get("expiry_time")
