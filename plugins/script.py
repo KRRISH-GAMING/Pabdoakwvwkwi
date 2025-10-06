@@ -1,12 +1,12 @@
 class script(object):
-    RESTART_TXT = """`**BOT RESTARTED !**`
+    RESTART_TXT = """**__BOT RESTARTED !__**
 
 📅 Date : <code>{}</code>
 ⏰ Time : <code>{}</code>
 🌐 Timezone : <code>Asia/Kolkata</code>
 🛠️ Build Status : <code>v2.7.1 [ Stable ]</code>"""
 
-    LOG_TEXT = """`**#NewUser**`
+    LOG_TEXT = """**__#NewUser__**
     
 Id - <code>{}</code>
 
@@ -24,7 +24,7 @@ Users can access stored messages using the shareable links I provide.
 
 To know more, click the **Help** button."""
 
-    HELP_TXT = """`**✨ HELP MENU**`
+    HELP_TXT = """**__✨ HELP MENU__**
 
 I am a permanent file store bot.  
 
@@ -46,7 +46,7 @@ Once set up, you can store your files using the commands below and access them v
 🔻 /stats - View bot statistics.
 🔻 /contact - Message the admin."""
 
-    ABOUT_TXT = """`**✨ ABOUT ME**`
+    ABOUT_TXT = """**__✨ ABOUT ME__**
 
 🤖 Name: {bot}  
 📝 Language: <a href=https://www.python.org>Python 3</a>  
@@ -55,14 +55,14 @@ Once set up, you can store your files using the commands below and access them v
 👥 Support Group: <a href=https://t.me/+8E9nKxs8Y-Y2OGRl>Support</a>  
 📢 Update Channel: <a href=https://t.me/+YczdaoCKP-AxMWFl>Updates</a>"""
 
-    CABOUT_TXT = """`**✨ ABOUT ME**`
+    CABOUT_TXT = """**__✨ ABOUT ME__**
 
 🤖 Name: {bot}  
 📝 Language: <a href=https://www.python.org>Python 3</a>  
 📚 Library: <a href=https://docs.pyrogram.org>Pyrogram</a>  
 🧑🏻‍💻 Developer: <a href=tg://user?id={developer}>Developer</a>"""
 
-    MANAGEC_TXT = """`**✨ MANAGE CLONE**`
+    MANAGEC_TXT = """**__✨ MANAGE CLONE__**
 
 💎 Premium Status: {premium_status} ({plan_type})
 ⏰ Premium Expiry: {expiry}
@@ -82,17 +82,17 @@ Use the buttons below to get started."""
 
 Then I’ll create a clone bot for you 😌"""
 
-    CUSTOMIZEC_TXT = """`**✨ CUSTOMIZE CLONE**`
+    CUSTOMIZEC_TXT = """**__✨ CUSTOMIZE CLONE__**
 
 🖍️ Username: {username}
 
 Modify and customize your clone bot from here."""
 
-    ST_MSG_TXT = """`**✨ START MESSAGE**`
+    ST_MSG_TXT = """**__✨ START MESSAGE__**
 
 Customize the start message of your clone bot using the options below."""
 
-    ST_TXT_TXT = """`**✨ START TEXT**`
+    ST_TXT_TXT = """**__✨ START TEXT__**
 
 Personalize the start message text of your clone bot to suit your preferences."""
 
@@ -104,7 +104,7 @@ I am a file store bot.
 
 📝 Now send your new start message text."""
 
-    ST_PIC_TXT = """`**✨ START PHOTO**`
+    ST_PIC_TXT = """**__✨ START PHOTO__**
 
 Include a photo to be displayed along with your start message."""
 
@@ -112,7 +112,7 @@ Include a photo to be displayed along with your start message."""
 
 ℹ️ This photo will be shown in your bot’s start message."""
 
-    CAPTION_TXT = """`**✨ CUSTOM CAPTION**`
+    CAPTION_TXT = """**__✨ CUSTOM CAPTION__**
 
 Add a custom caption to your media messages instead of using the original caption.
 
@@ -125,7 +125,7 @@ Available placeholders:
 
 ℹ️ This caption will be applied to your shareable link messages."""
 
-    BUTTON_TXT = """`**✨ CUSTOM BUTTON**`
+    BUTTON_TXT = """**__✨ CUSTOM BUTTON__**
 
 Add up to 3 custom buttons to your media messages."""
 
@@ -133,11 +133,11 @@ Add up to 3 custom buttons to your media messages."""
 
 ℹ️ The name will be shown on the button, and the URL will open when users click it."""
 
-    CH_MSG_TXT = """`**✨ CHANNEL MESSAGE**`
+    CH_MSG_TXT = """**__✨ CHANNEL MESSAGE__**
 
 Customize the channel message of your clone bot using the options below."""
 
-    WORD_FILTER_TXT = """`**✨ OFFENSIVE WORD FILTER**`
+    WORD_FILTER_TXT = """**__✨ OFFENSIVE WORD FILTER__**
 
 Block or filter offensive words in forwarded or posted messages.
 
@@ -165,13 +165,13 @@ Current Status: {status}"""
         "fool", "twat", "prick", "imbecile", "dork", "weirdo", "slob", "nerd", "loser", "simp", "sex"
     ]
 
-    MEDIA_FILTER_TXT = """`**✨ OFFENSIVE MEDIA FILTER**`
+    MEDIA_FILTER_TXT = """**__✨ OFFENSIVE MEDIA FILTER__**
 
 Automatically block or filter offensive media in forwarded or posted messages.
 
 Current Status: {status}"""
 
-    RANDOM_CAPTION_TXT = """`**✨ RANDOM CAPTION**`
+    RANDOM_CAPTION_TXT = """**__✨ RANDOM CAPTION__**
 
 Enable random captions for your forwarded or posted messages.
 
@@ -280,7 +280,7 @@ Current Status: {status}"""
         "Bas tumhari vibe dekhkar mood full on ho jaata hai 😎💥"
     ]
 
-    HEADER_TXT = """`**✨ CUSTOM HEADER**`
+    HEADER_TXT = """**__✨ CUSTOM HEADER__**
 
 Add a custom header that will appear at the top of every forwarded or posted message."""
 
@@ -288,7 +288,7 @@ Add a custom header that will appear at the top of every forwarded or posted mes
 
 ℹ️ This text will automatically appear at the **top** of every forwarded or posted message."""
 
-    FOOTER_TXT = """`**✨ CUSTOM FOOTER**`
+    FOOTER_TXT = """**__✨ CUSTOM FOOTER__**
 
 Add a custom footer that will appear at the bottom of every forwarded or posted message."""
 
@@ -296,7 +296,7 @@ Add a custom footer that will appear at the bottom of every forwarded or posted 
 
 ℹ️ This text will automatically appear at the **bottom** of every forwarded or posted message."""
 
-    FSUB_TXT = """`**✨ FORCE SUBSCRIBE**`
+    FSUB_TXT = """**__✨ FORCE SUBSCRIBE__**
 
 Users must join your required channels before they can use the clone bot.
 
@@ -318,7 +318,7 @@ This makes it easier to add channels without manually copying IDs or usernames.
 
 ⚠️ Note: Make sure I am an **admin** in that channel with permission to invite users."""
 
-    TOKEN_TXT = """`**✨ ACCESS TOKEN**`
+    TOKEN_TXT = """**__✨ ACCESS TOKEN__**
 
 Users must complete a verification link to gain special access to messages from all clone shareable links.
 
@@ -326,18 +326,18 @@ The access remains valid for the configured validity period.
 
 Current Status: {status}"""
 
-    AT_VALIDITY_TXT = """`**✨ ACCESS TOKEN VALIDITY**`
+    AT_VALIDITY_TXT = """**__✨ ACCESS TOKEN VALIDITY__**
 
 You can set how long the special access (via access token) will remain valid. 
 
 Once this period ends, users will need to verify again to continue without ads."""
 
-    AT_TUTORIAL_TXT = """`**✨ ACCESS TOKEN TUTORIAL**`
+    AT_TUTORIAL_TXT = """**__✨ ACCESS TOKEN TUTORIAL__**
 
 You can provide a tutorial link to guide users on how the access token works 
 and how it removes ads when accessing clone links."""
 
-    AUTO_POST_TXT = """`**✨ AUTO POST**`
+    AUTO_POST_TXT = """**__✨ AUTO POST__**
 
 You can enable automatic posting to your channel. 
 
@@ -361,7 +361,7 @@ This makes it easier to add channels without manually copying IDs or usernames.
 
 ⚠️ Note: Make sure I am an **admin** in that channel with all permission."""
 
-    AP_IMG_TXT = """`**✨ AUTO POST IMAGE**`
+    AP_IMG_TXT = """**__✨ AUTO POST IMAGE__**
 
 Include a photo to be displayed along with your auto post."""
 
@@ -369,7 +369,7 @@ Include a photo to be displayed along with your auto post."""
 
 ℹ️ This image will be shown in your auto post."""
 
-    AP_SLEEP_TXT = """`**✨ AUTO POST SLEEP**`
+    AP_SLEEP_TXT = """**__✨ AUTO POST SLEEP__**
 
 You can customize the waiting time (sleep) between one auto post and the next.
 
@@ -620,7 +620,7 @@ This controls how long the bot waits before sending another auto post to users."
         "https://i.ibb.co/gFv0Nm8M/IMG-20250904-163513-052.jpg",
     ]
 
-    PREMIUM_TXT = """`**✨ PREMIUM USERS**`
+    PREMIUM_TXT = """**__✨ PREMIUM USERS__**
 
 Premium users can access all your clone shareable links without restrictions."""
 
@@ -628,32 +628,32 @@ Premium users can access all your clone shareable links without restrictions."""
 
 ℹ️ This image will be shown in your buy premium."""
 
-    DELETE_TXT = """`**✨ AUTO DELETE**`
+    DELETE_TXT = """**__✨ AUTO DELETE__**
 
 You can enable or disable automatic message deletion.
 
 Current Status: {status}"""
 
-    AD_TIME_TXT = """`**✨ AUTO DELETE TIME**`
+    AD_TIME_TXT = """**__✨ AUTO DELETE TIME__**
 
 Set how long messages will remain before being automatically deleted."""
 
-    AD_MSG_TXT = """`**✨ AUTO DELETE MESSAGE**`
+    AD_MSG_TXT = """**__✨ AUTO DELETE MESSAGE__**
 
 Customize the warning message shown to users before their messages are auto-deleted."""
 
-    AD_TXT = """`⚠️ IMPORTANT`
+    AD_TXT = """**__⚠️ IMPORTANT__**
 
 All messages will be deleted after {time} {unit}.  
 
 Please save or forward them to your personal saved messages to avoid losing them!"""
 
-    FORWARD_TXT = """`**✨ FORWARD PROTECTION**`
+    FORWARD_TXT = """**__✨ FORWARD PROTECTION__**
 
 Restrict users from forwarding messages received through clone shareable links.
 
 Current Status: {status}"""
 
-    MODERATOR_TXT = """`**✨ MODERATOR**`
+    MODERATOR_TXT = """**__✨ MODERATOR__**
 
 Moderators can manage all clone features and have special access permissions."""
