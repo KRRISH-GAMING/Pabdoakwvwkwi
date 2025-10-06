@@ -108,7 +108,6 @@ class Database:
             'ap_image': None,
             'ap_sleep': '1h',
             'ap_mode': 'single',
-            'ap_index': 0,
             # Premium User
             'premium_user': [],
             'pu_upi': None,
