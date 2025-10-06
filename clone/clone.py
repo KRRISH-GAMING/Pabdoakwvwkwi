@@ -1586,6 +1586,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data == "close":
             await safe_action(query.answer)
             await safe_action(query.message.delete)
+            if query.message.reply_to_message:
+                await safe_action(query.message.reply_to_message.delete)
 
         else:
             await safe_action(client.send_message,
