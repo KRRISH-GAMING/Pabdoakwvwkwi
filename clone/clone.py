@@ -675,7 +675,7 @@ async def genlink(client, message):
             g_msg = await safe_action(client.ask,
                 message.chat.id,
                 "📩 Please send me the message (file/text/media) to generate a shareable link.\n\nSend /cancel to stop.",
-                quote=True
+                reply_to_message_id=message.id
             )
 
             if g_msg.text and g_msg.text.lower() == "/cancel":
@@ -947,7 +947,7 @@ async def broadcast(client, message):
             b_msg = await safe_action(client.ask,
                 message.from_user.id,
                 "📩 Now send me your broadcast message\n\nType /cancel to stop.",
-                quote=True
+                reply_to_message_id=message.id
             )
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
@@ -1054,7 +1054,7 @@ async def ban(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to ban:",
             filters=filters.text,
-            quote=True
+            reply_to_message_id=message.id
         )
         user_id = int(ask_id.text.strip())
 
@@ -1090,7 +1090,7 @@ async def unban(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to unban:",
             filters=filters.text,
-            quote=True
+            reply_to_message_id=message.id
         )
         user_id = int(ask_id.text.strip())
 
@@ -1194,7 +1194,7 @@ async def contact(client, message):
             c_msg = await safe_action(client.ask,
                 message.from_user.id,
                 "📩 Now send me your contact message\n\nType /cancel to stop.",
-                quote=True
+                reply_to_message_id=message.id
             )
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
