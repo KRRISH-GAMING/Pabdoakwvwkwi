@@ -163,14 +163,40 @@ async def restart_bots():
                 set_client(bot_me.id, xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-            """clone = await db.get_clone(bot_me.id)
+            clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
                 auto_post_channel = clone.get("ap_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot_me.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")"""
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
+        except FloodWait as e:
+            print(f"⏱ FloodWait: sleeping {e.value} seconds")
+            await asyncio.sleep(e.value)
+            async with semaphore:
+                xd = Client(
+                    name=f"clone_{bot_id}",
+                    api_id=API_ID,
+                    api_hash=API_HASH,
+                    bot_token=bot_token,
+                    plugins={"root": "clone"},
+                    workers=20,
+                    in_memory=True
+                )
+                await xd.start()
+                bot_me = await xd.get_me()
+                set_client(bot_me.id, xd)
+                print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
+
+            clone = await db.get_clone(bot_me.id)
+            if clone and clone.get("auto_post", False):
+                auto_post_channel = clone.get("ap_channel", None)
+                if auto_post_channel:
+                    asyncio.create_task(
+                        auto_post_clone(bot_me.id, db, auto_post_channel)
+                    )
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
