@@ -387,7 +387,7 @@ async def broadcast(client, message):
             )
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", quote=True)
+                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", reply_to_message_id=b_msg.id)
 
         sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", quote=True)
         start_time = pytime.time()
