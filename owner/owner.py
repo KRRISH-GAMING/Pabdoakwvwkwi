@@ -220,9 +220,7 @@ async def help(client, message):
 
 @Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
-    print("xxxx")
     try:
-        print("yyyy")
         ask_id = await safe_action(client.ask,
             chat_id=message.chat.id,
             text="👤 Send the User ID to add as premium:",
@@ -375,6 +373,11 @@ async def check_premium(client, message):
         )
         print(f"⚠️ Check Premium Error: {e}")
         print(traceback.format_exc())
+
+@Client.on_message(filters.command("test_owner"))
+async def test_owner(client, message):
+    print("🟢 test_owner triggered!")
+    await message.reply_text("✅ owner.py working!")
 
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
