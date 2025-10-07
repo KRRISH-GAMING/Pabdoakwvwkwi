@@ -1669,7 +1669,8 @@ async def message_capture(client: Client, message: Message):
 
                 await safe_action(message.reply_text,
                     f"🔗 Here is your shortened link:\n\n{short_link}",
-                    reply_markup=reply_markup
+                    reply_markup=reply_markup,
+                    quote=True
                 )
                 
                 SHORTEN_STATE.pop(user_id, None)
