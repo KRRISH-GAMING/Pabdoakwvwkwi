@@ -1638,17 +1638,17 @@ async def message_capture(client: Client, message: Message):
                 base_site = message.text.strip()
                 new_text = base_site.removeprefix("https://").removeprefix("http://")
                 if not domain(new_text):
-                    return await safe_action(message.reply_text, "❌ Invalid domain. Send a valid base site:")
+                    return await safe_action(message.reply_text, "❌ Invalid domain. Send a valid base site:", quote=True)
                 await clonedb.update_user_info(user_id, {"base_site": new_text})
                 state["step"] = 2
-                await safe_action(message.reply_text, "✅ Base site set. Now send your **Shortener API key**:")
+                await safe_action(message.reply_text, "✅ Base site set. Now send your **Shortener API key**:", quote=True)
                 return
 
             if state["step"] == 2:
                 api = message.text.strip()
                 await clonedb.update_user_info(user_id, {"shortener_api": api})
                 state["step"] = 3
-                await safe_action(message.reply_text, "✅ API set. Now send the **link to shorten**:")
+                await safe_action(message.reply_text, "✅ API set. Now send the **link to shorten**:", quote=True)
                 return
 
             if state["step"] == 3:
@@ -1659,7 +1659,7 @@ async def message_capture(client: Client, message: Message):
 
                 if not base_site or not api_key:
                     SHORTEN_STATE[user_id] = {"step": 1}
-                    return await safe_action(message.reply_text, "❌ Base site or API missing. Let's start over.")
+                    return await safe_action(message.reply_text, "❌ Base site or API missing. Let's start over.", quote=True)
 
                 short_link = await get_short_link(user, long_link)
 
