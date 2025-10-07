@@ -6,7 +6,7 @@ from plugins.script import *
 from owner.owner import *
 from clone.clone import *
 
-logging.config.fileConfig('logging.conf')
+logging.config.fileConfig("logging.conf")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
@@ -145,8 +145,8 @@ async def restart_bots():
     tasks = []
 
     async def restart_single(bot):
-        bot_token = bot['token']
-        bot_id = bot['_id']
+        bot_token = bot["token"]
+        bot_id = bot["_id"]
         try:
             async with semaphore:
                 xd = Client(
