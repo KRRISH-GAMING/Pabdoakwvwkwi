@@ -23,7 +23,7 @@ class Database:
         await self.col.insert_one(user)
 
     async def is_user_exist(self, id):
-        user = await self.col.find_one({'id': int(id)})
+        user = await self.col.find_one({"id": int(id)})
         return bool(user)
 
     async def total_users_count(self):
@@ -33,7 +33,7 @@ class Database:
         return self.col.find({})
 
     async def delete_user(self, user_id):
-        await self.col.delete_many({'id': int(user_id)})
+        await self.col.delete_many({"id": int(user_id)})
 
     # ---------------- PREMIUM ----------------
     async def add_premium_user(self, user_id: int, days: int, plan_type: str = "normal"):
@@ -77,58 +77,58 @@ class Database:
     # ---------------- CLONE ----------------
     async def add_clone_bot(self, bot_id, user_id, first_name, username, bot_token):
         add = {
-            'bot_id': bot_id,
-            'user_id': user_id,
-            'name': first_name,
-            'username': username,
-            'token': bot_token,
+            "bot_id": bot_id,
+            "user_id": user_id,
+            "name": first_name,
+            "username": username,
+            "token": bot_token,
             # Start Message
-            'start_text': script.START_TXT,
-            'start_photo': None,
-            'caption': None,
-            'button': [],
+            "start_text": script.START_TXT,
+            "start_photo": None,
+            "caption": None,
+            "button": [],
             # Channel Message
-            'word_filter': False,
-            'media_filter': False,
-            'random_caption': False,
-            'header': None,
-            'footer': None,
+            "word_filter": False,
+            "media_filter": False,
+            "random_caption": False,
+            "header": None,
+            "footer": None,
             # Force Subscribe
-            'force_subscribe': [],
+            "force_subscribe": [],
             # Access Token
-            'access_token': False,
-            'at_shorten_link': None,
-            'at_shorten_api': None,
-            'at_validity': '24h',
-            'at_renew_log': {},
-            'at_tutorial': None,
+            "access_token": False,
+            "at_shorten_link": None,
+            "at_shorten_api": None,
+            "at_validity": "24h",
+            "at_renew_log": {},
+            "at_tutorial": None,
             # Auto Post
-            'auto_post': False,
-            'ap_channel': None,
-            'ap_image': None,
-            'ap_sleep': '1h',
-            'ap_mode': 'single',
+            "auto_post": False,
+            "ap_channel": None,
+            "ap_image": None,
+            "ap_sleep": "1h",
+            "ap_mode": "single",
             # Premium User
-            'premium_user': [],
-            'pu_upi': None,
+            "premium_user": [],
+            "pu_upi": None,
             # Auto Delete
-            'auto_delete': False,
-            'ad_time': '1h',
-            'ad_msg': script.AD_TXT,
+            "auto_delete": False,
+            "ad_time": "1h",
+            "ad_msg": script.AD_TXT,
             # Forward Protect
-            'forward_protect': False,
+            "forward_protect": False,
             # Moderators
-            'moderators': [],
+            "moderators": [],
             # Status
-            'banned_users': [],
+            "banned_users": [],
             # Activate/Deactivate
-            'active': True,
-            'last_active': int(pytime.time())
+            "active": True,
+            "last_active": int(pytime.time())
         }
         await self.bot.insert_one(add)
 
     async def is_clone_exist(self, user_id):
-        clone = await self.bot.find_one({'user_id': int(user_id)})
+        clone = await self.bot.find_one({"user_id": int(user_id)})
         return bool(clone)
 
     async def get_clone(self, bot_id):
@@ -154,24 +154,24 @@ class Database:
 
     async def update_clone(self, bot_id, user_data: dict, raw=False):
         if raw:
-            await self.bot.update_one({'bot_id': int(bot_id)}, user_data, upsert=True)
+            await self.bot.update_one({"bot_id": int(bot_id)}, user_data, upsert=True)
         else:
-            await self.bot.update_one({'bot_id': int(bot_id)}, {'$set': user_data}, upsert=True)
+            await self.bot.update_one({"bot_id": int(bot_id)}, {"$set": user_data}, upsert=True)
 
     async def delete_clone(self, bot_id):
-        await self.bot.delete_one({'bot_id': int(bot_id)})
+        await self.bot.delete_one({"bot_id": int(bot_id)})
 
     async def delete_clone_by_id(self, db_id):
-        await self.bot.delete_one({'_id': ObjectId(db_id)})
+        await self.bot.delete_one({"_id": ObjectId(db_id)})
 
     async def ban_user(self, bot_id, user_id):
-        await self.bot.update_one({'bot_id': int(bot_id)}, {'$addToSet': {'banned_users': int(user_id)}})
+        await self.bot.update_one({"bot_id": int(bot_id)}, {"$addToSet": {"banned_users": int(user_id)}})
 
     async def unban_user(self, bot_id, user_id):
-        await self.bot.update_one({'bot_id': int(bot_id)}, {'$pull': {'banned_users': int(user_id)}})
+        await self.bot.update_one({"bot_id": int(bot_id)}, {"$pull": {"banned_users": int(user_id)}})
 
     async def get_banned_users(self, bot_id):
-        clone = await self.bot.find_one({'bot_id': int(bot_id)})
+        clone = await self.bot.find_one({"bot_id": int(bot_id)})
         return clone.get("banned_users", []) if clone else []
 
     async def is_user_banned(self, bot_id: int, user_id: int) -> bool:
@@ -319,18 +319,18 @@ class CloneDatabase:
 
     # ---------------- USERS ----------------
     async def add_user(self, bot_id, user_id):
-        user = {'user_id': int(user_id)}
+        user = {"user_id": int(user_id)}
         await self.db[str(bot_id)].insert_one(user)
     
     async def is_user_exist(self, bot_id, id):
-        user = await self.db[str(bot_id)].find_one({'user_id': int(id)})
+        user = await self.db[str(bot_id)].find_one({"user_id": int(id)})
         return bool(user)
 
     async def get_all_users(self, bot_id):
         return self.db[str(bot_id)].find({})
 
     async def delete_user(self, bot_id, user_id):
-        await self.db[str(bot_id)].delete_many({'user_id': int(user_id)})
+        await self.db[str(bot_id)].delete_many({"user_id": int(user_id)})
 
     async def total_users_count(self, bot_id):
         count = await self.db[str(bot_id)].count_documents({})
