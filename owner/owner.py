@@ -218,6 +218,11 @@ async def help(client, message):
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
 
+@Client.on_message(filters.command("test"))
+async def test_owner(client, message):
+    print("🟢 test_owner triggered!")
+    await message.reply_text("✅ owner.py working!")
+
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
     try:
