@@ -225,7 +225,7 @@ async def add_premium(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to add as premium:",
             filters=filters.text,
-            quote=True
+            reply_to_message_id=message.id
         )
         user_id = int(ask_id.text.strip())
 
@@ -233,7 +233,7 @@ async def add_premium(client, message):
             chat_id=message.chat.id,
             text="📅 Send number of days for premium:",
             filters=filters.text,
-            quote=True
+            reply_to_message_id=message.id
         )
         days = int(ask_days.text.strip())
 
@@ -241,7 +241,7 @@ async def add_premium(client, message):
             chat_id=message.chat.id,
             text="💎 Send plan type:\n\n- `normal`\n- `ultra`",
             filters=filters.text,
-            quote=True
+            reply_to_message_id=message.id
         )
         plan = ask_plan.text.lower().strip()
         if plan not in ["normal", "ultra"]:
@@ -272,7 +272,7 @@ async def remove_premium(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to remove from premium:",
             filters=filters.text,
-            quote=True
+            reply_to_message_id=message.id
         )
         
         user_id = int(ask_id.text.strip())
@@ -383,7 +383,7 @@ async def broadcast(client, message):
             b_msg = await safe_action(client.ask,
                 message.chat.id,
                 "📩 Send the message to broadcast\n\n/cancel to stop.",
-                quote=True
+                reply_to_message_id=message.id
             )
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
@@ -531,7 +531,7 @@ async def contact(client, message):
             c_msg = await safe_action(client.ask,
                 message.from_user.id,
                 "📩 Now send me your contact message\n\nType /cancel to stop.",
-                quote=True
+                reply_to_message_id=message.id
             )
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
