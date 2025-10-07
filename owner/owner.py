@@ -535,7 +535,7 @@ async def contact(client, message):
             )
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Contact cancelled.", quote=True)
+                return await safe_action(message.reply_text, "🚫 Contact cancelled.", reply_to_message_id=c_msg.id)
 
         header = (
             f"📩 **New Contact Message**\n\n"
