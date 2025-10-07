@@ -679,7 +679,7 @@ async def genlink(client, message):
             )
 
             if g_msg.text and g_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Process has been cancelled.", quote=True)
+                return await safe_action(message.reply_text, "🚫 Process has been cancelled.", reply_to_message_id=g_msg.id)
 
         file_id = None
         file_name = None
@@ -951,7 +951,7 @@ async def broadcast(client, message):
             )
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", quote=True)
+                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", reply_to_message_id=b_msg.id)
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
@@ -1198,7 +1198,7 @@ async def contact(client, message):
             )
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Contact cancelled.", quote=True)
+                return await safe_action(message.reply_text, "🚫 Contact cancelled.", reply_to_message_id=c_msg.id)
 
         header = (
             f"📩 **New Contact Message**\n\n"
