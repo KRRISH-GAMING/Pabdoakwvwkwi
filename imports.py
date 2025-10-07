@@ -41,3 +41,5 @@ from pyrogram.errors.exceptions.bad_request_400 import *
 from aiohttp import ClientSession, web, ClientTimeout, TCPConnector
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response, json_response
+
+from validators import domain
