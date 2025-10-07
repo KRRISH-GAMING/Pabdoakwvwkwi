@@ -714,6 +714,7 @@ async def genlink(client, message):
         await safe_action(message.reply_text,
             f"🔗 Here is your link:\n\n{share_link}",
             reply_markup=reply_markup,
+            reply_to_message_id=g_msg.id
         )
     except Exception as e:
         await safe_action(client.send_message,
@@ -901,20 +902,20 @@ async def shorten_handler(client: Client, message: Message):
         )
 
         if len(cmd) == 1:
-            help_msg = await safe_action(message.reply_text, help_text)
+            help_msg = await safe_action(message.reply_text, help_text, quote=True)
             SHORTEN_STATE[user_id] = {"step": 1, "help_msg_id": help_msg.id}
 
             if user.get("base_site") and user.get("shortener_api"):
                 SHORTEN_STATE[user_id]["step"] = 3
-                await safe_action(message.reply_text, "🔗 Base site and API already set. Send the link you want to shorten:")
+                await safe_action(message.reply_text, "🔗 Base site and API already set. Send the link you want to shorten:", quote=True)
             else:
-                await safe_action(message.reply_text, "Please send your **base site** (e.g., shortnerdomain.com):")
+                await safe_action(message.reply_text, "Please send your **base site** (e.g., shortnerdomain.com):", quote=True)
             return
 
         if len(cmd) == 2 and cmd[1].lower() == "none":
             await clonedb.update_user_info(user_id, {"base_site": None, "shortener_api": None})
             SHORTEN_STATE.pop(user_id, None)
-            return await safe_action(message.reply_text, "✅ Base site and API have been reset successfully.")
+            return await safe_action(message.reply_text, "✅ Base site and API have been reset successfully.", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -955,7 +956,7 @@ async def broadcast(client, message):
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", quote=True)
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_to_message_id=b_msg.id)
 
         done = blocked = deleted = failed = success = 0
         start_time = pytime.time()
@@ -1059,7 +1060,7 @@ async def ban(client, message):
         user_id = int(ask_id.text.strip())
 
         await db.ban_user(me.id, user_id)
-        await message.reply_text(f"✅ User `{user_id}` banned successfully.", quote=True)
+        await message.reply_text(f"✅ User `{user_id}` banned successfully.", reply_to_message_id=ask_id.id)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1095,7 +1096,7 @@ async def unban(client, message):
         user_id = int(ask_id.text.strip())
 
         await db.unban_user(me.id, user_id)
-        await message.reply_text(f"✅ User `{user_id}` unbanned successfully.", quote=True)
+        await message.reply_text(f"✅ User `{user_id}` unbanned successfully.", reply_to_message_id=ask_id.id)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1226,7 +1227,7 @@ async def contact(client, message):
             for mod_id in moderators:
                 await safe_action(client.send_message, mod_id, header)
 
-        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", quote=True)
+        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", reply_to_message_id=c_msg.id)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
