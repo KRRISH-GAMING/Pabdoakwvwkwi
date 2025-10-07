@@ -3,12 +3,7 @@ from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
 
-@Client.on_message(filters.command("test1"))
-async def test_owner(client, message):
-    print("🟢 test_owner triggered!")
-    await message.reply_text("✅ owner.py working!")
-
-@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
+@StreamBot.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
     try:
         ask_id = await safe_action(client.ask,
@@ -163,8 +158,3 @@ async def check_premium(client, message):
         )
         print(f"⚠️ Check Premium Error: {e}")
         print(traceback.format_exc())
-
-@Client.on_message(filters.command("test2"))
-async def test_owner(client, message):
-    print("🟢 test_owner triggered!")
-    await message.reply_text("✅ owner.py working!")
