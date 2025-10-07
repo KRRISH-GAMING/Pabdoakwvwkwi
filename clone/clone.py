@@ -38,7 +38,7 @@ async def start(client, message):
         auto_delete = clone.get("auto_delete", False)
         auto_delete_time = str(clone.get("ad_time", "1h"))
         auto_delete_time2 = parse_time(clone.get("ad_time", "1h"))
-        auto_delete_msg = clone.get('ad_msg', script.AD_TXT)
+        auto_delete_msg = clone.get("ad_msg", script.AD_TXT)
         forward_protect = clone.get("forward_protect", False)
 
         num_str = "".join(filter(str.isdigit, auto_delete_time)) or "0"
@@ -134,11 +134,10 @@ async def start(client, message):
                                 InlineKeyboardButton("♻️ Try Again", url=f"https://t.me/{me.username}?start={start_arg}")
                             ])
 
-                    await safe_action(client.send_message,
-                        user_id,
+                    await safe_action(message.reply_text,
                         "🚨 You must join the channel(s) first to use this bot.",
                         reply_markup=InlineKeyboardMarkup(buttons),
-                        parse_mode=enums.ParseMode.MARKDOWN
+                        quote=True
                     )
                     return
             except Exception as e:
@@ -152,12 +151,12 @@ async def start(client, message):
         # --- Start Handler ---
         if len(message.command) == 1:
             buttons = [[
-                InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
-                InlineKeyboardButton('😊 About', callback_data='about')
+                InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
+                InlineKeyboardButton("😊 About", callback_data="about")
                 ],[
-                InlineKeyboardButton('🤖 Create Your Own Clone', url=f'https://t.me/{BOT_USERNAME}?start')
+                InlineKeyboardButton("🤖 Create Your Own Clone", url=f"https://t.me/{BOT_USERNAME}?start")
                 ],[
-                InlineKeyboardButton('🔒 Close', callback_data='close')
+                InlineKeyboardButton("🔒 Close", callback_data="close")
             ]]
 
             if start_pic:
@@ -213,7 +212,7 @@ async def start(client, message):
                     btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
                     if premium_upi:
-                        btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data='remove_ads')])
+                        btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data="remove_ads")])
 
                     if tutorial_url:
                         btn.append([InlineKeyboardButton("ℹ️ Tutorial", url=tutorial_url)])
@@ -257,10 +256,11 @@ async def start(client, message):
                         chat_id=user_id,
                         file_id=file_id,
                         caption=f_caption,
-                        protect_content=forward_protect
+                        protect_content=forward_protect,
+                        reply_to_message_id=message.id
                     )
                 else:
-                    sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect)
+                    sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect, quote=True)
 
                 if sent_msg:
                     if buttons_data:
@@ -298,7 +298,7 @@ async def start(client, message):
                     btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
                     if premium_upi:
-                        btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data='remove_ads')])
+                        btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data="remove_ads")])
 
                     if tutorial_url:
                         btn.append([InlineKeyboardButton("ℹ️ Tutorial", url=tutorial_url)])
@@ -363,10 +363,11 @@ async def start(client, message):
                                 chat_id=user_id,
                                 file_id=file_id,
                                 caption=f_caption,
-                                protect_content=forward_protect
+                                protect_content=forward_protect,
+                                reply_to_message_id=message.id
                             )
                         else:
-                            sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect)
+                            sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect, quote=True)
 
                         buttons = []
                         for btn in buttons_data:
@@ -420,7 +421,7 @@ async def start(client, message):
                 btn = [[InlineKeyboardButton("✅ Verify", url=verify_url)]]
 
                 if premium_upi:
-                    btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data='remove_ads')])
+                    btn.append([InlineKeyboardButton("🛡 Remove Ads", callback_data="remove_ads")])
 
                 if tutorial_url:
                     btn.append([InlineKeyboardButton("ℹ️ Tutorial", url=tutorial_url)])
@@ -438,7 +439,8 @@ async def start(client, message):
                 msg = await safe_action(client.send_cached_media,
                     chat_id=user_id,
                     file_id=file_id,
-                    protect_content=forward_protect
+                    protect_content=forward_protect,
+                    reply_to_message_id=message.id
                 )
 
                 filetype = msg.media
@@ -520,7 +522,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
         if not await db.is_premium(owner_id):
             return
 
-        username = clone.get('username', bot_id)
+        username = clone.get("username", bot_id)
 
         clone_client = get_client(bot_id)
         if not clone_client:
@@ -536,7 +538,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 if not await db.is_premium(owner_id):
                     return
 
-                username = fresh.get('username', bot_id)
+                username = fresh.get("username", bot_id)
 
                 mode = fresh.get("ap_mode", "single")
 
@@ -649,7 +651,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
         )
         print(f"❌ Clone AutoPost crashed for {bot_id}: {e}")
 
-@Client.on_message(filters.command(['genlink']) & filters.private)
+@Client.on_message(filters.command("genlink") & filters.private)
 async def genlink(client, message):
     try:
         me = await get_me_safe(client)
@@ -673,10 +675,11 @@ async def genlink(client, message):
             g_msg = await safe_action(client.ask,
                 message.chat.id,
                 "📩 Please send me the message (file/text/media) to generate a shareable link.\n\nSend /cancel to stop.",
+                quote=True
             )
 
-            if g_msg.text and g_msg.text.lower() == '/cancel':
-                return await safe_action(message.reply_text, '🚫 Process has been cancelled.')
+            if g_msg.text and g_msg.text.lower() == "/cancel":
+                return await safe_action(message.reply_text, "🚫 Process has been cancelled.", quote=True)
 
         file_id = None
         file_name = None
@@ -705,7 +708,7 @@ async def genlink(client, message):
         share_link = f"https://t.me/{me.username}?start=SINGLE-{outstr}"
 
         reply_markup = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("🔁 Share URL", url=f'https://t.me/share/url?url={share_link}')]]
+            [[InlineKeyboardButton("🔁 Share URL", url=f"https://t.me/share/url?url={share_link}")]]
         )
 
         await safe_action(message.reply_text,
@@ -720,7 +723,7 @@ async def genlink(client, message):
         print(f"⚠️ Clone Generate Link Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command(['batch']) & filters.private)
+@Client.on_message(filters.command("batch") & filters.private)
 async def batch(client, message):
     try:
         me = await get_me_safe(client)
@@ -755,14 +758,14 @@ async def batch(client, message):
 
         match = regex.match(first)
         if not match:
-            return await safe_action(message.reply_text, '❌ Invalid first link.', quote=True)
+            return await safe_action(message.reply_text, "❌ Invalid first link.", quote=True)
         f_chat_id = match.group(4)
         f_msg_id = int(match.group(5))
         f_chat_id = int(f"-100{f_chat_id}") if f_chat_id.isnumeric() else f_chat_id
 
         match = regex.match(last)
         if not match:
-            return await safe_action(message.reply_text, '❌ Invalid last link.', quote=True)
+            return await safe_action(message.reply_text, "❌ Invalid last link.", quote=True)
         l_chat_id = match.group(4)
         l_msg_id = int(match.group(5))
         l_chat_id = int(f"-100{l_chat_id}") if l_chat_id.isnumeric() else l_chat_id
@@ -845,7 +848,7 @@ async def batch(client, message):
         share_link = f"https://t.me/{me.username}?start=BATCH-{file_id}"
 
         reply_markup = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("🔁 Share URL", url=f'https://t.me/share/url?url={share_link}')]]
+            [[InlineKeyboardButton("🔁 Share URL", url=f"https://t.me/share/url?url={share_link}")]]
         )
 
         await safe_action(sts.edit,
@@ -853,9 +856,9 @@ async def batch(client, message):
             reply_markup=reply_markup
         )
     except ChannelInvalid:
-        await safe_action(message.reply_text, '⚠️ This may be a private channel / group. Make me an admin over there to index the files.', quote=True)
+        await safe_action(message.reply_text, "⚠️ This may be a private channel / group. Make me an admin over there to index the files.", quote=True)
     except (UsernameInvalid, UsernameNotModified):
-        await safe_action(message.reply_text, '⚠️ Invalid Link specified.', quote=True)
+        await safe_action(message.reply_text, "⚠️ Invalid Link specified.", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -944,14 +947,15 @@ async def broadcast(client, message):
             b_msg = await safe_action(client.ask,
                 message.from_user.id,
                 "📩 Now send me your broadcast message\n\nType /cancel to stop.",
+                quote=True
             )
 
             if b_msg.text and b_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.")
+                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", quote=True)
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...")
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", quote=True)
 
         done = blocked = deleted = failed = success = 0
         start_time = pytime.time()
@@ -1050,6 +1054,7 @@ async def ban(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to ban:",
             filters=filters.text,
+            quote=True
         )
         user_id = int(ask_id.text.strip())
 
@@ -1085,6 +1090,7 @@ async def unban(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to unban:",
             filters=filters.text,
+            quote=True
         )
         user_id = int(ask_id.text.strip())
 
@@ -1187,11 +1193,12 @@ async def contact(client, message):
         else:
             c_msg = await safe_action(client.ask,
                 message.from_user.id,
-                "📩 Now send me your contact message\n\nType /cancel to stop."
+                "📩 Now send me your contact message\n\nType /cancel to stop.",
+                quote=True
             )
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Contact cancelled.")
+                return await safe_action(message.reply_text, "🚫 Contact cancelled.", quote=True)
 
         header = (
             f"📩 **New Contact Message**\n\n"
@@ -1219,7 +1226,7 @@ async def contact(client, message):
             for mod_id in moderators:
                 await safe_action(client.send_message, mod_id, header)
 
-        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!")
+        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1261,7 +1268,7 @@ async def reply(client, message):
         else:
             await safe_action(client.send_message, user_id, "📩 **Reply from Admin**")
 
-        await safe_action(message.reply_text, "✅ Reply delivered!")
+        await safe_action(message.reply_text, "✅ Reply delivered!", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1552,10 +1559,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data == "start":
             await safe_action(query.answer)
             buttons = [
-                [InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
-                 InlineKeyboardButton('ℹ️ About', callback_data='about')],
-                [InlineKeyboardButton('🤖 Create Your Own Clone', url=f'https://t.me/{BOT_USERNAME}?start')],
-                [InlineKeyboardButton('🔒 Close', callback_data='close')]
+                [InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
+                 InlineKeyboardButton("ℹ️ About", callback_data="about")],
+                [InlineKeyboardButton("🤖 Create Your Own Clone", url=f"https://t.me/{BOT_USERNAME}?start")],
+                [InlineKeyboardButton("🔒 Close", callback_data="close")]
             ]
             start_text = clone.get("start_text", script.START_TXT)
             await safe_action(query.message.edit_text,
@@ -1566,7 +1573,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # Help
         elif data == "help":
             await safe_action(query.answer)
-            buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
+            buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
             await safe_action(query.message.edit_text,
                 text=script.HELP_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
@@ -1575,10 +1582,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # About
         elif data == "about":
             await safe_action(query.answer)
-            buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
-            ownerid = int(clone['user_id'])
+            buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
             await safe_action(query.message.edit_text,
-                text=script.CABOUT_TXT.format(bot=me.mention, developer=ownerid),
+                text=script.CABOUT_TXT.format(bot=me.mention, developer=owner_id),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -1657,7 +1663,7 @@ async def message_capture(client: Client, message: Message):
                 short_link = await get_short_link(user, long_link)
 
                 reply_markup = InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("🔁 Share URL", url=f'https://t.me/share/url?url={short_link}')]]
+                    [[InlineKeyboardButton("🔁 Share URL", url=f"https://t.me/share/url?url={short_link}")]]
                 )
 
                 await safe_action(message.reply_text,
