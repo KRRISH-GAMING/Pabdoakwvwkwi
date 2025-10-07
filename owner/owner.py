@@ -186,12 +186,12 @@ async def start(client, message):
         if len(message.command) == 1:
             buttons = [
                 [
-                    InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
-                    InlineKeyboardButton('😊 About', callback_data='about')
+                    InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
+                    InlineKeyboardButton("😊 About", callback_data="about")
                 ],
-                [InlineKeyboardButton('🤖 Create Your Own Clone', callback_data='clone')],
-                [InlineKeyboardButton('🌟 Buy Premium', callback_data='premium')],
-                [InlineKeyboardButton('🔒 Close', callback_data='close')]
+                [InlineKeyboardButton("🤖 Create Your Own Clone", callback_data="clone")],
+                [InlineKeyboardButton("🌟 Buy Premium", callback_data="premium")],
+                [InlineKeyboardButton("🔒 Close", callback_data="close")]
             ]
             return await safe_action(message.reply_text,
                 script.START_TXT.format(user=message.from_user.mention, bot=me.mention),
@@ -225,6 +225,7 @@ async def add_premium(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to add as premium:",
             filters=filters.text,
+            quote=True
         )
         user_id = int(ask_id.text.strip())
 
@@ -232,6 +233,7 @@ async def add_premium(client, message):
             chat_id=message.chat.id,
             text="📅 Send number of days for premium:",
             filters=filters.text,
+            quote=True
         )
         days = int(ask_days.text.strip())
 
@@ -239,10 +241,11 @@ async def add_premium(client, message):
             chat_id=message.chat.id,
             text="💎 Send plan type:\n\n- `normal`\n- `ultra`",
             filters=filters.text,
+            quote=True
         )
         plan = ask_plan.text.lower().strip()
         if plan not in ["normal", "ultra"]:
-            return await safe_action(message.reply_text, "❌ Invalid plan type. Must be 'normal' or 'ultra'.")
+            return await safe_action(message.reply_text, "❌ Invalid plan type. Must be 'normal' or 'ultra'.", quote=True)
 
         await db.add_premium_user(user_id, days, plan)
 
@@ -252,6 +255,7 @@ async def add_premium(client, message):
             f"👤 User ID: `{user_id}`\n"
             f"📅 Days: {days}\n"
             f"⏳ Expiry: {expiry}",
+            quote=True
         )
     except Exception as e:
         await safe_action(client.send_message,
@@ -268,15 +272,16 @@ async def remove_premium(client, message):
             chat_id=message.chat.id,
             text="👤 Send the User ID to remove from premium:",
             filters=filters.text,
+            quote=True
         )
         
         user_id = int(ask_id.text.strip())
         user = await db.get_premium_user(user_id)
         if not user:
-            return await safe_action(message.reply_text, f"ℹ️ User `{user_id}` is **not premium**.")
+            return await safe_action(message.reply_text, f"ℹ️ User `{user_id}` is **not premium**.", quote=True)
 
         await db.remove_premium_user(user_id)
-        await safe_action(message.reply_text, f"✅ Removed premium from {user_id}.")
+        await safe_action(message.reply_text, f"✅ Removed premium from {user_id}.", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -315,7 +320,8 @@ async def list_premium(client, message):
         if len(text) > 4000:
             await safe_action(message.reply_document,
                 document=("premium_users.txt", text.encode("utf-8")),
-                caption="📄 Premium Users List"
+                caption="📄 Premium Users List",
+                quote=True
             )
         else:
             await safe_action(message.reply_text, text, quote=True)
@@ -377,12 +383,13 @@ async def broadcast(client, message):
             b_msg = await safe_action(client.ask,
                 message.chat.id,
                 "📩 Send the message to broadcast\n\n/cancel to stop.",
+                quote=True
             )
 
-            if b_msg.text and b_msg.text.lower() == '/cancel':
-                return await safe_action(message.reply_text, '🚫 Broadcast cancelled.')
+            if b_msg.text and b_msg.text.lower() == "/cancel":
+                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", quote=True)
 
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...")
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", quote=True)
         start_time = pytime.time()
         total_users = await db.total_users_count()
 
@@ -493,7 +500,7 @@ async def stats(client, message):
         print(f"⚠️ Stats Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command('restart') & filters.private & filters.user(ADMINS))
+@Client.on_message(filters.command("restart") & filters.private & filters.user(ADMINS))
 async def restart(client, message):
     try:
 
@@ -524,10 +531,11 @@ async def contact(client, message):
             c_msg = await safe_action(client.ask,
                 message.from_user.id,
                 "📩 Now send me your contact message\n\nType /cancel to stop.",
+                quote=True
             )
 
             if c_msg.text and c_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Contact cancelled.")
+                return await safe_action(message.reply_text, "🚫 Contact cancelled.", quote=True)
 
         header = (
             f"📩 **New Contact Message**\n\n"
@@ -549,7 +557,7 @@ async def contact(client, message):
             for admin_id in ADMINS:
                 await safe_action(client.send_message, admin_id, header)
 
-        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!")
+        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -583,7 +591,7 @@ async def reply(client, message):
         else:
             await safe_action(client.send_message, user_id, "📩 **Reply from Admin**")
 
-        await safe_action(message.reply_text, "✅ Reply delivered!")
+        await safe_action(message.reply_text, "✅ Reply delivered!", quote=True)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -666,10 +674,10 @@ async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int
 async def show_text_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('✏️ Edit', callback_data=f'edit_text_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_text_{bot_id}'),
-            InlineKeyboardButton('🔄 Default', callback_data=f'default_text_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'start_message_{bot_id}')]
+            [InlineKeyboardButton("✏️ Edit", callback_data=f"edit_text_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_text_{bot_id}"),
+            InlineKeyboardButton("🔄 Default", callback_data=f"default_text_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.ST_TXT_TXT,
@@ -686,10 +694,10 @@ async def show_text_menu(client, message, bot_id):
 async def show_photo_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_photo_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_photo_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_photo_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'start_message_{bot_id}')]
+            [InlineKeyboardButton("➕ Add", callback_data=f"add_photo_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_photo_{bot_id}"),
+            InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_photo_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.ST_PIC_TXT,
@@ -706,10 +714,10 @@ async def show_photo_menu(client, message, bot_id):
 async def show_caption_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_caption_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_caption_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_caption_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'start_message_{bot_id}')]
+            [InlineKeyboardButton("➕ Add", callback_data=f"add_caption_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_caption_{bot_id}"),
+            InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_caption_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.CAPTION_TXT,
@@ -767,10 +775,10 @@ async def show_button_menu(client, message, bot_id):
 async def show_header_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_header_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_header_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_header_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'link_message_{bot_id}')]
+            [InlineKeyboardButton("➕ Add", callback_data=f"add_header_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_header_{bot_id}"),
+            InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_header_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.HEADER_TXT,
@@ -787,10 +795,10 @@ async def show_header_menu(client, message, bot_id):
 async def show_footer_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_footer_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_footer_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_footer_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'link_message_{bot_id}')]
+            [InlineKeyboardButton("➕ Add", callback_data=f"add_footer_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_footer_{bot_id}"),
+            InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_footer_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.FOOTER_TXT,
@@ -853,7 +861,7 @@ async def show_fsub_menu(client, message, bot_id):
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
 
         if not fsub_data:
-            text = '📢 No active Force Subscribe channels.\n\n➕ Add one below:'
+            text = "📢 No active Force Subscribe channels.\n\n➕ Add one below:"
 
         await safe_action(message.edit_text,
             text=f"{script.FSUB_TXT}\n\n{text}",
@@ -932,10 +940,10 @@ async def show_token_menu(client, message, bot_id):
 async def show_validity_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('✏️ Edit', callback_data=f'edit_atvalidity_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_atvalidity_{bot_id}'),
-            InlineKeyboardButton('🔄 Default', callback_data=f'default_atvalidity_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'access_token_{bot_id}')]
+            [InlineKeyboardButton("✏️ Edit", callback_data=f"edit_atvalidity_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_atvalidity_{bot_id}"),
+            InlineKeyboardButton("🔄 Default", callback_data=f"default_atvalidity_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"access_token_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.AT_VALIDITY_TXT,
@@ -952,10 +960,10 @@ async def show_validity_menu(client, message, bot_id):
 async def show_tutorial_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_attutorial_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_attutorial_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_attutorial_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'access_token_{bot_id}')]
+            [InlineKeyboardButton("➕ Add", callback_data=f"add_attutorial_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_attutorial_{bot_id}"),
+            InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_attutorial_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"access_token_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.AT_TUTORIAL_TXT,
@@ -990,7 +998,7 @@ async def show_post_menu(client, message, bot_id):
 
         if current:
             buttons = [
-                [InlineKeyboardButton('🖼️ Image', callback_data=f'apimage_{bot_id}'),
+                [InlineKeyboardButton("🖼️ Image", callback_data=f"apimage_{bot_id}"),
                 InlineKeyboardButton("⏱ Sleep", callback_data=f"ap_sleep_{bot_id}"),
                 InlineKeyboardButton("❌ Disable", callback_data=f"ap_status_{bot_id}")]
             ]
@@ -1021,10 +1029,10 @@ async def show_post_menu(client, message, bot_id):
 async def show_image_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('➕ Add', callback_data=f'add_apimage_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_apimage_{bot_id}'),
-            InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_apimage_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_post_{bot_id}')]
+            [InlineKeyboardButton("➕ Add", callback_data=f"add_apimage_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_apimage_{bot_id}"),
+            InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_apimage_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"auto_post_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.AP_IMG_TXT,
@@ -1041,10 +1049,10 @@ async def show_image_menu(client, message, bot_id):
 async def show_sleep_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('✏️ Edit', callback_data=f'edit_apsleep_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_apsleep_{bot_id}'),
-            InlineKeyboardButton('🔄 Default', callback_data=f'default_apsleep_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_post_{bot_id}')]
+            [InlineKeyboardButton("✏️ Edit", callback_data=f"edit_apsleep_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_apsleep_{bot_id}"),
+            InlineKeyboardButton("🔄 Default", callback_data=f"default_apsleep_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"auto_post_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.AP_SLEEP_TXT,
@@ -1120,10 +1128,10 @@ async def show_premium_menu(client, message, bot_id):
 async def show_time_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('✏️ Edit', callback_data=f'edit_adtime_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_adtime_{bot_id}'),
-            InlineKeyboardButton('🔄 Default', callback_data=f'default_adtime_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_delete_{bot_id}')]
+            [InlineKeyboardButton("✏️ Edit", callback_data=f"edit_adtime_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_adtime_{bot_id}"),
+            InlineKeyboardButton("🔄 Default", callback_data=f"default_adtime_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"auto_delete_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.AD_TIME_TXT,
@@ -1140,10 +1148,10 @@ async def show_time_menu(client, message, bot_id):
 async def show_message_menu(client, message, bot_id):
     try:
         buttons = [
-            [InlineKeyboardButton('✏️ Edit', callback_data=f'edit_admessage_{bot_id}'),
-            InlineKeyboardButton('👁️ See', callback_data=f'see_admessage_{bot_id}'),
-            InlineKeyboardButton('🔄 Default', callback_data=f'default_admessage_{bot_id}')],
-            [InlineKeyboardButton('⬅️ Back', callback_data=f'auto_delete_{bot_id}')]
+            [InlineKeyboardButton("✏️ Edit", callback_data=f"edit_admessage_{bot_id}"),
+            InlineKeyboardButton("👁️ See", callback_data=f"see_admessage_{bot_id}"),
+            InlineKeyboardButton("🔄 Default", callback_data=f"default_admessage_{bot_id}")],
+            [InlineKeyboardButton("⬅️ Back", callback_data=f"auto_delete_{bot_id}")]
         ]
         await safe_action(message.edit_text,
             text=script.AD_MSG_TXT,
@@ -1207,11 +1215,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if data == "start":
             await safe_action(query.answer)
             buttons = [
-                [InlineKeyboardButton('💁‍♀️ Help', callback_data='help'),
-                 InlineKeyboardButton('ℹ️ About', callback_data='about')],
-                [InlineKeyboardButton('🤖 Create Your Own Clone', callback_data='clone')],
-                [InlineKeyboardButton('🌟 Buy Premium', callback_data='premium')],
-                [InlineKeyboardButton('🔒 Close', callback_data='close')]
+                [InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
+                 InlineKeyboardButton("ℹ️ About", callback_data="about")],
+                [InlineKeyboardButton("🤖 Create Your Own Clone", callback_data="clone")],
+                [InlineKeyboardButton("🌟 Buy Premium", callback_data="premium")],
+                [InlineKeyboardButton("🔒 Close", callback_data="close")]
             ]
             me = await client.get_me()
             await safe_action(query.message.edit_text,
@@ -1222,7 +1230,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # Help
         elif data == "help":
             await safe_action(query.answer)
-            buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
+            buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
             await safe_action(query.message.edit_text,
                 text=script.HELP_TXT,
                 reply_markup=InlineKeyboardMarkup(buttons)
@@ -1231,7 +1239,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # About
         elif data == "about":
             await safe_action(query.answer)
-            buttons = [[InlineKeyboardButton('⬅️ Back', callback_data='start')]]
+            buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
             me = await client.get_me()
             await safe_action(query.message.edit_text,
                 text=script.ABOUT_TXT.format(bot=me.mention),
@@ -1283,20 +1291,20 @@ async def cb_handler(client: Client, query: CallbackQuery):
             activate_text = "✅ Activate" if active else "❌ Deactivated"
 
             buttons = [
-                [InlineKeyboardButton('📝 Start Message', callback_data=f'start_message_{bot_id}'),
-                 InlineKeyboardButton('📢 Channel Message', callback_data=f'link_message_{bot_id}')],
-                [InlineKeyboardButton('🔔 Force Subscribe', callback_data=f'force_subscribe_{bot_id}'),
-                 InlineKeyboardButton('🔑 Access Token', callback_data=f'access_token_{bot_id}')],
-                [InlineKeyboardButton('📤 Auto Post', callback_data=f'auto_post_{bot_id}'),
-                 InlineKeyboardButton('🌟 Premium User', callback_data=f'premium_user_{bot_id}')],
-                [InlineKeyboardButton('⏳ Auto Delete', callback_data=f'auto_delete_{bot_id}'),
-                 InlineKeyboardButton('🚫 Forward Protect', callback_data=f'forward_protect_{bot_id}')],
-                [InlineKeyboardButton('🛡 Moderator', callback_data=f'moderator_{bot_id}'),
-                 InlineKeyboardButton('📊 Status', callback_data=f'status_{bot_id}')],
-                [InlineKeyboardButton(activate_text, callback_data=f'activate_deactivate_{bot_id}'),
-                 InlineKeyboardButton('🔄 Restart', callback_data=f'restart_{bot_id}')],
-                [InlineKeyboardButton('🗑️ Delete', callback_data=f'delete_{bot_id}')],
-                [InlineKeyboardButton('⬅️ Back', callback_data='clone')]
+                [InlineKeyboardButton("📝 Start Message", callback_data=f"start_message_{bot_id}"),
+                 InlineKeyboardButton("📢 Channel Message", callback_data=f"link_message_{bot_id}")],
+                [InlineKeyboardButton("🔔 Force Subscribe", callback_data=f"force_subscribe_{bot_id}"),
+                 InlineKeyboardButton("🔑 Access Token", callback_data=f"access_token_{bot_id}")],
+                [InlineKeyboardButton("📤 Auto Post", callback_data=f"auto_post_{bot_id}"),
+                 InlineKeyboardButton("🌟 Premium User", callback_data=f"premium_user_{bot_id}")],
+                [InlineKeyboardButton("⏳ Auto Delete", callback_data=f"auto_delete_{bot_id}"),
+                 InlineKeyboardButton("🚫 Forward Protect", callback_data=f"forward_protect_{bot_id}")],
+                [InlineKeyboardButton("🛡 Moderator", callback_data=f"moderator_{bot_id}"),
+                 InlineKeyboardButton("📊 Status", callback_data=f"status_{bot_id}")],
+                [InlineKeyboardButton(activate_text, callback_data=f"activate_deactivate_{bot_id}"),
+                 InlineKeyboardButton("🔄 Restart", callback_data=f"restart_{bot_id}")],
+                [InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_{bot_id}")],
+                [InlineKeyboardButton("⬅️ Back", callback_data="clone")]
             ]
 
             premium_user = await db.get_premium_user(user_id)
@@ -1399,11 +1407,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 buttons = [
-                    [InlineKeyboardButton('✏️ Start Text', callback_data=f'start_text_{bot_id}'),
-                     InlineKeyboardButton('🖼️ Start Photo', callback_data=f'start_photo_{bot_id}')],
-                    [InlineKeyboardButton('💬 Start Caption', callback_data=f'start_caption_{bot_id}'),
-                     InlineKeyboardButton('🔘 Start Button', callback_data=f'start_button_{bot_id}')],
-                    [InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]
+                    [InlineKeyboardButton("✏️ Start Text", callback_data=f"start_text_{bot_id}"),
+                     InlineKeyboardButton("🖼️ Start Photo", callback_data=f"start_photo_{bot_id}")],
+                    [InlineKeyboardButton("💬 Start Caption", callback_data=f"start_caption_{bot_id}"),
+                     InlineKeyboardButton("🔘 Start Button", callback_data=f"start_button_{bot_id}")],
+                    [InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")]
                 ]
                 await safe_action(query.message.edit_text,
                     text=script.ST_MSG_TXT,
@@ -1431,7 +1439,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 START_TEXT[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_edit_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_edit_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_ST_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -1495,7 +1503,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 START_PHOTO[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addphoto_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_ST_PIC,
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -1567,7 +1575,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 CAPTION_TEXT[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addcaption_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addcaption_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_CAPTION_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -1688,11 +1696,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 buttons = [
-                    [InlineKeyboardButton('🚫 Word Filter', callback_data=f'word_filter_{bot_id}'),
-                     InlineKeyboardButton('🎲 Random Caption', callback_data=f'random_caption_{bot_id}')],
-                    [InlineKeyboardButton('🔺 Header Text', callback_data=f'header_{bot_id}'),
-                     InlineKeyboardButton('🔻 Footer Text', callback_data=f'footer_{bot_id}')],
-                    [InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]
+                    [InlineKeyboardButton("🚫 Word Filter", callback_data=f"word_filter_{bot_id}"),
+                     InlineKeyboardButton("🎲 Random Caption", callback_data=f"random_caption_{bot_id}")],
+                    [InlineKeyboardButton("🔺 Header Text", callback_data=f"header_{bot_id}"),
+                     InlineKeyboardButton("🔻 Footer Text", callback_data=f"footer_{bot_id}")],
+                    [InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")]
                 ]
                 await safe_action(query.message.edit_text,
                     text=script.CH_MSG_TXT,
@@ -1866,7 +1874,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 HEADER_TEXT[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addheader_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addheader_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_HEADER_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -1934,7 +1942,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 FOOTER_TEXT[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addfooter_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addfooter_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_FOOTER_TXT,
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2188,7 +2196,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 AT_VALIDITY[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editatvalidity_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_editatvalidity_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="⏱ Please provide the new **Access Token Validity** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2261,7 +2269,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 AT_TUTORIAL[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_editadmessage_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="🔗 Please provide the updated **Access Token Tutorial** link:",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2430,7 +2438,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 AP_IMAGE[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addphoto_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addphoto_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=script.EDIT_AP_IMG,
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2502,7 +2510,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 AP_SLEEP[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editapsleep_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_editapsleep_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="⏱ Please provide the new **Auto Post Sleep** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2576,7 +2584,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     await show_premium_menu(client, query.message, bot_id)
                 else:
                     PU_UPI[user_id] = (query.message, bot_id)
-                    buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_pu_{bot_id}')]]
+                    buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_pu_{bot_id}")]]
                     await safe_action(query.message.edit_text,
                         text="🔗 Please provide the updated **Upi I'd**:",
                         reply_markup=InlineKeyboardMarkup(buttons)
@@ -2594,7 +2602,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 PU_UPI.pop(user_id, None)
                 await db.update_clone(bot_id, {"pu_upi": None})
 
-                buttons = [[InlineKeyboardButton('⬅️ Back', callback_data=f'manage_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="❌ Premium User setup cancelled.\nYou can re-enable it anytime by providing a valid UPI ID.",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2610,7 +2618,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 ADD_PU[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addpu_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addpu_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="✏️ Please provide the User ID of the new **premium user**:",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2795,7 +2803,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 AD_TIME[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadtime_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_editadtime_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="⏱ Please provide the new **Auto Delete Time** in **Seconds/Minutes/hours** (e.g., `30s` for 30 second, `5m` for 5 minute, `1h` for 1 hour):",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2868,7 +2876,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 AD_MESSAGE[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_editadmessage_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_editadmessage_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="📄 Please provide the new **Auto Delete Message**:",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -2975,7 +2983,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 ADD_MODERATOR[user_id] = (query.message, bot_id)
-                buttons = [[InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_addmoderator_{bot_id}')]]
+                buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addmoderator_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text="✏️ Please provide the User ID of the new **moderator**:",
                     reply_markup=InlineKeyboardMarkup(buttons)
@@ -3190,11 +3198,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 await safe_action(query.answer)
                 buttons = [
-                    [InlineKeyboardButton('✅ Yes, Sure', callback_data=f'delete_clone_{bot_id}')],
-                    [InlineKeyboardButton('❌ No, Go Back', callback_data=f'manage_{bot_id}')]
+                    [InlineKeyboardButton("✅ Yes, Sure", callback_data=f"delete_clone_{bot_id}")],
+                    [InlineKeyboardButton("❌ No, Go Back", callback_data=f"manage_{bot_id}")]
                 ]
                 await safe_action(query.message.edit_text,
-                    text='⚠️ Are You Sure? Do you want **delete** your clone bot.',
+                    text="⚠️ Are You Sure? Do you want **delete** your clone bot.",
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
