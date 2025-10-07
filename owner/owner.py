@@ -220,7 +220,9 @@ async def help(client, message):
 
 @Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
+    print("xxxx")
     try:
+        print("yyyy")
         ask_id = await safe_action(client.ask,
             chat_id=message.chat.id,
             text="👤 Send the User ID to add as premium:",
@@ -389,7 +391,7 @@ async def broadcast(client, message):
             if b_msg.text and b_msg.text.lower() == "/cancel":
                 return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", reply_to_message_id=b_msg.id)
 
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", quote=True)
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_to_message_id=b_msg.id)
         start_time = pytime.time()
         total_users = await db.total_users_count()
 
@@ -557,7 +559,7 @@ async def contact(client, message):
             for admin_id in ADMINS:
                 await safe_action(client.send_message, admin_id, header)
 
-        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", quote=True)
+        await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", reply_to_message_id=c_msg.id)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
