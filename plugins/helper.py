@@ -30,7 +30,7 @@ async def safe_action(coro_func, *args, **kwargs):
             print(f"⚠️ User blocked the bot. Skipping reply...")
             return
         except Exception as e:
-            if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e) and "QUERY_ID_INVALID" not in str(e):
+            if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e) and "QUERY_ID_INVALID" not in str(e) and "MESSAGE_DELETE_FORBIDDEN" not in str(e):
                 raise
             if "INPUT_USER_DEACTIVATED" in str(e):
                 print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
@@ -44,6 +44,22 @@ async def safe_action(coro_func, *args, **kwargs):
                 print(f"⚠️ Failed logging: {inner_e}")
             print(f"⚠️ Error in safe_action: {e}")
             print(traceback.format_exc())
+            return None
+
+async def get_me_safe(client):
+    if client in CLONE_ME and CLONE_ME[client]:
+        return CLONE_ME[client]
+
+    while True:
+        try:
+            me = await client.get_me()
+            CLONE_ME[client] = me
+            return me
+        except FloodWait as e:
+            print(f"⏳ FloodWait: waiting {e.value}s for get_me()...")
+            await asyncio.sleep(e.value)
+        except Exception as ex:
+            print(f"⚠️ get_me() failed: {ex}")
             return None
 
 async def is_subscribedx(client, query):
@@ -221,22 +237,6 @@ def parse_time(value: str) -> int:
         return int(value[:-1]) * 86400
     else:
         return int(value) * 3600
-
-async def get_me_safe(client):
-    if client in CLONE_ME and CLONE_ME[client]:
-        return CLONE_ME[client]
-
-    while True:
-        try:
-            me = await client.get_me()
-            CLONE_ME[client] = me
-            return me
-        except FloodWait as e:
-            print(f"⏳ FloodWait: waiting {e.value}s for get_me()...")
-            await asyncio.sleep(e.value)
-        except Exception as ex:
-            print(f"⚠️ get_me() failed: {ex}")
-            return None
 
 async def is_admin(client, chat_id: int, user_id: int) -> bool:
     try:
