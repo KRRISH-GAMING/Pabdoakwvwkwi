@@ -7,7 +7,7 @@ from plugins.script import *
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-CHECK_PAYMENT = {}
+PAYMENT = {}
 SHORTEN_STATE = {}
 
 START_TIME = pytime.time()
@@ -612,12 +612,15 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 random.shuffle(shuffled_images)
                 image_to_send = shuffled_images[0]
 
-                await safe_action(clone_client.send_photo,
-                    chat_id=target_channel,
-                    photo=fresh.get("ap_image", None) or image_to_send,
-                    caption=text,
-                    parse_mode=enums.ParseMode.HTML
-                )
+                try:
+                    await safe_action(clone_client.send_photo,
+                        chat_id=target_channel,
+                        photo=fresh.get("ap_image", None) or image_to_send,
+                        caption=text,
+                        parse_mode=enums.ParseMode.HTML
+                    )
+                except Exception as e:
+                    message.reply_text("Failed to auto post please disable and enable again.")
 
                 if mode == "single":
                     await db.mark_media_posted(bot_id, item["_id"])
@@ -1389,7 +1392,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 now = datetime.utcnow()
 
                 matched_payment = None
-                for txn in CHECK_PAYMENT:
+                for txn in PAYMENT.values():
                     if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                         matched_payment = txn
                         break
@@ -1691,15 +1694,19 @@ async def message_capture(client: Client, message: Message):
                 txn_id = txn_match.group(1)
                 txn_time = datetime.utcnow()
 
-                CHECK_PAYMENT[txn_id] = {
+                PAYMENT[txn_id] = {
                     "amount": amount,
                     "txn_id": txn_id,
                     "time": txn_time
                 }
 
-                for p in list(CHECK_PAYMENT):
-                    if (txn_time - p["time"]).seconds > 300:
-                        CHECK_PAYMENT.remove(p)
+                expired_txns = []
+                for txn_id, info in list(PAYMENT.items()):
+                    if (txn_time - info["time"]).seconds > 300:
+                        expired_txns.append(txn_id)
+
+                for txn_id in expired_txns:
+                    del PAYMENT[txn_id]
 
             me = await get_me_safe(client)
             if not me:
