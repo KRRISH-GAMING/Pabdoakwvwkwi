@@ -3327,7 +3327,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             now = datetime.utcnow()
 
             matched_payment = None
-            for txn in CHECK_PAYMENT:
+            for txn in CHECK_PAYMENT.values():
                 if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                     matched_payment = txn
                     break
@@ -3868,9 +3868,13 @@ async def message_capture(client, message):
                     "time": txn_time
                 }
 
-                for p in list(CHECK_PAYMENT):
-                    if (txn_time - p["time"]).seconds > 300:
-                        CHECK_PAYMENT.remove(p)
+                expired_txns = []
+                for txn_id, info in list(CHECK_PAYMENT.items()):
+                    if (txn_time - info["time"]).seconds > 300:
+                        expired_txns.append(txn_id)
+
+                for txn_id in expired_txns:
+                    del CHECK_PAYMENT[txn_id]
     except Exception as e:
         await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
         print(f"⚠️ Unexpected Error in message_capture: {e}")
