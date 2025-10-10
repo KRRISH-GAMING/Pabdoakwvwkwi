@@ -3339,7 +3339,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
 
-                reply = await client.listen.Message(filters.user(user_id), timeout=120)
+                reply = await client.wait_for_message(filters.user(user_id), timeout=120)
                 txn_id = reply.text.strip()
 
                 if txn_id == matched_payment["txn_id"]:
