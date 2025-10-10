@@ -619,8 +619,11 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                         caption=text,
                         parse_mode=enums.ParseMode.HTML
                     )
-                except Exception as e:
-                    message.reply_text("Failed to auto post please disable and enable again.")
+                except:
+                    await safe_action(clone_client.send_message,
+                        owner_id,
+                        "Failed to auto post please disable and enable again."
+                    )
 
                 if mode == "single":
                     await db.mark_media_posted(bot_id, item["_id"])
@@ -1404,7 +1407,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
 
-                    reply = await client.listen.Message(filters.user(user_id), timeout=120)
+                    reply = await client.wait_for_message(filters.user(user_id), timeout=120)
                     txn_id = reply.text.strip()
 
                     if txn_id == matched_payment["txn_id"]:
@@ -1678,36 +1681,6 @@ async def message_capture(client: Client, message: Message):
                 
                 SHORTEN_STATE.pop(user_id, None)
         elif chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]:
-            if message.chat.id in [-1003178595762]:
-
-                text = message.text or ""
-                if "💰 Airtel Payment Received" not in text:
-                    return
-
-                amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
-                txn_match = re.search(r"Txn ID:\s*(\d+)", text)
-
-                if not (amount_match and txn_match):
-                    return
-
-                amount = float(amount_match.group(1))
-                txn_id = txn_match.group(1)
-                txn_time = datetime.utcnow()
-
-                PAYMENT[txn_id] = {
-                    "amount": amount,
-                    "txn_id": txn_id,
-                    "time": txn_time
-                }
-
-                expired_txns = []
-                for txn_id, info in list(PAYMENT.items()):
-                    if (txn_time - info["time"]).seconds > 300:
-                        expired_txns.append(txn_id)
-
-                for txn_id in expired_txns:
-                    del PAYMENT[txn_id]
-
             me = await get_me_safe(client)
             if not me:
                 return
@@ -1841,6 +1814,35 @@ async def message_capture(client: Client, message: Message):
                     )
                     print(f"✅ Saved media: {media_type} ({media_file_id}) for bot @{me.username}")
                     await asyncio.sleep(0.25)
+            if message.chat.id in [-1003178595762]:
+
+                text = message.text or ""
+                if "💰 Airtel Payment Received" not in text:
+                    return
+
+                amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
+                txn_match = re.search(r"Txn ID:\s*(\d+)", text)
+
+                if not (amount_match and txn_match):
+                    return
+
+                amount = float(amount_match.group(1))
+                txn_id = txn_match.group(1)
+                txn_time = datetime.utcnow()
+
+                PAYMENT[txn_id] = {
+                    "amount": amount,
+                    "txn_id": txn_id,
+                    "time": txn_time
+                }
+
+                expired_txns = []
+                for txn_id, info in list(PAYMENT.items()):
+                    if (txn_time - info["time"]).seconds > 300:
+                        expired_txns.append(txn_id)
+
+                for txn_id in expired_txns:
+                    del PAYMENT[txn_id]
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
