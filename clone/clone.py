@@ -1375,7 +1375,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await safe_action(query.answer)
             days = int(parts[-1])
-            price_list = {7: "₹1", 30: "₹149", 180: "₹749", 365: "₹1199"}
+            price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
             amount_expected = int(str(price).replace("₹", "").strip())
 
@@ -1411,7 +1411,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                     await safe_action(query.message.edit_text,
                         f"✅ Payment detected for ₹{amount_expected}!\n\n"
-                        "Please reply with your **Transaction ID (Txn ID)** to confirm your payment.",
+                        "Please send your **Transaction ID (Txn ID)** to confirm your payment.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
                 else:
@@ -1671,6 +1671,14 @@ async def message_capture(client: Client, message: Message):
                 callback_message = data["callback_message"]
 
                 if new_text == expected_txn:
+                    me = await get_me_safe(client)
+                    if not me:
+                        return
+
+                    clone = await db.get_clone(me.id)
+                    if not clone:
+                        return
+
                     premium_users = clone.get("premium_user", [])
                     normalized = []
 
