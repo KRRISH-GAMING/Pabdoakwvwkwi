@@ -7,7 +7,7 @@ from plugins.script import *
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-PAYMENT = {}
+CHECK_PAYMENT = {}
 SHORTEN_STATE = {}
 
 START_TIME = pytime.time()
@@ -1395,7 +1395,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 now = datetime.utcnow()
 
                 matched_payment = None
-                for txn in PAYMENT.values():
+                for txn in CHECK_PAYMENT.values():
                     if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                         matched_payment = txn
                         break
@@ -1830,19 +1830,19 @@ async def message_capture(client: Client, message: Message):
                 txn_id = txn_match.group(1)
                 txn_time = datetime.utcnow()
 
-                PAYMENT[txn_id] = {
+                CHECK_PAYMENT[txn_id] = {
                     "amount": amount,
                     "txn_id": txn_id,
                     "time": txn_time
                 }
 
                 expired_txns = []
-                for txn_id, info in list(PAYMENT.items()):
+                for old_txn, info in list(CHECK_PAYMENT.items()):
                     if (txn_time - info["time"]).seconds > 300:
-                        expired_txns.append(txn_id)
+                        expired_txns.append(old_txn)
 
-                for txn_id in expired_txns:
-                    del PAYMENT[txn_id]
+                for old_txn in expired_txns:
+                    del CHECK_PAYMENT[old_txn]
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
