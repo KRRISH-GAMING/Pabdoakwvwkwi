@@ -1657,13 +1657,20 @@ async def message_capture(client: Client, message: Message):
 
             # -------------------- CONFIRM TXN ID --------------------
             if user_id in CPENDING_TXN:
+                try:
+                    await safe_action(message.delete)
+                except:
+                    pass
+
+                new_text = message.text.strip() if message.text else ""
+
                 data = CPENDING_TXN[user_id]
                 expected_txn = data["txn_expected"]
                 days = data["days"]
                 price = data["price"]
                 callback_message = data["callback_message"]
 
-                if txn_id == expected_txn:
+                if new_text == expected_txn:
                     premium_users = clone.get("premium_user", [])
                     normalized = []
 
@@ -1858,10 +1865,11 @@ async def message_capture(client: Client, message: Message):
                     "time": txn_time
                 }
 
-                expired_txns = []
-                for old_txn, info in list(CPAYMENT_CACHE.items()):
-                    if (txn_time - info["time"]).seconds > 300:
-                        expired_txns.append(old_txn)
+                expired_txns = [
+                    old_txn
+                    for old_txn, info in CPAYMENT_CACHE.items()
+                    if (txn_time - info["time"]).seconds > 300
+                ]
 
                 for old_txn in expired_txns:
                     del CPAYMENT_CACHE[old_txn]
