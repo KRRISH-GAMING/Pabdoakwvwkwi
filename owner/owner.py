@@ -3829,13 +3829,20 @@ async def message_capture(client, message):
 
             # -------------------- CONFIRM TXN ID --------------------
             if user_id in MPENDING_TXN:
+                try:
+                    await safe_action(message.delete)
+                except:
+                    pass
+
+                new_text = message.text.strip() if message.text else ""
+
                 data = MPENDING_TXN[user_id]
                 expected_txn = data["txn_expected"]
                 feature_type = data["feature_type"]
                 amount_expected = data["amount_expected"]
                 callback_message = data["callback_message"]
 
-                if txn_id == expected_txn:
+                if new_text == expected_txn:
                     days = 30
                     plan_type = feature_type.lower().split()[0]
                     await db.add_premium_user(user_id, days, plan_type)
@@ -3867,6 +3874,7 @@ async def message_capture(client, message):
                 if "💰 Airtel Payment Received" not in text:
                     return
 
+                print("MPAYMENT_CACHE type:", type(MPAYMENT_CACHE))
                 amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
                 txn_match = re.search(r"Txn ID:\s*(\d+)", text)
 
