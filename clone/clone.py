@@ -7,7 +7,8 @@ from plugins.script import *
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-CHECK_PAYMENT = {}
+CPAYMENT_CACHE = {}
+CPENDING_TXN = {}
 SHORTEN_STATE = {}
 
 START_TIME = pytime.time()
@@ -1374,7 +1375,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await safe_action(query.answer)
             days = int(parts[-1])
-            price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
+            price_list = {7: "₹1", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
             amount_expected = int(str(price).replace("₹", "").strip())
 
@@ -1395,57 +1396,24 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 now = datetime.utcnow()
 
                 matched_payment = None
-                for txn in CHECK_PAYMENT.values():
+                for txn in CPAYMENT_CACHE.values():
                     if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                         matched_payment = txn
                         break
 
                 if matched_payment:
+                    CPENDING_TXN[query.from_user.id] = {
+                        "days": days,
+                        "price": price,
+                        "txn_expected": matched_payment["txn_id"],
+                        "callback_message": query.message
+                    }
+
                     await safe_action(query.message.edit_text,
                         f"✅ Payment detected for ₹{amount_expected}!\n\n"
                         "Please reply with your **Transaction ID (Txn ID)** to confirm your payment.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
-
-                    reply = await client.wait_for_message(filters.user(user_id), timeout=120)
-                    txn_id = reply.text.strip()
-
-                    if txn_id == matched_payment["txn_id"]:
-                        premium_users = clone.get("premium_user", [])
-                        normalized = []
-
-                        for pu in premium_users:
-                            if isinstance(pu, dict):
-                                uid = pu.get("user_id")
-                                expiry = pu.get("expiry", 0)
-                                if uid:
-                                    normalized.append({"user_id": int(uid), "expiry": expiry})
-                            else:
-                                normalized.append({"user_id": int(pu), "expiry": 0})
-
-                        normalized = [u for u in normalized if u["user_id"] != user_id]
-
-                        expiry = datetime.utcnow() + timedelta(days=days)
-                        normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
-
-                        await db.update_clone(me.id, {"premium_user": normalized})
-
-                        await safe_action(query.message.edit_text,
-                            f"✅ Payment confirmed!\n"
-                            f"Plan: **{days} days Premium**\n"
-                            f"💰 Amount: {price}\n"
-                            f"🧾 Txn ID: `{matched_payment['txn_id']}`\n"
-                            f"🎉 Premium activated successfully!",
-                            parse_mode=enums.ParseMode.MARKDOWN
-                        )
-                    else:
-                        await safe_action(query.message.edit_text,
-                            f"❌ Invalid Txn ID.\n"
-                            f"Expected: `{matched_payment['txn_id']}`\n"
-                            f"Entered: `{txn_id}`\n\n"
-                            "Please try again or contact admin.",
-                            parse_mode=enums.ParseMode.MARKDOWN
-                        )
                 else:
                     await safe_action(query.message.edit_text,
                         f"❌ No new payment found for ₹{amount_expected}.\n\n"
@@ -1627,59 +1595,113 @@ async def message_capture(client: Client, message: Message):
         user_id = message.from_user.id if message.from_user else None
 
         if chat.type == enums.ChatType.PRIVATE and user_id:
-            if user_id not in SHORTEN_STATE:
+            if not (
+                user_id in SHORTEN_STATE
+                or user_id in CPENDING_TXN
+            ):
                 return
 
-            state = SHORTEN_STATE[user_id]
+            # -------------------- SHORTEN LINK --------------------
+            if user_id in SHORTEN_STATE:
+                state = SHORTEN_STATE[user_id]
 
-            help_msg_id = state.get("help_msg_id")
-            if help_msg_id:
-                try:
-                    await safe_action(client.delete_messages, chat_id=message.chat.id, message_ids=help_msg_id)
-                except:
-                    pass
-                state.pop("help_msg_id", None)
+                help_msg_id = state.get("help_msg_id")
+                if help_msg_id:
+                    try:
+                        await safe_action(client.delete_messages, chat_id=message.chat.id, message_ids=help_msg_id)
+                    except:
+                        pass
+                    state.pop("help_msg_id", None)
 
-            if state["step"] == 1:
-                base_site = message.text.strip()
-                new_text = base_site.removeprefix("https://").removeprefix("http://")
-                if not domain(new_text):
-                    return await safe_action(message.reply_text, "❌ Invalid domain. Send a valid base site:", quote=True)
-                await clonedb.update_user_info(user_id, {"base_site": new_text})
-                state["step"] = 2
-                await safe_action(message.reply_text, "✅ Base site set. Now send your **Shortener API key**:", quote=True)
+                if state["step"] == 1:
+                    base_site = message.text.strip()
+                    new_text = base_site.removeprefix("https://").removeprefix("http://")
+                    if not domain(new_text):
+                        return await safe_action(message.reply_text, "❌ Invalid domain. Send a valid base site:", quote=True)
+                    await clonedb.update_user_info(user_id, {"base_site": new_text})
+                    state["step"] = 2
+                    await safe_action(message.reply_text, "✅ Base site set. Now send your **Shortener API key**:", quote=True)
+                    return
+
+                if state["step"] == 2:
+                    api = message.text.strip()
+                    await clonedb.update_user_info(user_id, {"shortener_api": api})
+                    state["step"] = 3
+                    await safe_action(message.reply_text, "✅ API set. Now send the **link to shorten**:", quote=True)
+                    return
+
+                if state["step"] == 3:
+                    long_link = message.text.strip()
+                    user = await clonedb.get_user(user_id)
+                    base_site = user.get("base_site")
+                    api_key = user.get("shortener_api")
+
+                    if not base_site or not api_key:
+                        SHORTEN_STATE[user_id] = {"step": 1}
+                        return await safe_action(message.reply_text, "❌ Base site or API missing. Let's start over.", quote=True)
+
+                    short_link = await get_short_link(user, long_link)
+
+                    reply_markup = InlineKeyboardMarkup(
+                        [[InlineKeyboardButton("🔁 Share URL", url=f"https://t.me/share/url?url={short_link}")]]
+                    )
+
+                    await safe_action(message.reply_text,
+                        f"🔗 Here is your shortened link:\n\n{short_link}",
+                        reply_markup=reply_markup,
+                        quote=True
+                    )
+                    
+                    SHORTEN_STATE.pop(user_id, None)
+                    return
+
+            # -------------------- CONFIRM TXN ID --------------------
+            if user_id in CPENDING_TXN:
+                data = CPENDING_TXN[user_id]
+                expected_txn = data["txn_expected"]
+                days = data["days"]
+                price = data["price"]
+                callback_message = data["callback_message"]
+
+                if txn_id == expected_txn:
+                    premium_users = clone.get("premium_user", [])
+                    normalized = []
+
+                    for pu in premium_users:
+                        if isinstance(pu, dict):
+                            uid = pu.get("user_id")
+                            expiry = pu.get("expiry", 0)
+                            if uid:
+                                normalized.append({"user_id": int(uid), "expiry": expiry})
+                        else:
+                            normalized.append({"user_id": int(pu), "expiry": 0})
+
+                    normalized = [u for u in normalized if u["user_id"] != user_id]
+
+                    expiry = datetime.utcnow() + timedelta(days=days)
+                    normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
+
+                    await db.update_clone(me.id, {"premium_user": normalized})
+
+                    await safe_action(callback_message.edit_text,
+                        f"✅ Payment confirmed!\n"
+                        f"Plan: **{days} days Premium**\n"
+                        f"💰 Amount: {price}\n"
+                        f"🧾 Txn ID: `{matched_payment['txn_id']}`\n"
+                        f"🎉 Premium activated successfully!",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+                else:
+                    await safe_action(callback_message.edit_text,
+                        f"❌ Invalid Txn ID.\n"
+                        f"Expected: `{matched_payment['txn_id']}`\n"
+                        f"Entered: `{txn_id}`\n\n"
+                        "Please try again or contact admin.",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+
+                del CPENDING_TXN[user_id]
                 return
-
-            if state["step"] == 2:
-                api = message.text.strip()
-                await clonedb.update_user_info(user_id, {"shortener_api": api})
-                state["step"] = 3
-                await safe_action(message.reply_text, "✅ API set. Now send the **link to shorten**:", quote=True)
-                return
-
-            if state["step"] == 3:
-                long_link = message.text.strip()
-                user = await clonedb.get_user(user_id)
-                base_site = user.get("base_site")
-                api_key = user.get("shortener_api")
-
-                if not base_site or not api_key:
-                    SHORTEN_STATE[user_id] = {"step": 1}
-                    return await safe_action(message.reply_text, "❌ Base site or API missing. Let's start over.", quote=True)
-
-                short_link = await get_short_link(user, long_link)
-
-                reply_markup = InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("🔁 Share URL", url=f"https://t.me/share/url?url={short_link}")]]
-                )
-
-                await safe_action(message.reply_text,
-                    f"🔗 Here is your shortened link:\n\n{short_link}",
-                    reply_markup=reply_markup,
-                    quote=True
-                )
-                
-                SHORTEN_STATE.pop(user_id, None)
         elif chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]:
             me = await get_me_safe(client)
             if not me:
@@ -1830,19 +1852,19 @@ async def message_capture(client: Client, message: Message):
                 txn_id = txn_match.group(1)
                 txn_time = datetime.utcnow()
 
-                CHECK_PAYMENT[txn_id] = {
+                CPAYMENT_CACHE[txn_id] = {
                     "amount": amount,
                     "txn_id": txn_id,
                     "time": txn_time
                 }
 
                 expired_txns = []
-                for old_txn, info in list(CHECK_PAYMENT.items()):
+                for old_txn, info in list(CPAYMENT_CACHE.items()):
                     if (txn_time - info["time"]).seconds > 300:
                         expired_txns.append(old_txn)
 
                 for old_txn in expired_txns:
-                    del CHECK_PAYMENT[old_txn]
+                    del CPAYMENT_CACHE[old_txn]
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
