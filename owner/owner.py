@@ -7,8 +7,8 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
-CONFIRM_PAYMENT = {}
-CHECK_PAYMENT = {}
+MPAYMENT_CACHE = {}
+MPENDING_TXN = {}
 CLONE_TOKEN = {}
 START_TEXT = {}
 START_PHOTO = {}
@@ -3327,44 +3327,24 @@ async def cb_handler(client: Client, query: CallbackQuery):
             now = datetime.utcnow()
 
             matched_payment = None
-            for txn in CHECK_PAYMENT.values():
+            for txn in MPAYMENT_CACHE.values():
                 if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
                     matched_payment = txn
                     break
 
             if matched_payment:
+                MPENDING_TXN[query.from_user.id] = {
+                    "feature_type": feature_type,
+                    "amount_expected": amount_expected,
+                    "txn_expected": matched_payment["txn_id"],
+                    "callback_message": query.message
+                }
+
                 await safe_action(query.message.edit_text,
                     f"✅ Payment detected for ₹{amount_expected}!\n\n"
-                    "Please reply with your **Transaction ID (Txn ID)** to confirm your payment.",
+                    "Please send your **Transaction ID (Txn ID)** to confirm your payment.",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
-
-                reply = await client.wait_for_message(filters.user(int(user_id)), timeout=120)
-                txn_id = reply.text.strip()
-
-                if txn_id == matched_payment["txn_id"]:
-                    days = 30
-                    expiry_date = datetime.utcnow() + timedelta(days=days)
-                    plan_type = feature_type.lower().split()[0]
-                    await db.add_premium_user(user_id, days, plan_type)
-
-                    await safe_action(query.message.edit_text,
-                        f"✅ Payment confirmed!\n"
-                        f"Feature: **{feature_type}**\n"
-                        f"💰 Amount: ₹{amount_expected}\n"
-                        f"🧾 Txn ID: `{matched_payment['txn_id']}`\n"
-                        f"📅 Plan Validity: {days} days\n\n"
-                        f"🎉 Premium activated successfully!",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-                else:
-                    await safe_action(query.message.edit_text,
-                        f"❌ Invalid Txn ID.\n"
-                        f"Expected: `{matched_payment['txn_id']}`\n"
-                        f"Entered: `{txn_id}`\n\n"
-                        "Please try again or contact admin.",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
             else:
                 await safe_action(query.message.edit_text,
                     f"❌ No new payment found for ₹{amount_expected}.\n\n"
@@ -3421,6 +3401,7 @@ async def message_capture(client, message):
                 or user_id in AD_TIME
                 or user_id in AD_MESSAGE
                 or user_id in ADD_MODERATOR
+                or user_id in MPENDING_TXN
             ):
                 return
 
@@ -3845,6 +3826,40 @@ async def message_capture(client, message):
 
                 AUTO_POST.pop(user_id, None)
                 return
+
+            # -------------------- CONFIRM TXN ID --------------------
+            if user_id in MPENDING_TXN:
+                data = MPENDING_TXN[user_id]
+                expected_txn = data["txn_expected"]
+                feature_type = data["feature_type"]
+                amount_expected = data["amount_expected"]
+                callback_message = data["callback_message"]
+
+                if txn_id == expected_txn:
+                    days = 30
+                    plan_type = feature_type.lower().split()[0]
+                    await db.add_premium_user(user_id, days, plan_type)
+
+                    await safe_action(callback_message.edit_text,
+                        f"✅ Payment confirmed!\n"
+                        f"Feature: **{feature_type}**\n"
+                        f"💰 Amount: ₹{amount_expected}\n"
+                        f"🧾 Txn ID: `{expected_txn}`\n"
+                        f"📅 Plan Validity: {days} days\n\n"
+                        f"🎉 Premium activated successfully!",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+                else:
+                    await safe_action(callback_message.edit_text,
+                        f"❌ Invalid Txn ID.\n"
+                        f"Expected: `{expected_txn}`\n"
+                        f"Entered: `{txn_id}`\n\n"
+                        "Please try again or contact admin.",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+
+                del MPENDING_TXN[user_id]
+                return
         elif chat and (chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]):
             if message.chat.id in [-1003178595762]:
 
@@ -3862,19 +3877,19 @@ async def message_capture(client, message):
                 txn_id = txn_match.group(1)
                 txn_time = datetime.utcnow()
 
-                CHECK_PAYMENT[txn_id] = {
+                MPAYMENT_CACHE[txn_id] = {
                     "amount": amount,
                     "txn_id": txn_id,
                     "time": txn_time
                 }
 
                 expired_txns = []
-                for old_txn, info in list(CHECK_PAYMENT.items()):
+                for old_txn, info in list(MPAYMENT_CACHE.items()):
                     if (txn_time - info["time"]).seconds > 300:
                         expired_txns.append(old_txn)
 
                 for old_txn in expired_txns:
-                    del CHECK_PAYMENT[old_txn]
+                    del MPAYMENT_CACHE[old_txn]
     except Exception as e:
         await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
         print(f"⚠️ Unexpected Error in message_capture: {e}")
