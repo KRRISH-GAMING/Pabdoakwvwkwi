@@ -3312,7 +3312,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data.startswith("paid_"):
             await safe_action(query.answer)
             feature_type = data.replace("paid_", "").replace("_", " ")
-            amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
+            amount_expected = 1 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
 
             await safe_action(query.message.edit_text,
                 text=(
