@@ -3874,7 +3874,6 @@ async def message_capture(client, message):
                 if "💰 Airtel Payment Received" not in text:
                     return
 
-                print("MPAYMENT_CACHE type:", type(MPAYMENT_CACHE))
                 amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
                 txn_match = re.search(r"Txn ID:\s*(\d+)", text)
 
@@ -3891,10 +3890,11 @@ async def message_capture(client, message):
                     "time": txn_time
                 }
 
-                expired_txns = []
-                for old_txn, info in list(MPAYMENT_CACHE.items()):
-                    if (txn_time - info["time"]).seconds > 300:
-                        expired_txns.append(old_txn)
+                expired_txns = [
+                    old_txn
+                    for old_txn, info in MPAYMENT_CACHE.items()
+                    if (txn_time - info["time"]).seconds > 300
+                ]
 
                 for old_txn in expired_txns:
                     del MPAYMENT_CACHE[old_txn]
