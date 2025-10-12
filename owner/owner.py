@@ -3339,7 +3339,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
 
-                reply = await client.wait_for_message(filters.user(user_id), timeout=120)
+                reply = await client.wait_for_message(filters.user(int(user_id)), timeout=120)
                 txn_id = reply.text.strip()
 
                 if txn_id == matched_payment["txn_id"]:
@@ -3869,12 +3869,12 @@ async def message_capture(client, message):
                 }
 
                 expired_txns = []
-                for txn_id, info in list(CHECK_PAYMENT.items()):
+                for old_txn, info in list(CHECK_PAYMENT.items()):
                     if (txn_time - info["time"]).seconds > 300:
-                        expired_txns.append(txn_id)
+                        expired_txns.append(old_txn)
 
-                for txn_id in expired_txns:
-                    del CHECK_PAYMENT[txn_id]
+                for old_txn in expired_txns:
+                    del CHECK_PAYMENT[old_txn]
     except Exception as e:
         await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
         print(f"⚠️ Unexpected Error in message_capture: {e}")
