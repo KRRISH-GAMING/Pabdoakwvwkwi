@@ -33,7 +33,7 @@ async def safe_action(coro_func, *args, **kwargs):
             if "MESSAGE_NOT_MODIFIED" not in str(e) and "MESSAGE_ID_INVALID" not in str(e) and "QUERY_ID_INVALID" not in str(e) and "MESSAGE_DELETE_FORBIDDEN" not in str(e):
                 raise
             if "INPUT_USER_DEACTIVATED" in str(e):
-                print(f"⚠️ User {user_id} account is deleted. Skipping batch...")
+                print(f"⚠️ User account is deleted. Skipping...")
                 return
             try:
                 await coro_func(
