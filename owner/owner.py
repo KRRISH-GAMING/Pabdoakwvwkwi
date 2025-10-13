@@ -639,7 +639,7 @@ async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int
                 buttons.append(nav_buttons)
 
         is_vip = await db.is_premium(user_id, required_plan="vip")
-        if is_vip or not clones:
+        if is_admin or is_vip or not clones:
             buttons.append([InlineKeyboardButton("➕ Add Clone", callback_data="add_clone")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="start")])
