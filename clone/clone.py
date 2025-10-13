@@ -1702,15 +1702,15 @@ async def message_capture(client: Client, message: Message):
                         f"✅ Payment confirmed!\n"
                         f"Plan: **{days} days Premium**\n"
                         f"💰 Amount: {price}\n"
-                        f"🧾 Txn ID: `{matched_payment['txn_id']}`\n"
+                        f"🧾 Txn ID: `{expected_txn}`\n"
                         f"🎉 Premium activated successfully!",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
                 else:
                     await safe_action(callback_message.edit_text,
                         f"❌ Invalid Txn ID.\n"
-                        f"Expected: `{matched_payment['txn_id']}`\n"
-                        f"Entered: `{txn_id}`\n\n"
+                        f"Expected: `{expected_txn}`\n"
+                        f"Entered: `{new_text}`\n\n"
                         "Please try again or contact admin.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
