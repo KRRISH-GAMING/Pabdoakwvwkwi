@@ -3872,7 +3872,7 @@ async def message_capture(client, message):
                     await safe_action(callback_message.edit_text,
                         f"❌ Invalid Txn ID.\n"
                         f"Expected: `{expected_txn}`\n"
-                        f"Entered: `{txn_id}`\n\n"
+                        f"Entered: `{new_text}`\n\n"
                         "Please try again or contact admin.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
