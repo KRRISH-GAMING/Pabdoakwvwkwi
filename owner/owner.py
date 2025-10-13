@@ -753,9 +753,10 @@ async def show_button_menu(client, message, bot_id):
                       InlineKeyboardButton("❌", callback_data=f"noop")]
                 )
 
+        is_admin = owner_id in ADMINS
         is_premium_user = await db.is_premium(owner_id)
 
-        if is_premium_user or len(buttons_data) < 3:
+        if is_admin or is_premium_user or len(buttons_data) < 3:
             buttons.append([InlineKeyboardButton("➕ Add Button", callback_data=f"add_button_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"start_message_{bot_id}")])
@@ -853,9 +854,10 @@ async def show_fsub_menu(client, message, bot_id):
 
         await db.update_clone(bot_id, {"force_subscribe": new_fsub_data})
 
+        is_admin = owner_id in ADMINS
         is_premium_user = await db.is_premium(owner_id)
 
-        if is_premium_user or len(fsub_data) < 4:
+        if is_admin or is_premium_user or len(fsub_data) < 4:
             buttons.append([InlineKeyboardButton("➕ Add Channel", callback_data=f"add_fsub_{bot_id}")])
 
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
@@ -1307,8 +1309,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 [InlineKeyboardButton("⬅️ Back", callback_data="clone")]
             ]
 
+            is_admin = user_id in ADMINS
             premium_user = await db.get_premium_user(user_id)
-            if premium_user:
+            if is_admin:
+                premium_status = "N/A"
+                plan_type = "N/A"
+                expiry_str = "N/A"
+            elif premium_user:
                 expiry_time = premium_user.get("expiry_time")
                 plan_type = premium_user.get("plan_type", "normal")
                 if expiry_time and expiry_time > datetime.utcnow():
@@ -1807,8 +1814,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                is_admin = user_id in ADMINS
                 user_data = await db.is_premium(user_id)
-                if not user_data:
+                if not is_admin or not user_data:
                     return await safe_action(query.answer,
                         "🚫 This feature is for premium users only.\n\n"
                         "Contact admin to upgrade.",
@@ -2008,8 +2016,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                is_admin = user_id in ADMINS
+                user_data = await db.is_premium(user_id)
                 fsub_data = clone.get("force_subscribe", [])
-                if not await db.is_premium(user_id):
+                if not is_admin or not user_data:
                     if len(fsub_data) >= 4:
                         return await safe_action(query.answer, "❌ You can only add up to 4 channel.", show_alert=True)
 
@@ -2324,8 +2334,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                is_admin = user_id in ADMINS
                 user_data = await db.get_premium_user(user_id)
-                if not user_data:
+                if not is_admin or not user_data:
                     return await safe_action(query.answer,
                         "🚫 This feature is for premium users only.\n\n"
                         "Contact admin to upgrade.",
@@ -2334,7 +2345,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 plan_type = user_data.get("plan_type", "normal")
 
-                if plan_type not in ["ultra", "vip"]:
+                if not is_admin or plan_type not in ["ultra", "vip"]:
                     return await safe_action(query.answer,
                         "🚫 This feature is available only for ultra & vip premium users.\n\n"
                         "Upgrade to access.",
@@ -2570,8 +2581,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 if not active:
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
+                is_admin = user_id in ADMINS
                 user_data = await db.is_premium(user_id)
-                if not user_data:
+                if not is_admin or not user_data:
                     return await safe_action(query.answer,
                         "🚫 This feature is for premium users only.\n\n"
                         "Contact admin to upgrade.",
