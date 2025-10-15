@@ -62,37 +62,6 @@ async def get_me_safe(client):
             print(f"⚠️ get_me() failed: {ex}")
             return None
 
-async def is_subscribedx(client, query):
-    if REQUEST_TO_JOIN_MODE == True and JoinReqs().isActive():
-        try:
-            user = await JoinReqs().get_user(query.from_user.id)
-            if user and user["user_id"] == query.from_user.id:
-                return True
-            else:
-                try:
-                    user_data = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-                except UserNotParticipant:
-                    pass
-                except Exception as e:
-                    logger.exception(e)
-                else:
-                    if user_data.status != enums.ChatMemberStatus.BANNED:
-                        return True
-        except Exception as e:
-            logger.exception(e)
-            return False
-    else:
-        try:
-            user = await client.get_chat_member(AUTH_CHANNEL, query.from_user.id)
-        except UserNotParticipant:
-            pass
-        except Exception as e:
-            logger.exception(e)
-        else:
-            if user.status != enums.ChatMemberStatus.BANNED:
-                return True
-        return False
-
 def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     upi_url = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&cu=INR"
     qr = qrcode.QRCode(version=1, box_size=10, border=4)

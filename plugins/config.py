@@ -38,10 +38,6 @@ try:
     # Channel Information
     LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1002937162790"))
 
-    # auth_channel means force subscribe channel.
-    # if REQUEST_TO_JOIN_MODE is true then force subscribe work like request to join fsub, else if false then work like normal fsub.
-    REQUEST_TO_JOIN_MODE = bool(os.environ.get("REQUEST_TO_JOIN_MODE", True)) # Set True Or False
-
     # This Is Force Subscribe Channel, also known as Auth Channel 
     auth_channel = os.environ.get("AUTH_CHANNEL", "-1002829948273") # give your force subscribe channel id here else leave it blank
     AUTH_CHANNEL = int(auth_channel) if auth_channel and id_pattern.search(auth_channel) else None
