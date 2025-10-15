@@ -173,7 +173,7 @@ async def start(client, message):
                 invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL), creates_join_request=True)
             except:
                 await safe_action(message.reply_text,
-                    "Make Sure I Am Admin In Your Channel"
+                    "Make Sure I Am Admin In Your Channel.",
                     quote=True
                 )
                 return
