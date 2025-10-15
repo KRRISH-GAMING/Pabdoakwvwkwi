@@ -614,17 +614,20 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 image_to_send = shuffled_images[0]
 
                 try:
-                    await safe_action(clone_client.send_photo,
-                        chat_id=target_channel,
-                        photo=fresh.get("ap_image", None) or image_to_send,
-                        caption=text,
-                        parse_mode=enums.ParseMode.HTML
-                    )
+                    await client.get_chat_member(AUTH_CHANNEL, user_id)
                 except:
-                    await safe_action(clone_client.send_message,
-                        owner_id,
-                        "Failed to auto post please disable and enable again."
-                    )
+                    try:
+                        await safe_action(clone_client.send_photo,
+                            chat_id=target_channel,
+                            photo=fresh.get("ap_image", None) or image_to_send,
+                            caption=text,
+                            parse_mode=enums.ParseMode.HTML
+                        )
+                    except:
+                        await safe_action(clone_client.send_message,
+                            owner_id,
+                            "❌ Failed to auto post please disable and enable again.\n\n⚠️ Make sure I'm admin in your channel."
+                        )
 
                 if mode == "single":
                     await db.mark_media_posted(bot_id, item["_id"])
