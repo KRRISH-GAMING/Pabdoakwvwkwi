@@ -1824,7 +1824,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 is_admin = user_id in ADMINS
                 user_data = await db.is_premium(user_id)
-                if not is_admin or not user_data:
+                if not is_admin and not user_data:
                     return await safe_action(query.answer,
                         "🚫 This feature is for premium users only.\n\n"
                         "Contact admin to upgrade.",
@@ -2027,7 +2027,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 is_admin = user_id in ADMINS
                 user_data = await db.is_premium(user_id)
                 fsub_data = clone.get("force_subscribe", [])
-                if not is_admin or not user_data:
+                if not is_admin and not user_data:
                     if len(fsub_data) >= 4:
                         return await safe_action(query.answer, "❌ You can only add up to 4 channel.", show_alert=True)
 
@@ -2591,7 +2591,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
                 is_admin = user_id in ADMINS
                 user_data = await db.is_premium(user_id)
-                if not is_admin or not user_data:
+                if not is_admin and not user_data:
                     return await safe_action(query.answer,
                         "🚫 This feature is for premium users only.\n\n"
                         "Contact admin to upgrade.",
