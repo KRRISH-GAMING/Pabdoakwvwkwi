@@ -7,6 +7,8 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
+PENDING_USERS = set()
+
 MPAYMENT_CACHE = {}
 MPENDING_TXN = {}
 CLONE_TOKEN = {}
@@ -165,6 +167,10 @@ async def start(client, message):
                 LOG_CHANNEL,
                 script.LOG_TEXT.format(user_id, mention, username)
             )
+
+        if user_id in PENDING_USERS:
+            PENDING_USERS.remove(user_id)
+            return
 
         try:
             await client.get_chat_member(AUTH_CHANNEL, user_id)
@@ -3915,6 +3921,23 @@ async def message_capture(client, message):
                 for old_txn in expired_txns:
                     del MPAYMENT_CACHE[old_txn]
     except Exception as e:
-        await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
         print(f"⚠️ Unexpected Error in message_capture: {e}")
+        print(traceback.format_exc())
+
+@Client.on_chat_join_request()
+async def on_join_request(client, request):
+    try:
+        if request.chat.id == AUTH_CHANNEL:
+            user_id = request.from_user.id
+            PENDING_USERS.add(user_id)
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ on_join_request Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ on_join_request Error: {e}")
         print(traceback.format_exc())
