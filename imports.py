@@ -22,7 +22,6 @@ import imaplib
 import email
 import requests
 import base64
-import json
 
 # OS & Path
 import os
