@@ -7,8 +7,6 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
-PENDING_USERS = set()
-
 MPAYMENT_CACHE = {}
 MPENDING_TXN = {}
 CLONE_TOKEN = {}
@@ -168,11 +166,6 @@ async def start(client, message):
                 script.LOG_TEXT.format(user_id, mention, username)
             )
 
-        if user_id in PENDING_USERS:
-            print(PENDING_USERS)
-            PENDING_USERS.remove(user_id)
-            return
-
         try:
             await client.get_chat_member(AUTH_CHANNEL, user_id)
         except:
@@ -194,21 +187,21 @@ async def start(client, message):
                 quote=True
             )
 
-        if len(message.command) == 1:
-            buttons = [
-                [
-                    InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
-                    InlineKeyboardButton("😊 About", callback_data="about")
-                ],
-                [InlineKeyboardButton("🤖 Create Your Own Clone", callback_data="clone")],
-                [InlineKeyboardButton("🌟 Buy Premium", callback_data="premium")],
-                [InlineKeyboardButton("🔒 Close", callback_data="close")]
-            ]
-            return await safe_action(message.reply_text,
-                script.START_TXT.format(user=message.from_user.mention, bot=me.mention),
-                reply_markup=InlineKeyboardMarkup(buttons),
-                quote=True
-            )
+        buttons = [
+            [
+                InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
+                InlineKeyboardButton("😊 About", callback_data="about")
+            ],
+            [InlineKeyboardButton("🤖 Create Your Own Clone", callback_data="clone")],
+            [InlineKeyboardButton("🌟 Buy Premium", callback_data="premium")],
+            [InlineKeyboardButton("🔒 Close", callback_data="close")]
+        ]
+
+        return await safe_action(message.reply_text,
+            script.START_TXT.format(user=message.from_user.mention, bot=me.mention),
+            reply_markup=InlineKeyboardMarkup(buttons),
+            quote=True
+        )
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -3927,22 +3920,4 @@ async def message_capture(client, message):
             f"⚠️ Unexpected Error in message_capture:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Unexpected Error in message_capture: {e}")
-        print(traceback.format_exc())
-
-@Client.on_chat_join_request()
-async def on_join_request(client, request):
-    try:
-        user_id = request.from_user.id
-        chat_id = request.chat.id
-        if chat_id == int(AUTH_CHANNEL):
-            print(chat_id)
-            print(AUTH_CHANNEL)
-            user_id = request.from_user.id
-            PENDING_USERS.add(user_id)
-    except Exception as e:
-        await safe_action(client.send_message,
-            LOG_CHANNEL,
-            f"⚠️ on_join_request Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ on_join_request Error: {e}")
         print(traceback.format_exc())
