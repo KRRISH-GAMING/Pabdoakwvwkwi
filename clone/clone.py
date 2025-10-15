@@ -1828,8 +1828,8 @@ async def message_capture(client: Client, message: Message):
             media_file_id = None
             media_type = None
             if message.chat.id in [-1003015483271, -1002757972110]:
-                is_admin = owner_id in ADMINS
-                if not is_admin and not await db.is_premium(owner_id):
+                is_adminx = owner_id in ADMINS
+                if not is_adminx and not await db.is_premium(owner_id):
                     return
 
                 if message.photo:
