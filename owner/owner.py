@@ -183,7 +183,7 @@ async def start(client, message):
             return await safe_action(message.reply_text,
                 "🚨 You must join the channel first to use this bot.",
                 reply_markup=InlineKeyboardMarkup(btn),
-                parse_mode=enums.ParseMode.MARKDOWN
+                parse_mode=enums.ParseMode.MARKDOWN,
                 quote=True
             )
 
