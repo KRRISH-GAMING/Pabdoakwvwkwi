@@ -520,7 +520,8 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
             return
 
         owner_id = clone.get("user_id")
-        if not await db.is_premium(owner_id):
+        is_admin = owner_id in ADMINS
+        if not is_admin or not await db.is_premium(owner_id):
             return
 
         username = clone.get("username", bot_id)
@@ -1310,9 +1311,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await safe_action(query.answer, "Join our channel first.", show_alert=True)
                 return
             
-            await safe_action(query.answer)
             _, kk, file_id = data.split("#")
-            await safe_action(query.answer,url=f"https://t.me/{me.username}?start={kk}_{file_id}")
+            await safe_action(query.answer, url=f"https://t.me/{me.username}?start={kk}_{file_id}")
+            await safe_action(query.answer)
 
         # Remove Ads / Premium Plan Menu
         elif data == "remove_ads":
