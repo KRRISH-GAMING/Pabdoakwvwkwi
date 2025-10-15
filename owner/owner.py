@@ -3934,7 +3934,7 @@ async def on_join_request(client, request):
     try:
         user_id = request.from_user.id
         chat_id = request.chat.id
-        if chat_id == AUTH_CHANNEL:
+        if chat_id == int(AUTH_CHANNEL):
             print(chat_id)
             print(AUTH_CHANNEL)
             user_id = request.from_user.id
