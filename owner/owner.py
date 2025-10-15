@@ -153,11 +153,11 @@ async def start(client, message):
         if not me:
             return
 
-        user_id=message.from_user.id
-        first_name=message.from_user.first_name
-        last_name=message.from_user.last_name
-        mention=message.from_user.mention
-        username=message.from_user.username
+        user_id = message.from_user.id
+        first_name = message.from_user.first_name
+        last_name = message.from_user.last_name
+        mention = message.from_user.mention
+        username = message.from_user.username
 
         if not await db.is_user_exist(user_id):
             await db.add_user(user_id, first_name)
@@ -166,22 +166,26 @@ async def start(client, message):
                 script.LOG_TEXT.format(user_id, mention, username)
             )
 
-        if AUTH_CHANNEL and not await is_subscribedx(client, message):
-            await asyncio.sleep(2)
-            if not await is_subscribedx(client, message):
-                if REQUEST_TO_JOIN_MODE:
-                    invite_link = await client.create_chat_invite_link(chat_id=int(AUTH_CHANNEL), creates_join_request=True)
-                else:
-                    invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL))
-
-                btn = [[InlineKeyboardButton("🔔 Join Channel", url=invite_link.invite_link)]]
-
-                return await safe_action(client.send_message,
-                    user_id,
-                    "🚨 You must join the channel first to use this bot.",
-                    reply_markup=InlineKeyboardMarkup(btn),
-                    parse_mode=enums.ParseMode.MARKDOWN
+        try:
+            await client.get_chat_member(AUTH_CHANNEL, user_id)
+        except:
+            try:
+                invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL), creates_join_request=True)
+            except:
+                await safe_action(message.reply_text,
+                    "Make Sure I Am Admin In Your Channel"
+                    quote=True
                 )
+                return
+
+            btn = [[InlineKeyboardButton("🔔 Join Channel", url=invite_link.invite_link)]]
+
+            return await safe_action(message.reply_text,
+                "🚨 You must join the channel first to use this bot.",
+                reply_markup=InlineKeyboardMarkup(btn),
+                parse_mode=enums.ParseMode.MARKDOWN
+                quote=True
+            )
 
         if len(message.command) == 1:
             buttons = [
