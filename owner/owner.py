@@ -169,6 +169,7 @@ async def start(client, message):
             )
 
         if user_id in PENDING_USERS:
+            print(PENDING_USERS)
             PENDING_USERS.remove(user_id)
             return
 
@@ -179,7 +180,7 @@ async def start(client, message):
                 invite_link = await client.create_chat_invite_link(int(AUTH_CHANNEL), creates_join_request=True)
             except:
                 await safe_action(message.reply_text,
-                    "Make Sure I Am Admin In Your Channel.",
+                    "⚠️ Make sure I'm admin in your channel.",
                     quote=True
                 )
                 return
@@ -3931,7 +3932,11 @@ async def message_capture(client, message):
 @Client.on_chat_join_request()
 async def on_join_request(client, request):
     try:
-        if request.chat.id == AUTH_CHANNEL:
+        user_id = request.from_user.id
+        chat_id = request.chat.id
+        if chat_id == AUTH_CHANNEL:
+            print(chat_id)
+            print(AUTH_CHANNEL)
             user_id = request.from_user.id
             PENDING_USERS.add(user_id)
     except Exception as e:
