@@ -222,7 +222,7 @@ async def help(client, message):
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
 
-"""@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
+@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
     try:
         ask_id = await safe_action(client.ask,
@@ -376,7 +376,7 @@ async def check_premium(client, message):
             f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Check Premium Error: {e}")
-        print(traceback.format_exc())"""
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
@@ -649,7 +649,11 @@ async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int
         buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="start")])
 
         premium_user = await db.get_premium_user(user_id)
-        if premium_user:
+        if is_admin:
+            premium_status = "N/A"
+            plan_type = "N/A"
+            expiry_str = "N/A"
+        elif premium_user:
             expiry_time = premium_user.get("expiry_time")
             plan_type = premium_user.get("plan_type", "normal")
             if expiry_time and expiry_time > datetime.utcnow():
