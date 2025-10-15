@@ -521,7 +521,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
         owner_id = clone.get("user_id")
         is_admin = owner_id in ADMINS
-        if not is_admin or not await db.is_premium(owner_id):
+        if not is_admin and not await db.is_premium(owner_id):
             return
 
         username = clone.get("username", bot_id)
