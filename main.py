@@ -252,7 +252,7 @@ async def start():
     await assistant.start()
     logger.info(f"Assistant {(await assistant.get_me()).username} started")
 
-    load_plugins()
+    #load_plugins()
     await initialize_clients()
     #await start_web_server()
     await restart_bots()
