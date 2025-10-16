@@ -229,7 +229,7 @@ async def help(client, message):
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
 
-"""@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
+@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
     try:
         ask_id = await safe_action(client.ask,
@@ -383,7 +383,7 @@ async def check_premium(client, message):
             f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Check Premium Error: {e}")
-        print(traceback.format_exc())"""
+        print(traceback.format_exc())
 
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
@@ -509,28 +509,6 @@ async def stats(client, message):
             f"⚠️ Stats Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Stats Error: {e}")
-        print(traceback.format_exc())
-
-@Client.on_message(filters.command("restart") & filters.private & filters.user(ADMINS))
-async def restart(client, message):
-    try:
-
-        msg = await safe_action(message.reply_text, f"🔄 Restarting the server...\n[░░░░░░░░░░] 0%", quote=True)
-
-        for i in range(1, 11):
-            await asyncio.sleep(0.5)
-            bar = '▓' * i + '░' * (10 - i)
-            await safe_action(msg.edit_text, f"🔄 Restarting the server...\n[{bar}] {i*10}%")
-
-        await safe_action(msg.edit_text, f"✅ Server restarted successfully!")
-
-        os.execl(sys.executable, sys.executable, *sys.argv)
-    except Exception as e:
-        await safe_action(client.send_message,
-            LOG_CHANNEL,
-            f"⚠️ Restart Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Restart Error: {e}")
         print(traceback.format_exc())
 
 @Client.on_message(filters.command("contact") & filters.private)
