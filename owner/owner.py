@@ -2098,7 +2098,7 @@ async def cb_handler(client, query):
 
                 is_admin = user_id in ADMINS
                 user_data = await db.get_premium_user(user_id)
-                if not is_admin or not user_data:
+                if not is_admin and not user_data:
                     return await safe_action(query.answer,
                         "🚫 This feature is for premium users only.\n\n"
                         "Contact admin to upgrade.",
@@ -2107,7 +2107,7 @@ async def cb_handler(client, query):
 
                 plan_type = user_data.get("plan_type", "normal")
 
-                if not is_admin or plan_type not in ["ultra", "vip"]:
+                if not is_admin and plan_type not in ["ultra", "vip"]:
                     return await safe_action(query.answer,
                         "🚫 This feature is available only for ultra & vip premium users.\n\n"
                         "Upgrade to access.",
