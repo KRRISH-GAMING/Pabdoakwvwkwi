@@ -213,12 +213,12 @@ async def restart_bots():
     await asyncio.gather(*tasks)
     print("✅ All clone bots processed for restart.")
 
-async def auto_restart_loop():
+"""async def auto_restart_loop():
     while True:
         print("🔁 Starting scheduled bot restart...")
         await restart_bots()
         print("🕗 Sleeping for 8 hours before next restart...\n")
-        await asyncio.sleep(8 * 60 * 60)
+        await asyncio.sleep(8 * 60 * 60)"""
 
 """async def init_auto_deletes(client, db: Database):
     scheduled = await db.get_all_scheduled_deletes()
@@ -255,9 +255,9 @@ async def start():
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    #await restart_bots()
+    await restart_bots()
 
-    asyncio.create_task(auto_restart_loop())
+    #asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
