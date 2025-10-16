@@ -94,10 +94,6 @@ async def set_auto_menu(client):
         owner_cmds = [
             BotCommand("start", "Check I am alive"),
             BotCommand("help", "View help menu"),
-            BotCommand("addpremium", "Add a premium user"),
-            BotCommand("remove_premium", "Remove a premium user"),
-            BotCommand("list_premium", "Show all premium users"),
-            BotCommand("check_premium", "Check premium user"),
             BotCommand("broadcast", "Broadcast a message to users"),
             BotCommand("stats", "View bot statistics"),
             BotCommand("restart", "Restart a server"),
@@ -193,9 +189,20 @@ async def start(client, message):
                 InlineKeyboardButton("😊 About", callback_data="about")
             ],
             [InlineKeyboardButton("🤖 Create Your Own Clone", callback_data="clone")],
-            [InlineKeyboardButton("🌟 Buy Premium", callback_data="premium")],
-            [InlineKeyboardButton("🔒 Close", callback_data="close")]
         ]
+
+        if user_id in ADMINS:
+            buttons.append([
+                InlineKeyboardButton("👑 Premium Menu", callback_data="premium_menu"),
+                InlineKeyboardButton("📘 Tutorial", url="https://google.com")
+            ])
+        else:
+            buttons.append([
+                InlineKeyboardButton("🌟 Buy Premium", callback_data="premium"),
+                InlineKeyboardButton("📘 Tutorial", url="https://google.com")
+            ])
+
+        buttons.append([InlineKeyboardButton("🔒 Close", callback_data="close")])
 
         return await safe_action(message.reply_text,
             script.START_TXT.format(user=message.from_user.mention, bot=me.mention),
@@ -222,7 +229,7 @@ async def help(client, message):
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
 
-@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
+"""@Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
     try:
         ask_id = await safe_action(client.ask,
@@ -376,7 +383,7 @@ async def check_premium(client, message):
             f"⚠️ Check Premium Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Check Premium Error: {e}")
-        print(traceback.format_exc())
+        print(traceback.format_exc())"""
 
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
@@ -602,6 +609,66 @@ async def reply(client, message):
             f"⚠️ Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Reply Error: {e}")
+        print(traceback.format_exc())
+
+async def show_premiumx_menu(client, message):
+    try:
+        all_users = [user async for user in db.premium.find({})]
+        if not all_users:
+            user_text = "No premium users yet."
+        else:
+            lines = []
+            now = datetime.utcnow()
+
+            for u in all_users:
+                user_id = u["id"]
+                plan = u.get("plan_type", "normal").title()
+                expiry = u.get("expiry_time")
+                name = str(user_id)
+
+                try:
+                    tg_user = await client.get_users(user_id)
+                    name = tg_user.first_name
+                except:
+                    pass
+
+                if expiry:
+                    remaining = expiry - now
+                    days_left = remaining.days
+                    if days_left < 0:
+                        status = "❌ Expired"
+                    else:
+                        status = f"{days_left} days left"
+                    exp_str = expiry.strftime("%Y-%m-%d")
+                    lines.append(f"• {name} (`{user_id}`) | {plan} | {exp_str} | {status}")
+                else:
+                    lines.append(f"• {name} (`{user_id}`) | {plan} | ❌ Expired")
+
+            user_text = "\n".join(lines)
+
+        text = (
+            f"💎 **Premium Management**\n\n"
+            f"👥 **Users:**\n{user_text}"
+        )
+
+        buttons = [
+            [
+                InlineKeyboardButton("➕ Add", callback_data=f"add_premiumx"),
+                InlineKeyboardButton("➖ Remove", callback_data=f"remove_premium_menu")
+            ],
+            [
+                InlineKeyboardButton("⬅️ Back", callback_data=f"start")
+            ]
+        ]
+
+        await safe_action(message.edit_text,text=text, reply_markup=InlineKeyboardMarkup(buttons))
+
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Show Premium User Menu Error: {e}")
         print(traceback.format_exc())
 
 async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int = 6):
@@ -1216,8 +1283,12 @@ async def show_moderator_menu(client, message, bot_id):
         print(traceback.format_exc())
 
 @Client.on_callback_query()
-async def cb_handler(client: Client, query: CallbackQuery):
+async def cb_handler(client, query):
     try:
+        me = await get_me_safe(client)
+        if not me:
+            return
+
         user_id = query.from_user.id
         data = query.data
 
@@ -1225,13 +1296,26 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if data == "start":
             await safe_action(query.answer)
             buttons = [
-                [InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
-                 InlineKeyboardButton("ℹ️ About", callback_data="about")],
+                [
+                    InlineKeyboardButton("💁‍♀️ Help", callback_data="help"),
+                    InlineKeyboardButton("😊 About", callback_data="about")
+                ],
                 [InlineKeyboardButton("🤖 Create Your Own Clone", callback_data="clone")],
-                [InlineKeyboardButton("🌟 Buy Premium", callback_data="premium")],
-                [InlineKeyboardButton("🔒 Close", callback_data="close")]
             ]
-            me = await client.get_me()
+
+            if user_id in ADMINS:
+                buttons.append([
+                    InlineKeyboardButton("👑 Premium Menu", callback_data="premium_menu"),
+                    InlineKeyboardButton("📘 Tutorial", url="https://google.com")
+                ])
+            else:
+                buttons.append([
+                    InlineKeyboardButton("🌟 Buy Premium", callback_data="premium"),
+                    InlineKeyboardButton("📘 Tutorial", url="https://google.com")
+                ])
+
+            buttons.append([InlineKeyboardButton("🔒 Close", callback_data="close")])
+            
             await safe_action(query.message.edit_text,
                 text=script.START_TXT.format(user=query.from_user.mention, bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
@@ -1250,7 +1334,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         elif data == "about":
             await safe_action(query.answer)
             buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
-            me = await client.get_me()
             await safe_action(query.message.edit_text,
                 text=script.ABOUT_TXT.format(bot=me.mention),
                 reply_markup=InlineKeyboardMarkup(buttons)
@@ -3250,7 +3333,59 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
-        # Premium Menu
+        """# Premium Menu
+        elif data == "premium_menu":
+            await safe_action(query.answer)
+            await show_premiumx_menu(client, query.message)
+
+        # Add Premium User
+        elif action == "add_premium":
+            await safe_action(query.answer)
+            ADD_PREMIUM[user_id] = (query.message)
+            buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addpremium_{bot_id}")]]
+            await safe_action(query.message.edit_text,
+                text="✏️ Please provide the User ID of the new **premium user**:",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+        # Cancel Add Premium User
+        elif action == "cancel_addpremium":
+            await safe_action(query.answer)
+            ADD_PREMIUM.pop(user_id, None)
+            await show_premiumx_menu(client, query.message)
+
+        # Remove Premium User Menu
+        elif action == "remove_premium_menu":
+            all_users = [user async for user in db.premium.find({})]
+            if not all_users:
+                return await query.answer("❌ No premium users found!", show_alert=True)
+
+            buttons = []
+            for u in all_users:
+                user_id = u["id"]
+                plan = u.get("plan_type", "normal").title()
+                name = str(user_id)
+                try:
+                    tg_user = await client.get_users(user_id)
+                    name = tg_user.first_name
+                except:
+                    pass
+
+                buttons.append([InlineKeyboardButton(f"👤 {name} ({plan})", callback_data=f"remove_premium_{user_id}")])
+
+            buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"premium_menu")])
+            await safe_action(query.message.edit_text,
+                "👥 Please select a **premium user** to remove from the list:",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+        # Remove Premium User Action
+        elif action == "remove_premium":
+            await db.remove_premium_user(user_id)
+            await safe_action(query.answer, "✅ Premium user removed!", show_alert=True)
+            await show_premiumx_menu(client, query.message)"""
+
+        # Buy Premium Menu
         elif data == "premium":
             await safe_action(query.answer)
             text = (
@@ -3546,11 +3681,10 @@ async def message_capture(client, message):
                             handler_dict.pop(user_id, None)
                             return
 
-                    random_code()
-
                     await safe_action(orig_msg.edit_text, f"✏️ Updating **{db_field.replace('_', ' ')}**, please wait...")
                     try:
                         clone = await db.get_clone(bot_id)
+                        code = random_code()
                         if db_field == "start_photo":
                             storage_dir = "storage"
                             os.makedirs(storage_dir, exist_ok=True)
