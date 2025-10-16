@@ -3333,58 +3333,6 @@ async def cb_handler(client, query):
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
-        """# Premium Menu
-        elif data == "premium_menu":
-            await safe_action(query.answer)
-            await show_premiumx_menu(client, query.message)
-
-        # Add Premium User
-        elif action == "add_premium":
-            await safe_action(query.answer)
-            ADD_PREMIUM[user_id] = (query.message)
-            buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addpremium_{bot_id}")]]
-            await safe_action(query.message.edit_text,
-                text="✏️ Please provide the User ID of the new **premium user**:",
-                reply_markup=InlineKeyboardMarkup(buttons)
-            )
-
-        # Cancel Add Premium User
-        elif action == "cancel_addpremium":
-            await safe_action(query.answer)
-            ADD_PREMIUM.pop(user_id, None)
-            await show_premiumx_menu(client, query.message)
-
-        # Remove Premium User Menu
-        elif action == "remove_premium_menu":
-            all_users = [user async for user in db.premium.find({})]
-            if not all_users:
-                return await query.answer("❌ No premium users found!", show_alert=True)
-
-            buttons = []
-            for u in all_users:
-                user_id = u["id"]
-                plan = u.get("plan_type", "normal").title()
-                name = str(user_id)
-                try:
-                    tg_user = await client.get_users(user_id)
-                    name = tg_user.first_name
-                except:
-                    pass
-
-                buttons.append([InlineKeyboardButton(f"👤 {name} ({plan})", callback_data=f"remove_premium_{user_id}")])
-
-            buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"premium_menu")])
-            await safe_action(query.message.edit_text,
-                "👥 Please select a **premium user** to remove from the list:",
-                reply_markup=InlineKeyboardMarkup(buttons)
-            )
-
-        # Remove Premium User Action
-        elif action == "remove_premium":
-            await db.remove_premium_user(user_id)
-            await safe_action(query.answer, "✅ Premium user removed!", show_alert=True)
-            await show_premiumx_menu(client, query.message)"""
-
         # Buy Premium Menu
         elif data == "premium":
             await safe_action(query.answer)
