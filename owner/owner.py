@@ -264,7 +264,7 @@ async def restart(client, message):
         print(f"⚠️ Restart Error: {e}")
         print(traceback.format_exc())
 
-"""@Client.on_message(filters.command("contact") & filters.private)
+@Client.on_message(filters.command("contact") & filters.private)
 async def contact(client, message):
     try:
         if message.reply_to_message:
@@ -340,7 +340,7 @@ async def reply(client, message):
             f"⚠️ Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Reply Error: {e}")
-        print(traceback.format_exc())"""
+        print(traceback.format_exc())
 
 async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int = 6):
     try:
@@ -3086,7 +3086,7 @@ async def cb_handler(client, query):
         elif data.startswith("paid_"):
             await safe_action(query.answer)
             feature_type = data.replace("paid_", "").replace("_", " ")
-            amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
+            amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 1
 
             await safe_action(query.message.edit_text,
                 text=(
