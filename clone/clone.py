@@ -680,7 +680,7 @@ async def genlink(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         if message.reply_to_message:
@@ -753,7 +753,7 @@ async def batch(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         usage_text = (
@@ -897,7 +897,7 @@ async def shorten_handler(client: Client, message: Message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         user_id = message.from_user.id
@@ -953,7 +953,7 @@ async def broadcast(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         if message.reply_to_message:
@@ -1062,7 +1062,7 @@ async def ban(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         ask_id = await safe_action(client.ask,
@@ -1098,7 +1098,7 @@ async def unban(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         ask_id = await safe_action(client.ask,
@@ -1134,7 +1134,7 @@ async def list_ban(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         banned = await db.get_banned_users(me.id)
@@ -1166,7 +1166,7 @@ async def stats(client, message):
         moderators = clone.get("moderators", [])
         moderators = [int(m) for m in moderators]
 
-        if message.from_user.id != owner_id and message.from_user.id not in moderators:
+        if message.from_user.id != owner_id and message.from_user.id not in [moderators, ADMINS]:
             return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
 
         users = await clonedb.total_users_count(me.id)
