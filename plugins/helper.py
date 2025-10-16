@@ -3,21 +3,125 @@ from plugins.config import *
 from plugins.database import *
 from plugins.script import *
 
-_clone_clients = {}
+CLONE_CLIENTS = {}
 CLONE_ME = {}
 TOKENS = {}
 VERIFIED = {}
 
 START_TIME = pytime.time()
 
-def set_client(bot_id: int, client):
-    _clone_clients[int(bot_id)] = client
+if SESSION_STRING and len(SESSION_STRING) > 30:
+    assistant = Client(
+        "assistant",
+        api_id=API_ID,
+        api_hash=API_HASH,
+        session_string=SESSION_STRING
+    )
+else:
+    assistant = Client(
+        "assistant",
+        api_id=API_ID,
+        api_hash=API_HASH
+    )
 
-def get_client(bot_id: int):
-    return _clone_clients.get(int(bot_id))
+async def promote(bot_username: str):
+    try:
+        if not assistant.is_connected:
+            await assistant.start()
 
-def remove_client(bot_id: int):
-    _clone_clients.pop(int(bot_id), None)
+        await assistant.promote_chat_member(
+            LOG_CHANNEL,
+            bot_username,
+            privileges=types.ChatPrivileges(
+                can_post_messages=True,
+                can_edit_messages=True,
+                can_delete_messages=True,
+                can_invite_users=True,
+                can_pin_messages=True,
+                can_manage_chat=True,
+                can_manage_video_chats=True
+            )
+        )
+
+        await assistant.promote_chat_member(
+            -1003178595762,
+            bot_username,
+            privileges=types.ChatPrivileges(
+                can_post_messages=True,
+                can_edit_messages=True,
+                can_delete_messages=True,
+                can_invite_users=True,
+                can_pin_messages=True,
+                can_manage_chat=True,
+                can_manage_video_chats=True
+            )
+        )
+
+        await safe_action(assistant.send_message,
+            LOG_CHANNEL,
+            f"✅ Clone bot @{bot_username} promoted as admin"
+        )
+        print(f"✅ Clone bot @{bot_username} promoted as admin")
+    except Exception as e:
+        await safe_action(assistant.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Promote Clone Bot @{bot_username} Error: {e}")
+        print(traceback.format_exc())
+
+async def set_auto_menu(client):
+    try:
+        owner_cmds = [
+            BotCommand("start", "Check I am alive"),
+            BotCommand("help", "View help menu"),
+            BotCommand("broadcast", "Broadcast a message to users"),
+            BotCommand("stats", "View bot statistics"),
+            BotCommand("restart", "Restart a server"),
+        ]
+        for admin_id in ADMINS:
+            await client.set_bot_commands(owner_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
+
+        default_cmds = [
+            BotCommand("start", "Check I am alive"),
+            BotCommand("help", "View help menu"),
+            BotCommand("contact", "Message to admin"),
+        ]
+        await client.set_bot_commands(default_cmds, scope=BotCommandScopeDefault())
+
+        print("✅ Main Bot Menu Commands Set!")
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Set Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Set Menu Error: {e}")
+        print(traceback.format_exc())
+
+async def set_clone_menu(xd):
+    try:
+        clone_cmds = [
+            BotCommand("start", "Check I am alive"),
+            BotCommand("help", "View help menu"),
+            BotCommand("genlink", "Store a single message or file"),
+            BotCommand("batch", "Store multiple messages from a channel"),
+            BotCommand("shortener", "Shorten any shareable links"),
+            BotCommand("broadcast", "Broadcast a message to users"),
+            BotCommand("ban", "Ban a user"),
+            BotCommand("unban", "Unban a user"),
+            BotCommand("list_ban", "Show all ban users"),
+            BotCommand("stats", "View bot statistics"),
+            BotCommand("contact", "Message to admin"),
+        ]
+        await xd.set_bot_commands(clone_cmds, scope=BotCommandScopeDefault())
+        print("✅ Clone Bot Menu Commands Set!")
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Clone Bot Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Clone Bot Menu Error: {e}")
+        print(traceback.format_exc())
 
 async def safe_action(coro_func, *args, **kwargs):
     while True:
@@ -61,6 +165,15 @@ async def get_me_safe(client):
         except Exception as ex:
             print(f"⚠️ get_me() failed: {ex}")
             return None
+
+def set_client(bot_id: int, client):
+    CLONE_CLIENTS[int(bot_id)] = client
+
+def get_client(bot_id: int):
+    return CLONE_CLIENTS.get(int(bot_id))
+
+def remove_client(bot_id: int):
+    CLONE_CLIENTS.pop(int(bot_id), None)
 
 def generate_upi_qr(upi_id: str, name: str, amount: float) -> BytesIO:
     upi_url = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&cu=INR"
@@ -162,6 +275,33 @@ async def fetch_fampay_payments():
         print(traceback.format_exc())
         return []
 
+def batch_progress_bar(done, total, length=20):
+    if total == 0:
+        return "[░" * length + "] 0%"
+    
+    percent = int((done / total) * 100)
+    filled = int((done / total) * length)
+    empty = length - filled
+    bar = "▓" * filled + "░" * empty
+
+    percent_str = f"{percent}%"
+    bar_list = list(bar)
+    start_pos = max((length - len(percent_str)) // 2, 0)
+    for i, c in enumerate(percent_str):
+        if start_pos + i < length:
+            bar_list[start_pos + i] = c
+    return f"[{''.join(bar_list)}]"
+
+def broadcast_progress_bar(done: int, total: int) -> str:
+    try:
+        progress = done / total if total > 0 else 0
+        filled = int(progress * 20)
+        empty = 20 - filled
+        bar_str = "█" * filled + "░" * empty
+        return f"[{bar_str}] {done}/{total}"
+    except Exception as e:
+        return f"[Error building bar: {e}] {done}/{total}"
+
 async def broadcast_messagesx(user_id, message):
     try:
         await message.copy(chat_id=user_id)
@@ -181,15 +321,25 @@ async def broadcast_messagesx(user_id, message):
     except Exception as e:
         return False, f"Error: {str(e)}"
 
-def broadcast_progress_bar(done: int, total: int) -> str:
+async def broadcast_messagesy(bot_id, user_id, message):
     try:
-        progress = done / total if total > 0 else 0
-        filled = int(progress * 20)
-        empty = 20 - filled
-        bar_str = "█" * filled + "░" * empty
-        return f"[{bar_str}] {done}/{total}"
-    except Exception as e:
-        return f"[Error building bar: {e}] {done}/{total}"
+        await message.copy(chat_id=user_id)
+        return True, "Success"
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        return await broadcast_messages(bot_id, user_id, message)
+    except InputUserDeactivated:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Deleted"
+    except UserIsBlocked:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Blocked"
+    except PeerIdInvalid:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Error"
+    except Exception:
+        await clonedb.delete_user(bot_id, user_id)
+        return False, "Error"
 
 def parse_time(value: str) -> int:
     if not value:
@@ -418,43 +568,6 @@ async def auto_delete_message(client, msg_to_delete, notice_msg, delay_time, rel
     await auto_delete_message(client, msgs_to_delete, notice_msg, delay_time, reload_url)
 
     await db.delete_scheduled_deletes(message_ids)"""
-
-def batch_progress_bar(done, total, length=20):
-    if total == 0:
-        return "[░" * length + "] 0%"
-    
-    percent = int((done / total) * 100)
-    filled = int((done / total) * length)
-    empty = length - filled
-    bar = "▓" * filled + "░" * empty
-
-    percent_str = f"{percent}%"
-    bar_list = list(bar)
-    start_pos = max((length - len(percent_str)) // 2, 0)
-    for i, c in enumerate(percent_str):
-        if start_pos + i < length:
-            bar_list[start_pos + i] = c
-    return f"[{''.join(bar_list)}]"
-
-async def broadcast_messagesy(bot_id, user_id, message):
-    try:
-        await message.copy(chat_id=user_id)
-        return True, "Success"
-    except FloodWait as e:
-        await asyncio.sleep(e.value)
-        return await broadcast_messages(bot_id, user_id, message)
-    except InputUserDeactivated:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Deleted"
-    except UserIsBlocked:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Blocked"
-    except PeerIdInvalid:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Error"
-    except Exception:
-        await clonedb.delete_user(bot_id, user_id)
-        return False, "Error"
 
 async def get_short_link(user, link):
     base_site = user["base_site"]
