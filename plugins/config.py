@@ -1,4 +1,5 @@
-from imports import *
+import re
+import os
 
 def is_enabled(value, default):
     try:

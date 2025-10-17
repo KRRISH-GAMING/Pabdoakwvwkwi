@@ -1,6 +1,7 @@
-from imports import *
+import motor.motor_asyncio
+from bson import ObjectId
 from plugins.config import *
-from plugins.script import script
+from plugins.script import *
 
 class Database:
 
