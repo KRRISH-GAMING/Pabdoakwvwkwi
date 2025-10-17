@@ -1,11 +1,5 @@
-import asyncio
-import sys
-import re
-import traceback
-import shutil
-import time as pytime  # time module for timestamps
+import traceback, asyncio, os, sys, re, shutil, time as pytime
 from datetime import datetime, timedelta
-import os
 from pyrogram import *
 from pyrogram.types import *
 from pyrogram.errors import *
