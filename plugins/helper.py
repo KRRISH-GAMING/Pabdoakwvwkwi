@@ -116,8 +116,6 @@ async def set_auto_menu(client):
             BotCommand("contact", "Message to admin"),
         ]
         await client.set_bot_commands(default_cmds, scope=BotCommandScopeDefault())
-
-        print("✅ Main Bot Menu Commands Set!")
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -142,7 +140,6 @@ async def set_clone_menu(xd):
             BotCommand("contact", "Message to admin"),
         ]
         await xd.set_bot_commands(clone_cmds, scope=BotCommandScopeDefault())
-        print("✅ Clone Bot Menu Commands Set!")
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
