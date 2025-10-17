@@ -1,4 +1,21 @@
-from imports import *
+import asyncio
+import re
+import traceback
+import random
+import string
+import time as pytime  # time module for timestamps
+from datetime import datetime, date, timedelta, timezone
+import pytz
+import qrcode
+import imaplib
+import email
+import requests
+from io import BytesIO
+from pyrogram import *
+from pyrogram.types import *
+from pyrogram.errors import *
+from pyrogram.errors.exceptions.bad_request_400 import *
+from aiohttp import ClientSession
 from plugins.config import *
 from plugins.database import *
 from plugins.script import *
