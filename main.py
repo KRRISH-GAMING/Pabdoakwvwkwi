@@ -272,10 +272,6 @@ async def auto_restart_loop():
 async def start():
     logger.info("Initializing Bot...")
 
-    bot_info = await StreamBot.get_me()
-    StreamBot.username = bot_info.username
-    await set_auto_menu(StreamBot)
-
     await assistant.start()
     logger.info(f"Assistant {(await assistant.get_me()).username} started")
 
@@ -297,7 +293,11 @@ async def start():
 
     logger.info("Bot fully started. Idle mode...")
     await idle()
+
     await StreamBot.start()
+    bot_info = await StreamBot.get_me()
+    StreamBot.username = bot_info.username
+    await set_auto_menu(StreamBot)
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
