@@ -47,8 +47,6 @@ AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
-print("Registered handlers:", len(Client.handlers.get("on_message", [])))
-
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
@@ -3853,3 +3851,5 @@ async def message_capture(client, message):
         )
         print(f"⚠️ Unexpected Error in message_capture: {e}")
         print(traceback.format_exc())
+
+print("Registered handlers:", len(Client.handlers.get("on_message", [])))
