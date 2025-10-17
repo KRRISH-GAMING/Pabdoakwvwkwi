@@ -1,3 +1,9 @@
+from pyrogram import Client, filters
+from plugins.config import ADMINS
+
+@Client.on_message(filters.command("testcheck") & filters.user(ADMINS))
+async def testcheck(client, message):
+    await message.reply_text("✅ owner/owner.py responding")
 # Standard Library
 import asyncio
 import sys
@@ -9,6 +15,13 @@ from datetime import datetime, date, time as dtime, timedelta, timezone
 
 # OS
 import os
+
+from pyrogram import Client, filters
+from plugins.config import ADMINS
+
+@Client.on_message(filters.command("testcheck1") & filters.user(ADMINS))
+async def testcheck(client, message):
+    await message.reply_text("✅ owner/owner.py responding")
 
 # Pyrogram
 from pyrogram import *
