@@ -3851,5 +3851,3 @@ async def message_capture(client, message):
         )
         print(f"⚠️ Unexpected Error in message_capture: {e}")
         print(traceback.format_exc())
-
-print("Registered handlers:", len(Client.handlers.get("on_message", [])))
