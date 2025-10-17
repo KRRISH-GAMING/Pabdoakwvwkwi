@@ -1,3 +1,4 @@
+print("Registered handlers:", len(Client.handlers.get("on_message", [])))
 # Standard Library
 import asyncio
 import sys
@@ -49,7 +50,6 @@ ADD_MODERATOR = {}
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-    print("Start handler registering on:", Client)
     try:
         me = await get_me_safe(client)
         if not me:
@@ -137,7 +137,6 @@ async def help(client, message):
 
 @Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
-    print("Restart handler registering on:", Client)
     try:
         ask_id = await safe_action(client.ask,
             chat_id=message.chat.id,
