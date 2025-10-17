@@ -1,4 +1,3 @@
-print("Registered handlers:", len(Client.handlers.get("on_message", [])))
 # Standard Library
 import asyncio
 import sys
@@ -47,6 +46,8 @@ ADD_PU = {}
 AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
+
+print("Registered handlers:", len(Client.handlers.get("on_message", [])))
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
