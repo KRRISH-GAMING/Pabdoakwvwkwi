@@ -271,17 +271,15 @@ async def auto_restart_loop():
 
 async def start():
     logger.info("Initializing Bot...")
-
-    await assistant.start()
-    logger.info(f"Assistant {(await assistant.get_me()).username} started")
-
-    load_plugins()
-
     await StreamBot.start()
     bot_info = await StreamBot.get_me()
     StreamBot.username = bot_info.username
     await set_auto_menu(StreamBot)
 
+    await assistant.start()
+    logger.info(f"Assistant {(await assistant.get_me()).username} started")
+
+    #load_plugins()
     await initialize_clients()
     #await start_web_server()
     #await restart_bots()
