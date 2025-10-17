@@ -1,4 +1,24 @@
-from imports import *
+# Standard Library
+import asyncio
+import re
+import traceback
+import random
+import string
+import time as pytime  # time module for timestamps
+from datetime import datetime, date, time as dtime, timedelta, timezone
+
+# Third-party libraries
+import base64
+
+# Pyrogram
+from pyrogram import *
+from pyrogram.types import *
+from pyrogram.errors import *
+from pyrogram.errors.exceptions.bad_request_400 import *
+
+from validators import domain
+
+# Plugins
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
@@ -10,8 +30,6 @@ logger.setLevel(logging.INFO)
 CPAYMENT_CACHE = {}
 CPENDING_TXN = {}
 SHORTEN_STATE = {}
-
-START_TIME = pytime.time()
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
