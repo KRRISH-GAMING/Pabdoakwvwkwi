@@ -276,6 +276,12 @@ async def start():
     logger.info(f"Assistant {(await assistant.get_me()).username} started")
 
     load_plugins()
+
+    await StreamBot.start()
+    bot_info = await StreamBot.get_me()
+    StreamBot.username = bot_info.username
+    await set_auto_menu(StreamBot)
+
     await initialize_clients()
     #await start_web_server()
     #await restart_bots()
@@ -293,11 +299,6 @@ async def start():
 
     logger.info("Bot fully started. Idle mode...")
     await idle()
-
-    await StreamBot.start()
-    bot_info = await StreamBot.get_me()
-    StreamBot.username = bot_info.username
-    await set_auto_menu(StreamBot)
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
