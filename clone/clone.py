@@ -277,6 +277,7 @@ async def start(client, message):
                     notice = await safe_action(client.send_message,
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
+                        reply_to_message_id=message.id
                     )
                     
                     reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
@@ -401,6 +402,7 @@ async def start(client, message):
                         notice = await safe_action(client.send_message,
                             user_id,
                             auto_delete_msg.format(time=number, unit=unit),
+                            reply_to_message_id=message.id
                         )
 
                         reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
@@ -486,6 +488,7 @@ async def start(client, message):
                     notice = await safe_action(client.send_message,
                         user_id,
                         auto_delete_msg.format(time=number, unit=unit),
+                        reply_to_message_id=message.id
                     )
 
                     reload_url = f"https://t.me/{me.username}?start=AUTO-{encoded}"
