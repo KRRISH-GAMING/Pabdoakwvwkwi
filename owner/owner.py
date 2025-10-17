@@ -422,6 +422,8 @@ async def stats(client, message):
         print(f"⚠️ Stats Error: {e}")
         print(traceback.format_exc())
 
+print("👄 e")
+
 @Client.on_message(filters.command("restart") & filters.private & filters.user(ADMINS))
 async def restart(client, message):
     try:
@@ -443,6 +445,8 @@ async def restart(client, message):
         )
         print(f"⚠️ Restart Error: {e}")
         print(traceback.format_exc())
+
+print("👄 f")
 
 @Client.on_message(filters.command("contact") & filters.private)
 async def contact(client, message):
@@ -3858,3 +3862,6 @@ async def message_capture(client, message):
         )
         print(f"⚠️ Unexpected Error in message_capture: {e}")
         print(traceback.format_exc())
+
+
+print("👄 g")
