@@ -31,7 +31,7 @@ class StreamXBot(Client):
             yield message
 
 StreamBot = StreamXBot(
-    name="filetolink",
+    name="KMFileStoreBot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN,
