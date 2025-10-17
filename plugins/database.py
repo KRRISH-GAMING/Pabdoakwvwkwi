@@ -1,7 +1,4 @@
-import motor.motor_asyncio
-import time as pytime  # time module for timestamps
-from datetime import datetime, date, time as dtime, timedelta, timezone
-from bson import ObjectId
+from imports import *
 from plugins.config import *
 from plugins.script import *
 
