@@ -1,3 +1,4 @@
+print("👄 a")
 # Standard Library
 import asyncio
 import sys
@@ -46,6 +47,8 @@ ADD_PU = {}
 AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
+
+print("👄 b")
 
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -133,6 +136,8 @@ async def help(client, message):
         )
         print(f"⚠️ Help Error: {e}")
         print(traceback.format_exc())
+
+print("👄 c")
 
 @Client.on_message(filters.command("add_premium") & filters.private & filters.user(ADMINS))
 async def add_premium(client, message):
@@ -289,6 +294,8 @@ async def check_premium(client, message):
         )
         print(f"⚠️ Check Premium Error: {e}")
         print(traceback.format_exc())
+
+print("👄 d")
 
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
