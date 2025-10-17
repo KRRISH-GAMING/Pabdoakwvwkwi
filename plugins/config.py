@@ -1,5 +1,4 @@
-import re
-import os
+import re, os
 
 def is_enabled(value, default):
     try:
