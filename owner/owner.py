@@ -1,4 +1,15 @@
-from imports import *
+import asyncio
+import sys
+import re
+import traceback
+import shutil
+import time as pytime  # time module for timestamps
+from datetime import datetime, timedelta
+import os
+from pyrogram import *
+from pyrogram.types import *
+from pyrogram.errors import *
+from pyrogram.errors.exceptions.bad_request_400 import *
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
