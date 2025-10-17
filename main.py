@@ -11,131 +11,159 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
-multi_clients: Dict[int, Client] = {}
-work_loads: Dict[int, int] = {}
-StartTime = datetime.utcnow()
-__version__ = 1.5
-routes = web.RouteTableDef()
+StartTime = pytime.time()
+__version__ = 1.1
 
 class StreamXBot(Client):
-    async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
-        async for message in self.get_chat_history(chat_id, limit=limit):
-            yield message
 
-StreamBot = StreamXBot(
-    name="filetolink",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN,
-    workers=20,
-    plugins={"root": "owner"},
-    sleep_threshold=5
-)
+    def __init__(self):
+        super().__init__(
+            name="filetolink",
+            api_id=API_ID,
+            api_hash=API_HASH,
+            bot_token=BOT_TOKEN,
+            workers=50,
+            plugins={"root": "owner"},
+            sleep_threshold=5,
+        )
+    async def iter_messages(
+        self,
+        chat_id: Union[int, str],
+        limit: int,
+        offset: int = 0,
+    ) -> Optional[AsyncGenerator["types.Message", None]]:
+        """Iterate through a chat sequentially.
+        This convenience method does the same as repeatedly calling :meth:`~pyrogram.Client.get_messages` in a loop, thus saving
+        you from the hassle of setting up boilerplate code. It is useful for getting the whole chat messages with a
+        single call.
+        Parameters:
+            chat_id (``int`` | ``str``):
+                Unique identifier (int) or username (str) of the target chat.
+                For your personal cloud (Saved Messages) you can simply use "me" or "self".
+                For a contact that exists in your Telegram address book you can use his phone number (str).
+                
+            limit (``int``):
+                Identifier of the last message to be returned.
+                
+            offset (``int``, *optional*):
+                Identifier of the first message to be returned.
+                Defaults to 0.
+        Returns:
+            ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
+        Example:
+            .. code-block:: python
+                for message in app.iter_messages("pyrogram", 1, 15000):
+                    print(message.text)
+        """
+        current = offset
+        while True:
+            new_diff = min(200, limit - current)
+            if new_diff <= 0:
+                return
+            messages = await self.get_messages(chat_id, list(range(current, current+new_diff+1)))
+            for message in messages:
+                yield message
+                current += 1
+      
+StreamBot = StreamXBot()
+
+multi_clients = {}
+work_loads = {}
 
 class TokenParser:
+    def __init__(self, config_file: Optional[str] = None):
+        self.tokens = {}
+        self.config_file = config_file
+
     def parse_from_env(self) -> Dict[int, str]:
-        return {
-            i+1: t for i, (_, t) in enumerate(
-                filter(lambda x: x[0].startswith("MULTI_TOKEN"), sorted(os.environ.items()))
+        self.tokens = dict(
+            (c + 1, t)
+            for c, (_, t) in enumerate(
+                filter(
+                    lambda n: n[0].startswith("MULTI_TOKEN"), sorted(environ.items())
+                )
             )
-        }
+        )
+        return self.tokens
 
 async def initialize_clients():
     multi_clients[0] = StreamBot
     work_loads[0] = 0
     all_tokens = TokenParser().parse_from_env()
-
     if not all_tokens:
-        logger.info("No additional clients found, using default client")
+        print("No additional clients found, using default client")
         return
-
-    semaphore = asyncio.Semaphore(10)
-
+    
     async def start_client(client_id, token):
-        async with semaphore:
-            try:
-                logger.info(f"Starting client {client_id}")
-                client = await Client(
-                    name=f"clone_{client_id}",
-                    api_id=API_ID,
-                    api_hash=API_HASH,
-                    bot_token=token,
-                    workers=20,
-                    in_memory=True,
-                ).start()
-                work_loads[client_id] = 0
-                return client_id, client
-            except Exception:
-                logger.exception(f"Failed starting Client {client_id}")
-                return None
-
-    clients = await asyncio.gather(*[start_client(i, t) for i, t in all_tokens.items()])
-    clients = [c for c in clients if c]
+        try:
+            print(f"Starting - Client {client_id}")
+            if client_id == len(all_tokens):
+                await asyncio.sleep(2)
+                print("This will take some time, please wait...")
+            client = await Client(
+                name=str(client_id),
+                api_id=API_ID,
+                api_hash=API_HASH,
+                bot_token=token,
+                sleep_threshold=SLEEP_THRESHOLD,
+                workers=20,
+                no_updates=True,
+                in_memory=True
+            ).start()
+            work_loads[client_id] = 0
+            return client_id, client
+        except Exception:
+            logging.error(f"Failed starting Client - {client_id} Error:", exc_info=True)
+    
+    clients = await asyncio.gather(*[start_client(i, token) for i, token in all_tokens.items()])
     multi_clients.update(dict(clients))
-
-    if len(multi_clients) > 1:
-        logger.info(f"Multi-Client Mode Enabled: {len(multi_clients)} clients")
+    if len(multi_clients) != 1:
+        print("Multi-Client Mode Enabled")
     else:
-        logger.info("Only default client active")
+        print("No additional clients were initialized, using default client")
 
-def get_readable_time(start: datetime) -> str:
-    delta = datetime.utcnow() - start
-    days, remainder = divmod(delta.total_seconds(), 86400)
-    hours, remainder = divmod(remainder, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    return f"{int(days)}d:{int(hours)}h:{int(minutes)}m:{int(seconds)}s"
+def get_readable_time(seconds: int) -> str:
+    count = 0
+    readable_time = ""
+    time_list = []
+    time_suffix_list = ["s", "m", "h", " days"]
+    while count < 4:
+        count += 1
+        if count < 3:
+            remainder, result = divmod(seconds, 60)
+        else:
+            remainder, result = divmod(seconds, 24)
+        if seconds == 0 and remainder == 0:
+            break
+        time_list.append(int(result))
+        seconds = int(remainder)
+    for x in range(len(time_list)):
+        time_list[x] = str(time_list[x]) + time_suffix_list[x]
+    if len(time_list) == 4:
+        readable_time += time_list.pop() + ", "
+    time_list.reverse()
+    readable_time += ": ".join(time_list)
+    return readable_time 
 
-def get_least_loaded_bot() -> tuple[Client, int]:
-    client_id, _ = min(work_loads.items(), key=lambda x: x[1])
-    work_loads[client_id] += 1
-    return multi_clients[client_id], client_id
-
-async def complete_task(client_id: int):
-    if client_id in work_loads:
-        work_loads[client_id] = max(0, work_loads[client_id] - 1)
-
-async def dispatch_task(chat_id: int, text: str):
-    client, client_id = get_least_loaded_bot()
-    try:
-        await safe_action(client.send_message, chat_id, text)
-    except Exception as e:
-        logger.warning(f"Failed to send with bot {client_id}: {e}")
-    finally:
-        await complete_task(client_id)
-
-async def dispatch_bulk(tasks: list):
-    async def worker(task):
-        await dispatch_task(task["chat_id"], task["text"])
-    await asyncio.gather(*[worker(t) for t in tasks])
+routes = web.RouteTableDef()
 
 @routes.get("/", allow_head=True)
-async def root(_):
-    return web.json_response({
-        "server_status": "running",
-        "uptime": get_readable_time(StartTime),
-        "telegram_bot": "@" + StreamBot.username,
-        "connected_bots": len(multi_clients),
-        "loads": {f"bot{c}": l for c, l in work_loads.items()},
-        "version": __version__
-    })
-
-async def start_web_server():
-    app = web.Application(client_max_size=30_000_000)
-    app.add_routes(routes)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", PORT)
-    await site.start()
-    logger.info(f"Web server running on port {PORT}")
-
-def load_plugins():
-    for file in glob.glob("owner/*.py"):
-        plugin_name = Path(file).stem
-        spec = importlib.util.spec_from_file_location(f"owner.{plugin_name}", file)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        sys.modules[f"owner.{plugin_name}"] = module
-        logger.info(f"✅ Imported plugin: {plugin_name}")
+async def root_route_handler(_):
+    return web.json_response(
+        {
+            "server_status": "running",
+            "uptime": get_readable_time(time.time() - StartTime),
+            "telegram_bot": "@" + StreamBot.username,
+            "connected_bots": len(multi_clients),
+            "loads": dict(
+                ("bot" + str(c + 1), l)
+                for c, (_, l) in enumerate(
+                    sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
+                )
+            ),
+            "version": __version__,
+        }
+    )
 
 async def restart_bots():
     bots_cursor = await db.get_all_clone()
@@ -241,34 +269,46 @@ async def restart_bots():
             schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
         )"""
 
+StreamBot.start()
+
 async def start():
-    logger.info("Initializing Bot...")
-    await StreamBot.start()
+    print('\n')
+    print('Initalizing KM File Store Bot')
     bot_info = await StreamBot.get_me()
     StreamBot.username = bot_info.username
-
     await set_auto_menu(StreamBot)
 
     await assistant.start()
-    logger.info(f"Assistant {(await assistant.get_me()).username} started")
-
-    load_plugins()
+    print(f"Assistant {(await assistant.get_me()).username} started")
     await initialize_clients()
-    #await start_web_server()
+
+    for name in glob.glob("owner/*.py"):
+        with open(name) as a:
+            patt = Path(a.name)
+            plugin_name = patt.stem.replace(".py", "")
+            plugins_dir = Path(f"owner/{plugin_name}.py")
+            import_path = "owner.{}".format(plugin_name)
+            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
+            load = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(load)
+            sys.modules["plugins." + plugin_name] = load
+            print("Imported => " + plugin_name)
+
+    me = await StreamBot.get_me()
+
+    tz = pytz.timezone('Asia/Kolkata')
+    today = date.today()
+    now = datetime.now(tz)
+    time = now.strftime("%H:%M:%S %p")
+    await StreamBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
+    
+    #app = web.AppRunner(await web_server())
+    #await app.setup()
+    #bind_address = "0.0.0.0"
+    #await web.TCPSite(app, bind_address, PORT).start()
+
     await restart_bots()
-
-    #asyncio.create_task(auto_restart_loop())
-    #asyncio.create_task(init_auto_deletes(StreamBot, db))
-
-    try:
-        today = date.today()
-        tz = pytz.timezone("Asia/Kolkata")
-        now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-        await dispatch_task(LOG_CHANNEL, script.RESTART_TXT.format(today, now))
-    except Exception:
-        logger.warning("Failed to send restart log")
-
-    logger.info("Bot fully started. Idle mode...")
+    print("Bot Started Powered By @VJ_Botz")
     await idle()
 
 if __name__ == "__main__":
