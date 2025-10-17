@@ -273,6 +273,7 @@ async def start():
     logger.info("Initializing Bot...")
 
     await StreamBot.start()
+    print("Running StreamBot instance:", StreamBot)
     load_plugins()
 
     bot_info = await StreamBot.get_me()
