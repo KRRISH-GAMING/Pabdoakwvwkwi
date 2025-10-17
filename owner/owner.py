@@ -1,4 +1,13 @@
-from imports import *
+# top of owner/owner.py
+try:
+    # existing imports / top-level init
+    from imports import *
+    ...
+except Exception as e:
+    import traceback
+    print("⚠️ Import error in owner/owner.py:", e)
+    print(traceback.format_exc())
+    raise
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
