@@ -1,4 +1,21 @@
-from imports import *
+import logging
+import logging.config
+import glob
+import asyncio
+import importlib
+import sys
+from datetime import datetime, date, timezone
+from typing import *
+import pytz
+import os
+from pathlib import Path
+from pyrogram import *
+from pyrogram.types import *
+from pyrogram.errors import *
+from pyrogram.errors.exceptions.bad_request_400 import *
+from aiohttp import ClientSession, web, ClientTimeout, TCPConnector
+from aiohttp.web_request import Request
+from aiohttp.web_response import Response, json_response
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
@@ -162,14 +179,14 @@ async def restart_bots():
                 await set_clone_menu(xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-            """clone = await db.get_clone(bot_me.id)
+            clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
                 auto_post_channel = clone.get("ap_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot_me.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")"""
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except FloodWait as e:
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
@@ -189,14 +206,14 @@ async def restart_bots():
                 await set_clone_menu(xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
-            """clone = await db.get_clone(bot_me.id)
+            clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
                 auto_post_channel = clone.get("ap_channel", None)
                 if auto_post_channel:
                     asyncio.create_task(
                         auto_post_clone(bot_me.id, db, auto_post_channel)
                     )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")"""
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
