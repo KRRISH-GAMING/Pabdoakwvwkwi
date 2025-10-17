@@ -1,32 +1,4 @@
-# Standard Library
-import logging
-import logging.config
-import glob
-import asyncio
-import importlib
-import sys
-from datetime import datetime, date, time as dtime, timedelta, timezone
-from typing import *
-
-# Third-party libraries
-import pytz
-
-# OS & Path
-import os
-from pathlib import Path
-
-# Pyrogram
-from pyrogram import *
-from pyrogram.types import *
-from pyrogram.errors import *
-from pyrogram.errors.exceptions.bad_request_400 import *
-
-# aiohttp
-from aiohttp import ClientSession, web, ClientTimeout, TCPConnector
-from aiohttp.web_request import Request
-from aiohttp.web_response import Response, json_response
-
-# Plugins
+from imports import *
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
