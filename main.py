@@ -189,6 +189,7 @@ async def restart_bots():
                 await xd.start()
                 bot_me = await xd.get_me()
                 set_client(bot_me.id, xd)
+                await set_clone_menu(xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
             clone = await db.get_clone(bot_me.id)
@@ -215,6 +216,7 @@ async def restart_bots():
                 await xd.start()
                 bot_me = await xd.get_me()
                 set_client(bot_me.id, xd)
+                await set_clone_menu(xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
 
             clone = await db.get_clone(bot_me.id)
