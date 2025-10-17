@@ -1,35 +1,4 @@
-from pyrogram import Client, filters
-from plugins.config import ADMINS
-
-@Client.on_message(filters.command("testcheck") & filters.user(ADMINS))
-async def testcheck(client, message):
-    await message.reply_text("✅ owner/owner.py responding")
-# Standard Library
-import asyncio
-import sys
-import re
-import traceback
-import shutil
-import time as pytime  # time module for timestamps
-from datetime import datetime, date, time as dtime, timedelta, timezone
-
-# OS
-import os
-
-from pyrogram import Client, filters
-from plugins.config import ADMINS
-
-@Client.on_message(filters.command("testcheck1") & filters.user(ADMINS))
-async def testcheck(client, message):
-    await message.reply_text("✅ owner/owner.py responding")
-
-# Pyrogram
-from pyrogram import *
-from pyrogram.types import *
-from pyrogram.errors import *
-from pyrogram.errors.exceptions.bad_request_400 import *
-
-# Plugins
+from imports import *
 from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
