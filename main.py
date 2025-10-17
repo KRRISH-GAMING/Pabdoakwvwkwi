@@ -13,6 +13,7 @@ from plugins.config import *
 from plugins.database import *
 from plugins.helper import *
 from plugins.script import *
+from clone.clone import *
 
 logging.config.fileConfig("logging.conf")
 logger = logging.getLogger()
