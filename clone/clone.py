@@ -60,6 +60,7 @@ async def start(client, message):
         if not await clonedb.is_user_exist(me.id, user_id):
             await clonedb.add_user(me.id, user_id)
 
+        # --- Track banned users ---
         if await db.is_user_banned(me.id, user_id):
             return await message.reply_text("🚫 You are banned from using this bot.\nContact admin to unban.", quote=True)
 
@@ -281,6 +282,9 @@ async def start(client, message):
                     reload_url = f"https://t.me/{me.username}?start=SINGLE-{encoded}"
                     asyncio.create_task(auto_delete_message(client, [sent_msg], notice, auto_delete_time2, reload_url))
             except Exception as e:
+                if "INPUT_USER_DEACTIVATED" in str(e):
+                    print(f"⚠️ User account is deleted. Skipping...")
+                    return
                 await safe_action(client.send_message,
                     LOG_CHANNEL,
                     f"⚠️ Clone Single File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -322,88 +326,93 @@ async def start(client, message):
                 if not total_files:
                     return await safe_action(message.reply_text, "⚠️ No files in this batch.", quote=True)
 
+                sts = None
                 sts = await safe_action(message.reply_text, f"📦 Preparing batch...\n\nTotal files: **{total_files}**", quote=True)
 
-                sent_files = []
-                for index, db_file_id in enumerate(file_ids, start=1):
-                    try:
-                        await safe_action(sts.edit_text, f"📤 Sending file {index}/{total_files}...")
+                if sts:
+                    sent_files = []
+                    for index, db_file_id in enumerate(file_ids, start=1):
+                        try:
+                            await safe_action(sts.edit_text, f"📤 Sending file {index}/{total_files}...")
 
-                        if batch.get("is_auto_post"):
-                            file = await db.get_file_by_file_id(db_file_id, me.id)
-                        else:
-                            file = await db.get_file(db_file_id)
+                            if batch.get("is_auto_post"):
+                                file = await db.get_file_by_file_id(db_file_id, me.id)
+                            else:
+                                file = await db.get_file(db_file_id)
 
-                        if not file:
+                            if not file:
+                                continue
+
+                            file_id = file.get("file_id")
+                            file_name = file.get("file_name") or "None"
+                            file_size = file.get("file_size")
+                            media_type = file.get("media_type", "document")
+                            original_caption = file.get("caption") or ""
+
+                            if caption:
+                                try:
+                                    f_caption = caption.format(
+                                        file_name=file_name,
+                                        file_size=get_size(file_size) if file_size else "N/A",
+                                        caption=original_caption
+                                    )
+                                except:
+                                    f_caption = original_caption or f"<code>{file_name}</code>"
+                            else:
+                                f_caption = original_caption or f"<code>{file_name}</code>"
+
+                            if not f_caption.strip():
+                                f_caption = "None"
+
+                            sent_msg = None
+                            if file_id:
+                                sent_msg = await safe_action(client.send_cached_media,
+                                    chat_id=user_id,
+                                    file_id=file_id,
+                                    caption=f_caption,
+                                    protect_content=forward_protect,
+                                    reply_to_message_id=message.id
+                                )
+                            else:
+                                sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect, quote=True)
+
+                            buttons = []
+                            for btn in buttons_data:
+                                buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
+
+                            if sent_msg and buttons:
+                                if sent_msg.caption is not None:
+                                    await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
+                                else:
+                                    await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
+
+                            sent_files.append(sent_msg)
+                            await asyncio.sleep(1.5)
+                        except Exception as e:
+                            await safe_action(client.send_message,
+                                LOG_CHANNEL,
+                                f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                            )
+                            print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
                             continue
 
-                        file_id = file.get("file_id")
-                        file_name = file.get("file_name") or "None"
-                        file_size = file.get("file_size")
-                        media_type = file.get("media_type", "document")
-                        original_caption = file.get("caption") or ""
-
-                        if caption:
-                            try:
-                                f_caption = caption.format(
-                                    file_name=file_name,
-                                    file_size=get_size(file_size) if file_size else "N/A",
-                                    caption=original_caption
-                                )
-                            except:
-                                f_caption = original_caption or f"<code>{file_name}</code>"
-                        else:
-                            f_caption = original_caption or f"<code>{file_name}</code>"
-
-                        if not f_caption.strip():
-                            f_caption = "None"
-
-                        sent_msg = None
-                        if file_id:
-                            sent_msg = await safe_action(client.send_cached_media,
-                                chat_id=user_id,
-                                file_id=file_id,
-                                caption=f_caption,
-                                protect_content=forward_protect,
-                                reply_to_message_id=message.id
-                            )
-                        else:
-                            sent_msg = await safe_action(message.reply_text, original_caption, protect_content=forward_protect, quote=True)
-
-                        buttons = []
-                        for btn in buttons_data:
-                            buttons.append([InlineKeyboardButton(btn["name"], url=btn["url"])])
-
-                        if sent_msg and buttons:
-                            if sent_msg.caption is not None:
-                                await safe_action(sent_msg.edit_caption, f_caption, reply_markup=InlineKeyboardMarkup(buttons))
-                            else:
-                                await safe_action(sent_msg.edit_text, original_caption, reply_markup=InlineKeyboardMarkup(buttons))
-
-                        sent_files.append(sent_msg)
-                        await asyncio.sleep(1.5)
-                    except Exception as e:
-                        await safe_action(client.send_message,
-                            LOG_CHANNEL,
-                            f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                    notice = None
+                    if sent_files and auto_delete:
+                        notice = await safe_action(client.send_message,
+                            user_id,
+                            auto_delete_msg.format(time=number, unit=unit),
                         )
-                        print(f"⚠️ Clone Batch File Handler Error sending message: {e}")
-                        continue
 
-                notice = None
-                if sent_files and auto_delete:
-                    notice = await safe_action(client.send_message,
-                        user_id,
-                        auto_delete_msg.format(time=number, unit=unit),
-                    )
+                        reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
+                        asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2, reload_url))
 
-                    reload_url = f"https://t.me/{me.username}?start=BATCH-{file_id}"
-                    asyncio.create_task(auto_delete_message(client, sent_files, notice, auto_delete_time2, reload_url))
-
-                await safe_action(sts.edit_text, f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
-                await asyncio.sleep(5)
-                await safe_action(sts.delete)
+                    await safe_action(sts.edit_text, f"✅ Batch completed!\n\nTotal files sent: **{total_files}**")
+                    await asyncio.sleep(5)
+                    await safe_action(sts.delete)
             except Exception as e:
+                if "INPUT_USER_DEACTIVATED" in str(e):
+                    print(f"⚠️ User account is deleted. Skipping...")
+                    return
                 await safe_action(client.send_message,
                     LOG_CHANNEL,
                     f"⚠️ Clone Batch File Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -437,6 +446,7 @@ async def start(client, message):
                 )
 
             try:
+                msg = None
                 msg = await safe_action(client.send_cached_media,
                     chat_id=user_id,
                     file_id=file_id,
@@ -482,6 +492,9 @@ async def start(client, message):
                     asyncio.create_task(auto_delete_message(client, [msg], notice, auto_delete_time2, reload_url))
                 return
             except Exception as e:
+                if "INPUT_USER_DEACTIVATED" in str(e):
+                    print(f"⚠️ User account is deleted. Skipping...")
+                    return
                 await safe_action(client.send_message,
                     LOG_CHANNEL,
                     f"⚠️ Clone Auto Post Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
