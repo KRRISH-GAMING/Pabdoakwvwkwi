@@ -34,6 +34,8 @@ AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
+broadcast_cancel = False
+
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
@@ -279,6 +281,8 @@ async def check_premium(client, message):
 
 @Client.on_message(filters.command("broadcast") & filters.private & filters.user(ADMINS))
 async def broadcast(client, message):
+    global broadcast_cancel
+    broadcast_cancel = False
     try:
         if message.reply_to_message:
             b_msg = message.reply_to_message
@@ -292,6 +296,10 @@ async def broadcast(client, message):
             if b_msg.text and b_msg.text.lower() == "/cancel":
                 return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", reply_to_message_id=b_msg.id)
 
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
+        )
+
         sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_to_message_id=b_msg.id)
         start_time = pytime.time()
         total_users = await db.total_users_count()
@@ -300,6 +308,10 @@ async def broadcast(client, message):
 
         users = await db.get_all_users()
         async for user in users:
+            if broadcast_cancel:
+                await safe_action(sts.edit_text, "🚫 Broadcast cancelled by admin.")
+                print("🛑 Broadcast cancelled mid-way.")
+                return
             try:
                 if "id" in user:
                     pti, sh = await broadcast_messagesx(int(user["id"]), b_msg)
@@ -1123,8 +1135,15 @@ async def cb_handler(client, query):
         user_id = query.from_user.id
         data = query.data
 
+        # Cancel Broadcast
+        if data == "cancel_broadcast":
+            global broadcast_cancel
+            broadcast_cancel = True
+            await query.answer("🚫 Broadcast cancelled!", show_alert=True)
+            await query.message.edit_text("🛑 Broadcast cancelled by admin.")
+
         # Start Menu
-        if data == "start":
+        elif data == "start":
             await safe_action(query.answer)
             buttons = [
                 [
