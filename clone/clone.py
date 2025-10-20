@@ -17,6 +17,8 @@ CPAYMENT_CACHE = {}
 CPENDING_TXN = {}
 SHORTEN_STATE = {}
 
+broadcast_cancel = False
+
 @Client.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     try:
@@ -960,6 +962,8 @@ async def shorten_handler(client: Client, message: Message):
 
 @Client.on_message(filters.command("broadcast") & filters.private)
 async def broadcast(client, message):
+    global broadcast_cancel
+    broadcast_cancel = False
     try:
         me = await get_me_safe(client)
         if not me:
@@ -988,6 +992,10 @@ async def broadcast(client, message):
             if b_msg.text and b_msg.text.lower() == "/cancel":
                 return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", reply_to_message_id=b_msg.id)
 
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
+        )
+
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
         sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_to_message_id=b_msg.id)
@@ -996,6 +1004,11 @@ async def broadcast(client, message):
         start_time = pytime.time()
 
         async for user in users:
+            if broadcast_cancel:
+                await safe_action(sts.edit_text, "🚫 Broadcast cancelled by admin.")
+                print("🛑 Broadcast cancelled mid-way.")
+                return
+
             if 'user_id' in user:
                 pti, sh = await broadcast_messagesy(me.id, int(user['user_id']), b_msg)
                 if pti:
@@ -1337,6 +1350,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
             _, kk, file_id = data.split("#")
             await safe_action(query.answer, url=f"https://t.me/{me.username}?start={kk}_{file_id}")
             await safe_action(query.answer)
+
+        # Cancel Broadcast
+        elif data == "cancel_broadcast":
+            global broadcast_cancel
+            broadcast_cancel = True
+            await query.answer("🚫 Broadcast cancelled!", show_alert=True)
+            await query.message.edit_text("🛑 Broadcast cancelled by admin.")
 
         # Remove Ads / Premium Plan Menu
         elif data == "remove_ads":
