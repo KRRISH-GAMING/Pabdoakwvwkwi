@@ -998,7 +998,7 @@ async def broadcast(client, message):
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_to_message_id=b_msg.id)
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_markup=keyboard, reply_to_message_id=b_msg.id)
 
         done = blocked = deleted = failed = success = 0
         start_time = pytime.time()
