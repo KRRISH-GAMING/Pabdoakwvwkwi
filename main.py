@@ -26,6 +26,8 @@ StartTime = datetime.utcnow()
 __version__ = 1.5
 routes = web.RouteTableDef()
 
+auto_restart_task = None
+
 class StreamXBot(Client):
     async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
         async for message in self.get_chat_history(chat_id, limit=limit):
@@ -225,11 +227,24 @@ async def restart_bots():
     print("✅ All clone bots processed for restart.")
 
 async def auto_restart_loop():
-    while True:
-        print("🔁 Starting scheduled bot restart...")
-        await restart_bots()
-        print("🕗 Sleeping for 8 hours before next restart...\n")
-        await asyncio.sleep(8 * 60 * 60)
+    global auto_restart_task
+
+    if auto_restart_task and not auto_restart_task.done():
+        auto_restart_task.cancel()
+        try:
+            await auto_restart_task
+        except asyncio.CancelledError:
+            print("🛑 Old auto-restart loop stopped.")
+
+    async def loop():
+        while True:
+            print("🔁 Starting scheduled bot restart...")
+            await restart_bots()
+            print("🕗 Sleeping for 8 hours before next restart...\n")
+            await asyncio.sleep(8 * 60 * 60)
+
+    auto_restart_task = asyncio.create_task(loop())
+    print("✅ New auto-restart loop started.")
 
 """async def init_auto_deletes(client, db: Database):
     scheduled = await db.get_all_scheduled_deletes()
@@ -265,9 +280,9 @@ async def start():
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    await restart_bots()
+    #await restart_bots()
 
-    #asyncio.create_task(auto_restart_loop())
+    asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
