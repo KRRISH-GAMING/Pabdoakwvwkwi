@@ -300,7 +300,7 @@ async def broadcast(client, message):
             [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
         )
 
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_to_message_id=b_msg.id)
+        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_markup=keyboard, reply_to_message_id=b_msg.id)
         start_time = pytime.time()
         total_users = await db.total_users_count()
 
