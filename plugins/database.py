@@ -338,6 +338,51 @@ class CloneDatabase:
         count = await self.db[str(bot_id)].count_documents({})
         return count
 
+    # ---------------- BROADCAST ----------------
+    async def start_broadcast(self, bot_id, message, total_users):
+        data = {
+            "bot_id": int(bot_id),
+            "message": message,  # Store the message dict (text, media, etc.)
+            "total_users": total_users,
+            "done_users": [],
+            "status": "running",  # running / cancelled / completed
+            "start_time": datetime.utcnow()
+        }
+        await self.db.broadcasts.update_one(
+            {"bot_id": int(bot_id)},
+            {"$set": data},
+            upsert=True
+        )
+
+    async def get_broadcast(self, bot_id):
+        return await self.db.broadcasts.find_one({"bot_id": int(bot_id)})
+
+    async def update_broadcast_progress(self, bot_id, user_id):
+        await self.db.broadcasts.update_one(
+            {"bot_id": int(bot_id)},
+            {"$addToSet": {"done_users": int(user_id)}}
+        )
+
+    async def get_broadcast_status(self, bot_id):
+        bc = await self.db.broadcasts.find_one({"bot_id": int(bot_id)})
+        return bc.get("status") if bc else None
+
+    async def cancel_broadcast(self, bot_id):
+        await self.db.broadcasts.update_one(
+            {"bot_id": int(bot_id)},
+            {"$set": {"status": "cancelled"}}
+        )
+
+    async def complete_broadcast(self, bot_id):
+        await self.db.broadcasts.update_one(
+            {"bot_id": int(bot_id)},
+            {"$set": {"status": "completed", "end_time": datetime.utcnow()}}
+        )
+
+    async def get_pending_broadcasts(self):
+        cursor = self.db.broadcasts.find({"status": "running"})
+        return [bc async for bc in cursor]
+
     # ---------------- SETTING ----------------
     async def get_user(self, user_id):
         user_id = int(user_id)
