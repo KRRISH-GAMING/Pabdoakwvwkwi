@@ -255,79 +255,6 @@ async def auto_restart_loop():
     auto_restart_task = asyncio.create_task(loop())
     print("✅ New auto-restart loop started.")
 
-"""async def init_auto_deletes(client, db: Database):
-    scheduled = await db.get_all_scheduled_deletes()
-
-    for task in scheduled:
-        chat_id = task["chat_id"]
-        message_ids = task["message_ids"]
-        notice_id = task["notice_id"]
-        delete_at = task["delete_at"]
-        reload_url = task.get("reload_url")
-
-        if delete_at.tzinfo is None:
-            delete_at = delete_at.replace(tzinfo=timezone.utc)
-
-        delay_time = (delete_at - datetime.now(timezone.utc)).total_seconds()
-        if delay_time < 0:
-            delay_time = 0
-
-        asyncio.create_task(
-            schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
-        )"""
-
-async def resume_pending_broadcasts():
-    pending_broadcasts = await clonedb.get_pending_broadcasts()
-    if not pending_broadcasts:
-        return
-
-    for bc in pending_broadcasts:
-        asyncio.create_task(resume_broadcast(bc, StreamBot))  # pass client
-
-async def resume_broadcast(bc, client):
-    bot_id = bc["bot_id"]
-    done_users = set(bc.get("done_users", []))
-    total_users = bc["total_users"]
-    b_msg = bc["message"]
-    chat_id = bc["chat_id"]
-
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
-    )
-
-    sts = await client.send_message(chat_id, "⏳ Broadcast resuming...", reply_markup=keyboard)
-
-    users_cursor = await clonedb.get_all_users(bot_id)
-    users = [user async for user in users_cursor]
-
-    for user in users:
-        user_id = int(user["user_id"])
-        if user_id in done_users:
-            continue
-
-        status = await clonedb.get_broadcast_status(bot_id)
-        if status == "cancelled":
-            await sts.edit("🚫 Broadcast cancelled by admin.", reply_markup=None)
-            print(f"🛑 Broadcast {bot_id} cancelled mid-way.")
-            return
-
-        try:
-            pti, sh = await broadcast_messagesy(bot_id, user_id, b_msg)
-        except Exception as e:
-            print(f"❌ Failed to send to {user_id}: {e}")
-            continue
-
-        await clonedb.update_broadcast_progress(bot_id, user_id)
-        done_users.add(user_id)
-
-        # edit progress every 10 users
-        if len(done_users) % 10 == 0 or len(done_users) == total_users:
-            await sts.edit(f"📢 Broadcast in progress...\nDone: {len(done_users)}/{total_users}", reply_markup=keyboard)
-
-    await clonedb.complete_broadcast(bot_id)
-    await sts.edit("✅ Broadcast completed", reply_markup=None)
-    print(f"✅ Broadcast resumed and completed for bot {bot_id}")
-
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
@@ -344,8 +271,6 @@ async def start():
     await restart_bots()
 
     #asyncio.create_task(auto_restart_loop())
-    #asyncio.create_task(init_auto_deletes(StreamBot, db))
-    await resume_pending_broadcasts()
 
     try:
         today = date.today()
