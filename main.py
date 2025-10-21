@@ -280,9 +280,9 @@ async def start():
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    #await restart_bots()
+    await restart_bots()
 
-    asyncio.create_task(auto_restart_loop())
+    #asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
