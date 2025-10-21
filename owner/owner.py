@@ -300,7 +300,11 @@ async def broadcast(client, message):
             [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
         )
 
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_markup=keyboard, reply_to_message_id=b_msg.id)
+        sts = await safe_action(message.reply_text,
+            "⏳ Broadcast starting...",
+            reply_markup=keyboard,
+            reply_to_message_id=b_msg.id
+        )
         start_time = pytime.time()
         total_users = await db.total_users_count()
 
@@ -348,7 +352,7 @@ async def broadcast(client, message):
 
 ⏳ ETA: {eta}
 ⚡ Speed: {speed:.2f} users/sec
-""")
+""", reply_markup=keyboard)
                         except:
                             pass
                 else:
@@ -379,7 +383,7 @@ async def broadcast(client, message):
 
 ⚡ Speed: {speed:.2f} users/sec
 """
-        await safe_action(sts.edit, final_text)
+        await safe_action(sts.edit, final_text, reply_markup=keyboard)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
