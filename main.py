@@ -246,10 +246,22 @@ async def auto_restart_loop():
     auto_restart_task = asyncio.create_task(loop())
     print("✅ New auto-restart loop started.")
 
-"""async def init_auto_deletes(client, db: Database):
-    scheduled = await db.get_all_scheduled_deletes()
+async def init_auto_deletes(client, db):
+    try:
+        scheduled = await db.get_all_scheduled_deletes()
+        if not scheduled:
+            return
 
-    for task in scheduled:
+        logger.info(f"Initializing {len(scheduled)} auto-delete tasks...")
+
+        for task in scheduled:
+            asyncio.create_task(handle_single_delete_task(client, db, task))
+
+    except Exception as e:
+        logger.error(f"Error initializing auto deletes: {e}")
+
+async def handle_single_delete_task(client, db, task):
+    try:
         chat_id = task["chat_id"]
         message_ids = task["message_ids"]
         notice_id = task["notice_id"]
@@ -259,13 +271,11 @@ async def auto_restart_loop():
         if delete_at.tzinfo is None:
             delete_at = delete_at.replace(tzinfo=timezone.utc)
 
-        delay_time = (delete_at - datetime.now(timezone.utc)).total_seconds()
-        if delay_time < 0:
-            delay_time = 0
-
-        asyncio.create_task(
-            schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
-        )"""
+        delay_time = max((delete_at - datetime.now(timezone.utc)).total_seconds(), 0)
+        await asyncio.sleep(delay_time)
+        await schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
+    except Exception as e:
+        logger.warning(f"Auto delete failed for {task.get('chat_id')}: {e}")
 
 async def start():
     logger.info("Initializing Bot...")
@@ -283,7 +293,7 @@ async def start():
     await restart_bots()
 
     #asyncio.create_task(auto_restart_loop())
-    #asyncio.create_task(init_auto_deletes(StreamBot, db))
+    asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
         today = date.today()
