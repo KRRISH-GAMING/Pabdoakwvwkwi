@@ -250,9 +250,7 @@ async def auto_restart_loop():
             print("🔁 Starting scheduled bot restart...")
             await restart_bots()
             print("🕗 Sleeping for 8 hours before next restart...\n")
-            #await asyncio.sleep(8 * 60 * 60)
-            await asyncio.sleep(60)
-            print("restart...\n")
+            await asyncio.sleep(8 * 60 * 60)
 
     auto_restart_task = asyncio.create_task(loop())
     print("✅ New auto-restart loop started.")
@@ -291,9 +289,9 @@ async def start():
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    #await restart_bots()
+    await restart_bots()
 
-    asyncio.create_task(auto_restart_loop())
+    #asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
