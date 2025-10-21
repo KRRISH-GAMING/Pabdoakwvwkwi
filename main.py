@@ -276,6 +276,42 @@ async def auto_restart_loop():
             schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
         )"""
 
+async def resume_pending_broadcasts():
+    pending_broadcasts = await clonedb.get_pending_broadcasts()
+    if not pending_broadcasts:
+        return
+
+    for bc in pending_broadcasts:
+        asyncio.create_task(resume_broadcast(bc))
+
+async def resume_broadcast(bc):
+    bot_id = bc["bot_id"]
+    done_users = set(bc.get("done_users", []))
+    total_users = bc["total_users"]
+    b_msg = bc["message"]
+
+    users = await clonedb.get_all_users(bot_id)
+    total_done = len(done_users)
+    start_time = pytime.time()
+
+    print(f"🔄 Resuming broadcast for bot {bot_id} ({total_done}/{total_users})")
+
+    async for user in users:
+        user_id = int(user["user_id"])
+        if user_id in done_users:
+            continue
+
+        status = await clonedb.get_broadcast_status(bot_id)
+        if status == "cancelled":
+            print(f"🛑 Broadcast {bot_id} cancelled mid-way.")
+            return
+
+        pti, sh = await broadcast_messagesy(bot_id, user_id, b_msg)
+        await clonedb.update_broadcast_progress(bot_id, user_id)
+
+    await clonedb.complete_broadcast(bot_id)
+    print(f"✅ Broadcast resumed and completed for bot {bot_id}")
+
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
@@ -293,6 +329,7 @@ async def start():
 
     #asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
+    await resume_pending_broadcasts()
 
     try:
         today = date.today()
