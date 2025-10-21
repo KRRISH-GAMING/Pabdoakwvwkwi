@@ -295,11 +295,12 @@ async def resume_broadcast(bc, client):
         [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
     )
 
-    # recreate progress message
     sts = await client.send_message(chat_id, "⏳ Broadcast resuming...", reply_markup=keyboard)
 
-    users = await clonedb.get_all_users(bot_id)
-    async for user in users:
+    users_cursor = await clonedb.get_all_users(bot_id)
+    users = [user async for user in users_cursor]
+
+    for user in users:
         user_id = int(user["user_id"])
         if user_id in done_users:
             continue
@@ -310,11 +311,18 @@ async def resume_broadcast(bc, client):
             print(f"🛑 Broadcast {bot_id} cancelled mid-way.")
             return
 
-        pti, sh = await broadcast_messagesy(bot_id, user_id, b_msg)
-        await clonedb.update_broadcast_progress(bot_id, user_id)
+        try:
+            pti, sh = await broadcast_messagesy(bot_id, user_id, b_msg)
+        except Exception as e:
+            print(f"❌ Failed to send to {user_id}: {e}")
+            continue
 
-        # edit progress message with keyboard
-        await sts.edit(f"Broadcast in progress...\nDone: {len(done_users)+1}/{total_users}", reply_markup=keyboard)
+        await clonedb.update_broadcast_progress(bot_id, user_id)
+        done_users.add(user_id)
+
+        # edit progress every 10 users
+        if len(done_users) % 10 == 0 or len(done_users) == total_users:
+            await sts.edit(f"📢 Broadcast in progress...\nDone: {len(done_users)}/{total_users}", reply_markup=keyboard)
 
     await clonedb.complete_broadcast(bot_id)
     await sts.edit("✅ Broadcast completed", reply_markup=None)
