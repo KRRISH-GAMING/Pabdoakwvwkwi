@@ -282,20 +282,23 @@ async def resume_pending_broadcasts():
         return
 
     for bc in pending_broadcasts:
-        asyncio.create_task(resume_broadcast(bc))
+        asyncio.create_task(resume_broadcast(bc, StreamBot))  # pass client
 
-async def resume_broadcast(bc):
+async def resume_broadcast(bc, client):
     bot_id = bc["bot_id"]
     done_users = set(bc.get("done_users", []))
     total_users = bc["total_users"]
     b_msg = bc["message"]
+    chat_id = bc["chat_id"]
+
+    keyboard = InlineKeyboardMarkup(
+        [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
+    )
+
+    # recreate progress message
+    sts = await client.send_message(chat_id, "⏳ Broadcast resuming...", reply_markup=keyboard)
 
     users = await clonedb.get_all_users(bot_id)
-    total_done = len(done_users)
-    start_time = pytime.time()
-
-    print(f"🔄 Resuming broadcast for bot {bot_id} ({total_done}/{total_users})")
-
     async for user in users:
         user_id = int(user["user_id"])
         if user_id in done_users:
@@ -303,13 +306,18 @@ async def resume_broadcast(bc):
 
         status = await clonedb.get_broadcast_status(bot_id)
         if status == "cancelled":
+            await sts.edit("🚫 Broadcast cancelled by admin.", reply_markup=None)
             print(f"🛑 Broadcast {bot_id} cancelled mid-way.")
             return
 
         pti, sh = await broadcast_messagesy(bot_id, user_id, b_msg)
         await clonedb.update_broadcast_progress(bot_id, user_id)
 
+        # edit progress message with keyboard
+        await sts.edit(f"Broadcast in progress...\nDone: {len(done_users)+1}/{total_users}", reply_markup=keyboard)
+
     await clonedb.complete_broadcast(bot_id)
+    await sts.edit("✅ Broadcast completed", reply_markup=None)
     print(f"✅ Broadcast resumed and completed for bot {bot_id}")
 
 async def start():
@@ -329,7 +337,7 @@ async def start():
 
     #asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
-    #await resume_pending_broadcasts()
+    await resume_pending_broadcasts()
 
     try:
         today = date.today()
