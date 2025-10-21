@@ -860,7 +860,12 @@ async def broadcast(client, message):
 
         users = await clonedb.get_all_users(me.id)
         total_users = await clonedb.total_users_count(me.id)
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_markup=keyboard, reply_to_message_id=b_msg.id)
+        sts = await safe_action(message.reply_text,
+            "⏳ Broadcast starting...",
+            reply_markup=keyboard,
+            reply_to_message_id=b_msg.id
+        )
+        await clonedb.start_broadcast(me.id, b_msg, total_users)
 
         done = blocked = deleted = failed = success = 0
         start_time = pytime.time()
@@ -868,11 +873,13 @@ async def broadcast(client, message):
         async for user in users:
             if broadcast_cancel:
                 await safe_action(sts.edit_text, "🚫 Broadcast cancelled by admin.")
+                await clonedb.cancel_broadcast(me.id)
                 print("🛑 Broadcast cancelled mid-way.")
                 return
 
             if 'user_id' in user:
                 pti, sh = await broadcast_messagesy(me.id, int(user['user_id']), b_msg)
+                await clonedb.update_broadcast_progress(me.id, int(user['user_id']))
                 if pti:
                     success += 1
                 else:
@@ -934,6 +941,7 @@ async def broadcast(client, message):
 ⚡ Speed: {speed:.2f} users/sec
 """
         await safe_action(sts.edit, final_text)
+        await clonedb.complete_broadcast(me.id)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
@@ -1292,7 +1300,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 image_to_send = shuffled_images[0]
 
                 try:
-                    await client.get_chat_member(AUTH_CHANNEL, user_id)
+                    await clone_client.get_chat_member(target_channel, owner_id)
                 except:
                     try:
                         await safe_action(clone_client.send_photo,
@@ -1304,7 +1312,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     except:
                         await safe_action(clone_client.send_message,
                             owner_id,
-                            "❌ Failed to auto post please disable and enable again.\n\n⚠️ Make sure I'm admin in your channel."
+                            "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
                         )
 
                 if mode == "single":
