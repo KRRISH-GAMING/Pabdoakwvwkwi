@@ -28,6 +28,8 @@ routes = web.RouteTableDef()
 
 auto_restart_task = None
 
+AUTO_POST_TASKS: dict[int, asyncio.Task] = {}
+
 class StreamXBot(Client):
     async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
         async for message in self.get_chat_history(chat_id, limit=limit):
@@ -148,6 +150,19 @@ def load_plugins():
         sys.modules[f"owner.{plugin_name}"] = module
         logger.info(f"✅ Imported plugin: {plugin_name}")
 
+async def start_auto_post(bot_id: int, db, channel_id: int):
+    old_task = AUTO_POST_TASKS.get(bot_id)
+    if old_task and not old_task.done():
+        old_task.cancel()
+        try:
+            await old_task
+        except asyncio.CancelledError:
+            print(f"🛑 Old auto-post stopped for bot {bot_id}")
+
+    new_task = asyncio.create_task(auto_post_clone(bot_id, db, channel_id))
+    AUTO_POST_TASKS[bot_id] = new_task
+    print(f"▶️ Auto-post started for bot {bot_id}")
+
 async def restart_bots():
     bots_cursor = await db.get_all_clone()
     bots = await bots_cursor.to_list(None)
@@ -177,12 +192,9 @@ async def restart_bots():
 
             clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
-                auto_post_channel = clone.get("ap_channel", None)
+                auto_post_channel = clone.get("ap_channel")
                 if auto_post_channel:
-                    asyncio.create_task(
-                        auto_post_clone(bot_me.id, db, auto_post_channel)
-                    )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")
+                    await start_auto_post(bot_me.id, db, auto_post_channel)
         except FloodWait as e:
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
@@ -204,12 +216,9 @@ async def restart_bots():
 
             clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
-                auto_post_channel = clone.get("ap_channel", None)
+                auto_post_channel = clone.get("ap_channel")
                 if auto_post_channel:
-                    asyncio.create_task(
-                        auto_post_clone(bot_me.id, db, auto_post_channel)
-                    )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")
+                    await start_auto_post(bot_me.id, db, auto_post_channel)
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
@@ -241,27 +250,17 @@ async def auto_restart_loop():
             print("🔁 Starting scheduled bot restart...")
             await restart_bots()
             print("🕗 Sleeping for 8 hours before next restart...\n")
-            await asyncio.sleep(8 * 60 * 60)
+            #await asyncio.sleep(8 * 60 * 60)
+            await asyncio.sleep(60)
+            print("restart...\n")
 
     auto_restart_task = asyncio.create_task(loop())
     print("✅ New auto-restart loop started.")
 
-async def init_auto_deletes(client, db):
-    try:
-        scheduled = await db.get_all_scheduled_deletes()
-        if not scheduled:
-            return
+"""async def init_auto_deletes(client, db: Database):
+    scheduled = await db.get_all_scheduled_deletes()
 
-        logger.info(f"Initializing {len(scheduled)} auto-delete tasks...")
-
-        for task in scheduled:
-            asyncio.create_task(handle_single_delete_task(client, db, task))
-
-    except Exception as e:
-        logger.error(f"Error initializing auto deletes: {e}")
-
-async def handle_single_delete_task(client, db, task):
-    try:
+    for task in scheduled:
         chat_id = task["chat_id"]
         message_ids = task["message_ids"]
         notice_id = task["notice_id"]
@@ -271,11 +270,13 @@ async def handle_single_delete_task(client, db, task):
         if delete_at.tzinfo is None:
             delete_at = delete_at.replace(tzinfo=timezone.utc)
 
-        delay_time = max((delete_at - datetime.now(timezone.utc)).total_seconds(), 0)
-        await asyncio.sleep(delay_time)
-        await schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
-    except Exception as e:
-        logger.warning(f"Auto delete failed for {task.get('chat_id')}: {e}")
+        delay_time = (delete_at - datetime.now(timezone.utc)).total_seconds()
+        if delay_time < 0:
+            delay_time = 0
+
+        asyncio.create_task(
+            schedule_delete(client, db, chat_id, message_ids, notice_id, delay_time, reload_url)
+        )"""
 
 async def start():
     logger.info("Initializing Bot...")
@@ -290,10 +291,10 @@ async def start():
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    await restart_bots()
+    #await restart_bots()
 
-    #asyncio.create_task(auto_restart_loop())
-    asyncio.create_task(init_auto_deletes(StreamBot, db))
+    asyncio.create_task(auto_restart_loop())
+    #asyncio.create_task(init_auto_deletes(StreamBot, db))
 
     try:
         today = date.today()
