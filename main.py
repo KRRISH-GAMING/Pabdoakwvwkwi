@@ -329,7 +329,7 @@ async def start():
 
     #asyncio.create_task(auto_restart_loop())
     #asyncio.create_task(init_auto_deletes(StreamBot, db))
-    await resume_pending_broadcasts()
+    #await resume_pending_broadcasts()
 
     try:
         today = date.today()
