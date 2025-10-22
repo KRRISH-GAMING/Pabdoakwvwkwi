@@ -534,37 +534,28 @@ async def start(client, message):
 
 async def auto_post_clone(bot_id: int, db, target_channel: int):
     try:
-        clone = await db.get_clone(bot_id)
-        if not clone or not clone.get("auto_post", False):
-            return
-
-        owner_id = clone.get("user_id")
-        is_admin = owner_id in ADMINS
-        is_premium = await db.is_premium(owner_id)
-        if not is_admin and not is_premium:
-            return
-
-        username = clone.get("username", bot_id)
-
-        clone_client = get_client(bot_id)
-        if not clone_client:
-            return
-
         while True:
             try:
-                fresh = await db.get_clone(bot_id)
-                if not fresh or not fresh.get("auto_post", False):
+                clone_client = get_client(bot_id)
+                if not clone_client:
+                    print(f"⚠️ No client found for bot {bot_id}")
                     return
 
-                owner_id = fresh.get("user_id")
+                clone = await db.get_clone(bot_id)
+                if not fresh or not clone.get("auto_post", False):
+                    print(f"⏹ Auto-post disabled for bot {bot_id}")
+                    return
+
+                owner_id = clone.get("user_id")
                 is_admin = owner_id in ADMINS
                 is_premium = await db.is_premium(owner_id)
                 if not is_admin and not is_premium:
+                    print(f"⏹ Auto-post stopped for bot {bot_id} (no premium)")
                     return
 
-                username = fresh.get("username", bot_id)
+                username = clone.get("username", bot_id)
 
-                mode = fresh.get("ap_mode", "single")
+                mode = clone.get("ap_mode", "single")
 
                 item = None
                 items = []
@@ -609,8 +600,8 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     share_link = f"https://t.me/{bot_username}?start=BATCH-{outstr}"
 
                 random_caption = clone.get("random_caption", False)
-                header = fresh.get("header", None)
-                footer = fresh.get("footer", None)
+                header = clone.get("header", None)
+                footer = clone.get("footer", None)
                 selected_caption = random.choice(script.CAPTION_LIST) if script.CAPTION_LIST else ""
 
                 text = ""
@@ -642,7 +633,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     try:
                         await safe_action(clone_client.send_photo,
                             chat_id=target_channel,
-                            photo=fresh.get("ap_image", None) or image_to_send,
+                            photo=clone.get("ap_image", None) or image_to_send,
                             caption=text,
                             parse_mode=enums.ParseMode.HTML
                         )
@@ -658,7 +649,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     for it in items:
                         await db.mark_media_posted(bot_id, it["file_id"])
 
-                sleep_time = parse_time(fresh.get("ap_sleep", "1h"))
+                sleep_time = parse_time(clone.get("ap_sleep", "1h"))
                 await asyncio.sleep(sleep_time)
             except Exception as e:
                 if 'item' in locals() and item:
