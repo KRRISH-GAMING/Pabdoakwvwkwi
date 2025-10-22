@@ -28,8 +28,6 @@ routes = web.RouteTableDef()
 
 auto_restart_task = None
 
-AUTO_POST_TASKS: dict[int, asyncio.Task] = {}
-
 class StreamXBot(Client):
     async def iter_messages(self, chat_id: Union[int, str], limit: int) -> AsyncGenerator[types.Message, None]:
         async for message in self.get_chat_history(chat_id, limit=limit):
@@ -150,19 +148,6 @@ def load_plugins():
         sys.modules[f"owner.{plugin_name}"] = module
         logger.info(f"✅ Imported plugin: {plugin_name}")
 
-async def start_auto_post(bot_id: int, db, channel_id: int):
-    old_task = AUTO_POST_TASKS.get(bot_id)
-    if old_task and not old_task.done():
-        old_task.cancel()
-        try:
-            await old_task
-        except asyncio.CancelledError:
-            print(f"🛑 Old auto-post stopped for bot {bot_id}")
-
-    new_task = asyncio.create_task(auto_post_clone(bot_id, db, channel_id))
-    AUTO_POST_TASKS[bot_id] = new_task
-    print(f"▶️ Auto-post started for bot {bot_id}")
-
 async def restart_bots():
     bots_cursor = await db.get_all_clone()
     bots = await bots_cursor.to_list(None)
@@ -192,9 +177,12 @@ async def restart_bots():
 
             clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
-                auto_post_channel = clone.get("ap_channel")
+                auto_post_channel = clone.get("ap_channel", None)
                 if auto_post_channel:
-                    await start_auto_post(bot_me.id, db, auto_post_channel)
+                    asyncio.create_task(
+                        auto_post_clone(bot_me.id, db, auto_post_channel)
+                    )
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except FloodWait as e:
             print(f"⏱ FloodWait: sleeping {e.value} seconds")
             await asyncio.sleep(e.value)
@@ -216,9 +204,12 @@ async def restart_bots():
 
             clone = await db.get_clone(bot_me.id)
             if clone and clone.get("auto_post", False):
-                auto_post_channel = clone.get("ap_channel")
+                auto_post_channel = clone.get("ap_channel", None)
                 if auto_post_channel:
-                    await start_auto_post(bot_me.id, db, auto_post_channel)
+                    asyncio.create_task(
+                        auto_post_clone(bot_me.id, db, auto_post_channel)
+                    )
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
         except (UserDeactivated, AuthKeyUnregistered):
             print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
             await db.delete_clone_by_id(bot_id)
