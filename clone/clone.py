@@ -542,7 +542,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                     return
 
                 clone = await db.get_clone(bot_id)
-                if not fresh or not clone.get("auto_post", False):
+                if not clone or not clone.get("auto_post", False):
                     print(f"⏹ Auto-post disabled for bot {bot_id}")
                     return
 
@@ -634,7 +634,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                         caption=text,
                         parse_mode=enums.ParseMode.HTML
                     )
-                except:
+                except Exception as e:
                     await safe_action(clone_client.send_message,
                         owner_id,
                         "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
