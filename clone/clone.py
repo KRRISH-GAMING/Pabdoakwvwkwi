@@ -532,6 +532,158 @@ async def start(client, message):
         print(f"⚠️ Clone Start Bot Error: {e}")
         print(traceback.format_exc())
 
+async def auto_post_clone(bot_id: int, db, target_channel: int):
+    try:
+        clone = await db.get_clone(bot_id)
+        if not clone or not clone.get("auto_post", False):
+            return
+
+        owner_id = clone.get("user_id")
+        is_admin = owner_id in ADMINS
+        is_premium = await db.is_premium(owner_id)
+        if not is_admin and not is_premium:
+            return
+
+        username = clone.get("username", bot_id)
+
+        clone_client = get_client(bot_id)
+        if not clone_client:
+            return
+
+        while True:
+            try:
+                fresh = await db.get_clone(bot_id)
+                if not fresh or not fresh.get("auto_post", False):
+                    return
+
+                owner_id = fresh.get("user_id")
+                is_admin = owner_id in ADMINS
+                is_premium = await db.is_premium(owner_id)
+                if not is_admin and not is_premium:
+                    return
+
+                username = fresh.get("username", bot_id)
+
+                mode = fresh.get("ap_mode", "single")
+
+                item = None
+                items = []
+
+                if mode == "single":
+                    item = await db.pop_random_unposted_media(bot_id)
+                    if not item:
+                        print(f"⌛ No new media for @{username}, sleeping 60s...")
+                        await asyncio.sleep(60)
+                        continue
+
+                    file_id = item.get("file_id")
+                    if not file_id:
+                        await db.mark_media_posted(item["_id"], bot_id)
+                        continue
+
+                    await db.mark_media_posted(item["_id"], bot_id)
+
+                    db_file_id = str(item["_id"])
+                    string = f"file_{db_file_id}"
+                    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
+                    bot_username = (await clone_client.get_me()).username
+                    share_link = f"https://t.me/{bot_username}?start=SINGLE-{outstr}"
+
+                elif mode == "batch":
+                    batch_size = random.randint(10, 100)
+                    for _ in range(batch_size):
+                        item = await db.pop_random_unposted_media(bot_id)
+                        if item:
+                            items.append(item)
+
+                    if not items:
+                        print(f"⌛ No new media for @{username}, sleeping 60s...")
+                        await asyncio.sleep(60)
+                        continue
+
+                    file_ids = [it["file_id"] for it in items]
+                    batch_id = await db.add_batch(bot_id, file_ids, is_auto_post=True)
+                    string = str(batch_id)
+                    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
+                    bot_username = (await clone_client.get_me()).username
+                    share_link = f"https://t.me/{bot_username}?start=BATCH-{outstr}"
+
+                random_caption = clone.get("random_caption", False)
+                header = fresh.get("header", None)
+                footer = fresh.get("footer", None)
+                selected_caption = random.choice(script.CAPTION_LIST) if script.CAPTION_LIST else ""
+
+                text = ""
+
+                if header:
+                    text += f"<blockquote>{header}</blockquote>\n\n"
+
+                if mode == "single":
+                    if random_caption:
+                        text += f"{selected_caption}\n\n<blockquote>🔗 Here is your link:\n{share_link}</blockquote>"
+                    else:
+                        text += f"🔗 Here is your link:\n{share_link}"
+                elif mode == "batch":
+                    if random_caption:
+                        text += f"📦 Batch contains {len(items)} items.\n\n{selected_caption}\n\n<blockquote>🔗 Here is your link:\n{share_link}</blockquote>"
+                    else:
+                        text += f"📦 Batch contains {len(items)} items.\n\n🔗 Here is your link:\n{share_link}"
+
+                if footer:
+                    text += f"\n\n<blockquote>{footer}</blockquote>"
+
+                shuffled_images = script.list_image.copy()
+                random.shuffle(shuffled_images)
+                image_to_send = shuffled_images[0]
+
+                try:
+                    await clone_client.get_chat_member(target_channel, owner_id)
+                except:
+                    try:
+                        await safe_action(clone_client.send_photo,
+                            chat_id=target_channel,
+                            photo=fresh.get("ap_image", None) or image_to_send,
+                            caption=text,
+                            parse_mode=enums.ParseMode.HTML
+                        )
+                    except:
+                        await safe_action(clone_client.send_message,
+                            owner_id,
+                            "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
+                        )
+
+                if mode == "single":
+                    await db.mark_media_posted(bot_id, item["_id"])
+                elif mode == "batch":
+                    for it in items:
+                        await db.mark_media_posted(bot_id, it["file_id"])
+
+                sleep_time = parse_time(fresh.get("ap_sleep", "1h"))
+                await asyncio.sleep(sleep_time)
+            except Exception as e:
+                if 'item' in locals() and item:
+                    if mode == "single":
+                        await db.unmark_media_posted(bot_id, item["file_id"])
+                    elif mode == "batch":
+                        for it in items:
+                            await db.unmark_media_posted(bot_id, it["file_id"])
+
+                print(f"⚠️ Clone Auto-post error for @{username}: {e}")
+                try:
+                    await safe_action(clone_client.send_message,
+                        LOG_CHANNEL,
+                        f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+                    )
+                except:
+                    pass
+                await asyncio.sleep(30)
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"❌ Clone AutoPost crashed for {bot_id}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"❌ Clone AutoPost crashed for {bot_id}: {e}")
+
 @Client.on_message(filters.command("help") & filters.private)
 async def help(client, message):
     try:
@@ -1190,158 +1342,6 @@ async def reply(client, message):
         )
         print(f"⚠️ Clone Reply Error: {e}")
         print(traceback.format_exc())
-
-async def auto_post_clone(bot_id: int, db, target_channel: int):
-    try:
-        clone = await db.get_clone(bot_id)
-        if not clone or not clone.get("auto_post", False):
-            return
-
-        owner_id = clone.get("user_id")
-        is_admin = owner_id in ADMINS
-        is_premium = await db.is_premium(owner_id)
-        if not is_admin and not is_premium:
-            return
-
-        username = clone.get("username", bot_id)
-
-        clone_client = get_client(bot_id)
-        if not clone_client:
-            return
-
-        while True:
-            try:
-                fresh = await db.get_clone(bot_id)
-                if not fresh or not fresh.get("auto_post", False):
-                    return
-
-                owner_id = fresh.get("user_id")
-                is_admin = owner_id in ADMINS
-                is_premium = await db.is_premium(owner_id)
-                if not is_admin and not is_premium:
-                    return
-
-                username = fresh.get("username", bot_id)
-
-                mode = fresh.get("ap_mode", "single")
-
-                item = None
-                items = []
-
-                if mode == "single":
-                    item = await db.pop_random_unposted_media(bot_id)
-                    if not item:
-                        print(f"⌛ No new media for @{username}, sleeping 60s...")
-                        await asyncio.sleep(60)
-                        continue
-
-                    file_id = item.get("file_id")
-                    if not file_id:
-                        await db.mark_media_posted(item["_id"], bot_id)
-                        continue
-
-                    await db.mark_media_posted(item["_id"], bot_id)
-
-                    db_file_id = str(item["_id"])
-                    string = f"file_{db_file_id}"
-                    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
-                    bot_username = (await clone_client.get_me()).username
-                    share_link = f"https://t.me/{bot_username}?start=SINGLE-{outstr}"
-
-                elif mode == "batch":
-                    batch_size = random.randint(10, 100)
-                    for _ in range(batch_size):
-                        item = await db.pop_random_unposted_media(bot_id)
-                        if item:
-                            items.append(item)
-
-                    if not items:
-                        print(f"⌛ No new media for @{username}, sleeping 60s...")
-                        await asyncio.sleep(60)
-                        continue
-
-                    file_ids = [it["file_id"] for it in items]
-                    batch_id = await db.add_batch(bot_id, file_ids, is_auto_post=True)
-                    string = str(batch_id)
-                    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
-                    bot_username = (await clone_client.get_me()).username
-                    share_link = f"https://t.me/{bot_username}?start=BATCH-{outstr}"
-
-                random_caption = clone.get("random_caption", False)
-                header = fresh.get("header", None)
-                footer = fresh.get("footer", None)
-                selected_caption = random.choice(script.CAPTION_LIST) if script.CAPTION_LIST else ""
-
-                text = ""
-
-                if header:
-                    text += f"<blockquote>{header}</blockquote>\n\n"
-
-                if mode == "single":
-                    if random_caption:
-                        text += f"{selected_caption}\n\n<blockquote>🔗 Here is your link:\n{share_link}</blockquote>"
-                    else:
-                        text += f"🔗 Here is your link:\n{share_link}"
-                elif mode == "batch":
-                    if random_caption:
-                        text += f"📦 Batch contains {len(items)} items.\n\n{selected_caption}\n\n<blockquote>🔗 Here is your link:\n{share_link}</blockquote>"
-                    else:
-                        text += f"📦 Batch contains {len(items)} items.\n\n🔗 Here is your link:\n{share_link}"
-
-                if footer:
-                    text += f"\n\n<blockquote>{footer}</blockquote>"
-
-                shuffled_images = script.list_image.copy()
-                random.shuffle(shuffled_images)
-                image_to_send = shuffled_images[0]
-
-                try:
-                    await clone_client.get_chat_member(target_channel, owner_id)
-                except:
-                    try:
-                        await safe_action(clone_client.send_photo,
-                            chat_id=target_channel,
-                            photo=fresh.get("ap_image", None) or image_to_send,
-                            caption=text,
-                            parse_mode=enums.ParseMode.HTML
-                        )
-                    except:
-                        await safe_action(clone_client.send_message,
-                            owner_id,
-                            "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
-                        )
-
-                if mode == "single":
-                    await db.mark_media_posted(bot_id, item["_id"])
-                elif mode == "batch":
-                    for it in items:
-                        await db.mark_media_posted(bot_id, it["file_id"])
-
-                sleep_time = parse_time(fresh.get("ap_sleep", "1h"))
-                await asyncio.sleep(sleep_time)
-            except Exception as e:
-                if 'item' in locals() and item:
-                    if mode == "single":
-                        await db.unmark_media_posted(bot_id, item["file_id"])
-                    elif mode == "batch":
-                        for it in items:
-                            await db.unmark_media_posted(bot_id, it["file_id"])
-
-                print(f"⚠️ Clone Auto-post error for @{username}: {e}")
-                try:
-                    await safe_action(clone_client.send_message,
-                        LOG_CHANNEL,
-                        f"⚠️ Clone Auto Post Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-                    )
-                except:
-                    pass
-                await asyncio.sleep(30)
-    except Exception as e:
-        await safe_action(client.send_message,
-            LOG_CHANNEL,
-            f"❌ Clone AutoPost crashed for {bot_id}:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"❌ Clone AutoPost crashed for {bot_id}: {e}")
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
