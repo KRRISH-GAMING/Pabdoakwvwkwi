@@ -148,83 +148,106 @@ def load_plugins():
         sys.modules[f"owner.{plugin_name}"] = module
         logger.info(f"✅ Imported plugin: {plugin_name}")
 
-async def restart_bots():
-    bots_cursor = await db.get_all_clone()
-    bots = await bots_cursor.to_list(None)
+running_clones = {}  # {bot_id: Client}
+restart_lock = asyncio.Lock()  # prevent overlapping restarts
+has_started_restart = False    # prevent double startup
 
-    semaphore = asyncio.Semaphore(10)
-    tasks = []
 
-    async def restart_single(bot):
-        bot_token = bot["token"]
-        bot_id = bot["_id"]
+# -------------------------------------------------
+# Stop a clone safely
+# -------------------------------------------------
+async def stop_clone(bot_id: int):
+    if bot_id in running_clones:
         try:
-            async with semaphore:
-                xd = Client(
-                    name=f"clone_{bot_id}",
-                    api_id=API_ID,
-                    api_hash=API_HASH,
-                    bot_token=bot_token,
-                    plugins={"root": "clone"},
-                    workers=20,
-                    in_memory=True
-                )
-                await xd.start()
-                bot_me = await xd.get_me()
-                set_client(bot_me.id, xd)
-                await set_clone_menu(xd)
-                print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
-
-            clone = await db.get_clone(bot_me.id)
-            if clone and clone.get("auto_post", False):
-                auto_post_channel = clone.get("ap_channel", None)
-                if auto_post_channel:
-                    asyncio.create_task(
-                        auto_post_clone(bot_me.id, db, auto_post_channel)
-                    )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")
-        except FloodWait as e:
-            print(f"⏱ FloodWait: sleeping {e.value} seconds")
-            await asyncio.sleep(e.value)
-            async with semaphore:
-                xd = Client(
-                    name=f"clone_{bot_id}",
-                    api_id=API_ID,
-                    api_hash=API_HASH,
-                    bot_token=bot_token,
-                    plugins={"root": "clone"},
-                    workers=20,
-                    in_memory=True
-                )
-                await xd.start()
-                bot_me = await xd.get_me()
-                set_client(bot_me.id, xd)
-                await set_clone_menu(xd)
-                print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
-
-            clone = await db.get_clone(bot_me.id)
-            if clone and clone.get("auto_post", False):
-                auto_post_channel = clone.get("ap_channel", None)
-                if auto_post_channel:
-                    asyncio.create_task(
-                        auto_post_clone(bot_me.id, db, auto_post_channel)
-                    )
-                    print(f"▶️ Auto-post started for @{bot_me.username}")
-        except (UserDeactivated, AuthKeyUnregistered):
-            print(f"⚠️ Bot {bot_id} invalid/deactivated. Removing from DB...")
-            await db.delete_clone_by_id(bot_id)
+            await running_clones[bot_id].stop()
+            print(f"🛑 Stopped clone bot {bot_id}")
         except Exception as e:
-            if "SESSION_REVOKED" in str(e) or "ACCESS_TOKEN_EXPIRED" in str(e):
-                print(f"⚠️ Token expired or revoked for bot {bot_id}, removing from DB...")
-                await db.delete_clone_by_id(bot_id)
-            else:
-                print(f"❌ Error restarting bot {bot_id}: {e}")
+            print(f"⚠️ Error stopping clone {bot_id}: {e}")
+        running_clones.pop(bot_id, None)
 
-    for bot in bots:
-        tasks.append(restart_single(bot))
 
-    await asyncio.gather(*tasks)
-    print("✅ All clone bots processed for restart.")
+# -------------------------------------------------
+# Restart a single clone
+# -------------------------------------------------
+async def restart_single_clone(bot_data, start_auto_post=False):
+    bot_token = bot_data["token"]
+    bot_id = bot_data["_id"]
+
+    await stop_clone(bot_id)  # ensure old instance is gone
+
+    try:
+        client = Client(
+            name=f"clone_{bot_id}",
+            api_id=API_ID,
+            api_hash=API_HASH,
+            bot_token=bot_token,
+            plugins={"root": "clone"},
+            workers=20,
+            in_memory=True
+        )
+        await client.start()
+        bot_me = await client.get_me()
+
+        running_clones[bot_me.id] = client
+        set_client(bot_me.id, client)
+        await set_clone_menu(client)
+        print(f"✅ Restarted clone @{bot_me.username} ({bot_me.id})")
+
+        # Only start auto-post on first launch
+        if start_auto_post:
+            clone = await db.get_clone(bot_me.id)
+            if clone and clone.get("auto_post", False):
+                ap_channel = clone.get("ap_channel")
+                if ap_channel:
+                    asyncio.create_task(auto_post_clone(bot_me.id, db, ap_channel))
+                    print(f"▶️ Auto-post started for @{bot_me.username}")
+
+    except FloodWait as e:
+        print(f"⏱ FloodWait {e.value}s for {bot_id}")
+        await asyncio.sleep(e.value)
+        await restart_single_clone(bot_data, start_auto_post=start_auto_post)
+    except (UserDeactivated, AuthKeyUnregistered):
+        print(f"⚠️ Bot {bot_id} deactivated — removing from DB")
+        await db.delete_clone_by_id(bot_id)
+    except Exception as e:
+        if "SESSION_REVOKED" in str(e) or "ACCESS_TOKEN_EXPIRED" in str(e):
+            print(f"⚠️ Token revoked for {bot_id} — removing from DB")
+            await db.delete_clone_by_id(bot_id)
+        else:
+            print(f"❌ Error restarting {bot_id}: {e}")
+
+
+# -------------------------------------------------
+# Restart all clones safely (with concurrency limit)
+# -------------------------------------------------
+async def restart_all_clones(start_auto_post=False):
+    async with restart_lock:
+        print("♻️ Restarting all clones...")
+        bots_cursor = await db.get_all_clone()
+        bots = await bots_cursor.to_list(None)
+
+        semaphore = asyncio.Semaphore(10)
+
+        async def limited(bot):
+            async with semaphore:
+                await restart_single_clone(bot, start_auto_post=start_auto_post)
+
+        await asyncio.gather(*(limited(bot) for bot in bots))
+        print("✅ All clones restarted.")
+
+
+# -------------------------------------------------
+# Scheduled runtime restart — NO AUTO POST
+# -------------------------------------------------
+async def schedule_clone_restart(hours=60):
+    while True:
+        print("⏳ Scheduled clone restart triggered...")
+        try:
+            await restart_all_clones(start_auto_post=False)
+        except Exception as e:
+            print(f"⚠️ Scheduled restart error: {e}")
+        print(f"🕒 Next restart in {hours} hours.")
+        await asyncio.sleep(hours)
 
 async def start():
     logger.info("Initializing Bot...")
@@ -239,7 +262,11 @@ async def start():
     load_plugins()
     await initialize_clients()
     #await start_web_server()
-    await restart_bots()
+    global has_started_restart
+    if not has_started_restart:
+        has_started_restart = True
+        await restart_all_clones(start_auto_post=True)
+        asyncio.create_task(schedule_clone_restart(hours=60))
 
     try:
         today = date.today()
