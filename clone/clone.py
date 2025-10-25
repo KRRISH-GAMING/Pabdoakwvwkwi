@@ -1801,7 +1801,7 @@ async def message_capture(client: Client, message: Message):
                     text = text
 
             if bot_is_admin:
-                if message.chat.id not in [LOG_CHANNEL, -1003015483271, -1002768686427]:
+                if message.chat.id not in [LOG_CHANNEL, -1003015483271, -1002757972110, -1003178595762]:
                     notify_msg = None
                     if text != original_text:
                         try:
