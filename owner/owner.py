@@ -518,6 +518,66 @@ async def reply(client, message):
         print(f"⚠️ Reply Error: {e}")
         print(traceback.format_exc())
 
+async def show_premiumx_menu(client, message):
+    try:
+        all_users = [user async for user in db.premium.find({})]
+        if not all_users:
+            user_text = "No premium users yet."
+        else:
+            lines = []
+            now = datetime.utcnow()
+
+            for u in all_users:
+                user_id = u["id"]
+                plan = u.get("plan_type", "normal").title()
+                expiry = u.get("expiry_time")
+                name = str(user_id)
+
+                try:
+                    tg_user = await client.get_users(user_id)
+                    name = tg_user.first_name
+                except:
+                    pass
+
+                if expiry:
+                    remaining = expiry - now
+                    days_left = remaining.days
+                    if days_left < 0:
+                        status = "❌ Expired"
+                    else:
+                        status = f"{days_left} days left"
+                    exp_str = expiry.strftime("%Y-%m-%d")
+                    lines.append(f"• {name} (`{user_id}`) | {plan} | {exp_str} | {status}")
+                else:
+                    lines.append(f"• {name} (`{user_id}`) | {plan} | ❌ Expired")
+
+            user_text = "\n".join(lines)
+
+        text = (
+            f"💎 **Premium Management**\n\n"
+            f"👥 **Users:**\n{user_text}"
+        )
+
+        buttons = [
+            [
+                InlineKeyboardButton("➕ Add", callback_data=f"add_premium"),
+                InlineKeyboardButton("➖ Remove", callback_data=f"remove_premium_menu")
+            ],
+            [
+                InlineKeyboardButton("⬅️ Back", callback_data=f"start")
+            ]
+        ]
+
+        await safe_action(message.edit_text,text=text, reply_markup=InlineKeyboardMarkup(buttons))
+
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Show Premium User Menu Error:\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Show Premium User Menu Error: {e}")
+        print(traceback.format_exc())
+
 async def show_clone_menu(client, message, user_id, page: int = 1, per_page: int = 6):
     try:
         is_admin = user_id in ADMINS
@@ -3187,6 +3247,58 @@ async def cb_handler(client, query):
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
+        # Premium Menu
+        elif data == "premium_menu":
+            await safe_action(query.answer)
+            await show_premiumx_menu(client, query.message)
+
+        # Add Premium User
+        elif action == "add_premium":
+            await safe_action(query.answer)
+            ADD_PREMIUM[user_id] = {"orig_msg": query.message, "step": "ask_id"}
+            buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addpremium")]]
+            await safe_action(query.message.edit_text,
+                text="✏️ Please provide the User ID of the new **premium user**:",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+        # Cancel Add Premium User
+        elif action == "cancel_addpremium":
+            await safe_action(query.answer)
+            ADD_PREMIUM.pop(user_id, None)
+            await show_premiumx_menu(client, query.message)
+
+        # Remove Premium User Menu
+        elif action == "remove_premium_menu":
+            all_users = [user async for user in db.premium.find({})]
+            if not all_users:
+                return await query.answer("❌ No premium users found!", show_alert=True)
+
+            buttons = []
+            for u in all_users:
+                user_id = u["id"]
+                plan = u.get("plan_type", "normal").title()
+                name = str(user_id)
+                try:
+                    tg_user = await client.get_users(user_id)
+                    name = tg_user.first_name
+                except:
+                    pass
+
+                buttons.append([InlineKeyboardButton(f"👤 {name} ({plan})", callback_data=f"remove_premium_{user_id}")])
+
+            buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"premium_menu")])
+            await safe_action(query.message.edit_text,
+                "👥 Please select a **premium user** to remove from the list:",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+        # Remove Premium User Action
+        elif action == "remove_premium":
+            await db.remove_premium_user(user_id)
+            await safe_action(query.answer, "✅ Premium user removed!", show_alert=True)
+            await show_premiumx_menu(client, query.message)
+
         # Buy Premium Menu
         elif data == "premium":
             await safe_action(query.answer)
@@ -3339,7 +3451,9 @@ async def message_capture(client, message):
             user_id = message.from_user.id if message.from_user else None
 
             if not (
-                user_id in CLONE_TOKEN
+                user_id in ADD_PREMIUM
+                or user_id in MPENDING_TXN
+                or user_id in CLONE_TOKEN
                 or user_id in START_TEXT
                 or user_id in START_PHOTO
                 or user_id in CAPTION_TEXT
@@ -3358,8 +3472,106 @@ async def message_capture(client, message):
                 or user_id in AD_TIME
                 or user_id in AD_MESSAGE
                 or user_id in ADD_MODERATOR
-                or user_id in MPENDING_TXN
             ):
+                return
+
+            # -------------------- ADD PREMIUM --------------------
+            if user_id in ADD_PREMIUM:
+                data = ACCESS_TOKEN[user_id]
+                orig_msg, step = data["orig_msg"], data["step"]
+                try:
+                    await safe_action(message.delete)
+                except:
+                    pass
+
+                new_text = message.text.strip() if message.text else ""
+                if not new_text:
+                    await safe_action(orig_msg.edit_text, "❌ Empty message. Please send valid text.")
+                    await asyncio.sleep(2)
+                    await show_premiumx_menu(client, orig_msg)
+                    ADD_PREMIUM.pop(user_id, None)
+                    return
+
+                # Step 1: Ask user_id
+                if step == "ask_id":
+                    try:
+                        data["user_id"] = new_text
+                        data["step"] = "ask_days"
+                        return await safe_action(orig_msg.edit_text, "📅 Send number of **days** for premium:")
+                    except:
+                        return await safe_action(orig_msg.edit_text, "❌ Invalid User ID. Try again.")
+
+                # Step 2: Ask days
+                elif step == "ask_days":
+                    try:
+                        data["days"] = new_text
+                        data["step"] = "ask_plan"
+                        return await safe_action(orig_msg.edit_text, "💎 Send plan type:\n`normal` or `ultra`")
+                    except:
+                        return await safe_action(orig_msg.edit_text, "❌ Invalid number. Try again.")
+
+                # Step 3: Ask plan
+                elif step == "ask_plan":
+                    plan = message.text.lower().strip()
+                    if plan not in ["normal", "ultra", "vip"]:
+                        return await safe_action(orig_msg.edit_text, "❌ Invalid plan type. Must be 'normal' or 'ultra'.")
+
+                    data["plan"] = plan
+
+                    # Add premium to DB
+                    await db.add_premium_user(data["user_id"], data["days"], plan)
+
+                    expiry = (datetime.utcnow() + timedelta(days=data["days"])).strftime("%Y-%m-%d %H:%M")
+                    await safe_action(orig_msg.edit_text,
+                        f"✅ Added **{plan.title()} Premium**\n\n"
+                        f"👤 User ID: `{data['user_id']}`\n"
+                        f"📅 Days: {data['days']}\n"
+                        f"⏳ Expiry: {expiry}"
+                    )
+
+                    ADD_PREMIUM.pop(message.from_user.id, None)
+                    await show_premiumx_menu(client, orig_msg)
+                    return
+
+            # -------------------- CONFIRM TXN ID --------------------
+            if user_id in MPENDING_TXN:
+                try:
+                    await safe_action(message.delete)
+                except:
+                    pass
+
+                new_text = message.text.strip() if message.text else ""
+
+                data = MPENDING_TXN[user_id]
+                expected_txn = data["txn_expected"]
+                feature_type = data["feature_type"]
+                amount_expected = data["amount_expected"]
+                callback_message = data["callback_message"]
+
+                if new_text == expected_txn:
+                    days = 30
+                    plan_type = feature_type.lower().split()[0]
+                    await db.add_premium_user(user_id, days, plan_type)
+
+                    await safe_action(callback_message.edit_text,
+                        f"✅ Payment confirmed!\n"
+                        f"Feature: **{feature_type}**\n"
+                        f"💰 Amount: ₹{amount_expected}\n"
+                        f"🧾 Txn ID: `{expected_txn}`\n"
+                        f"📅 Plan Validity: {days} days\n\n"
+                        f"🎉 Premium activated successfully!",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+                else:
+                    await safe_action(callback_message.edit_text,
+                        f"❌ Invalid Txn ID.\n"
+                        f"Expected: `{expected_txn}`\n"
+                        f"Entered: `{new_text}`\n\n"
+                        "Please try again or contact admin.",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+
+                del MPENDING_TXN[user_id]
                 return
 
             # -------------------- CREATE CLONE --------------------
@@ -3781,47 +3993,6 @@ async def message_capture(client, message):
                 )
 
                 AUTO_POST.pop(user_id, None)
-                return
-
-            # -------------------- CONFIRM TXN ID --------------------
-            if user_id in MPENDING_TXN:
-                try:
-                    await safe_action(message.delete)
-                except:
-                    pass
-
-                new_text = message.text.strip() if message.text else ""
-
-                data = MPENDING_TXN[user_id]
-                expected_txn = data["txn_expected"]
-                feature_type = data["feature_type"]
-                amount_expected = data["amount_expected"]
-                callback_message = data["callback_message"]
-
-                if new_text == expected_txn:
-                    days = 30
-                    plan_type = feature_type.lower().split()[0]
-                    await db.add_premium_user(user_id, days, plan_type)
-
-                    await safe_action(callback_message.edit_text,
-                        f"✅ Payment confirmed!\n"
-                        f"Feature: **{feature_type}**\n"
-                        f"💰 Amount: ₹{amount_expected}\n"
-                        f"🧾 Txn ID: `{expected_txn}`\n"
-                        f"📅 Plan Validity: {days} days\n\n"
-                        f"🎉 Premium activated successfully!",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-                else:
-                    await safe_action(callback_message.edit_text,
-                        f"❌ Invalid Txn ID.\n"
-                        f"Expected: `{expected_txn}`\n"
-                        f"Entered: `{new_text}`\n\n"
-                        "Please try again or contact admin.",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-
-                del MPENDING_TXN[user_id]
                 return
         elif chat and (chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]):
             if message.chat.id in [-1003178595762]:
