@@ -159,7 +159,7 @@ async def restart_bots(start_auto_post=True):
 
     async def restart_single(bot):
         bot_token = bot["token"]
-        bot_id = bot["_id"]
+        bot_id = str(bot["_id"])
 
         # Stop old client if running
         old_client = get_client(bot_id)
