@@ -12,6 +12,7 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
+ADD_PREMIUM = {}
 MPAYMENT_CACHE = {}
 MPENDING_TXN = {}
 CLONE_TOKEN = {}
