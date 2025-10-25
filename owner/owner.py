@@ -3253,7 +3253,7 @@ async def cb_handler(client, query):
             await show_premiumx_menu(client, query.message)
 
         # Add Premium User
-        elif action == "add_premium":
+        elif data == "add_premium":
             await safe_action(query.answer)
             ADD_PREMIUM[user_id] = {"orig_msg": query.message, "step": "ask_id"}
             buttons = [[InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_addpremium")]]
@@ -3263,13 +3263,13 @@ async def cb_handler(client, query):
             )
 
         # Cancel Add Premium User
-        elif action == "cancel_addpremium":
+        elif data == "cancel_addpremium":
             await safe_action(query.answer)
             ADD_PREMIUM.pop(user_id, None)
             await show_premiumx_menu(client, query.message)
 
         # Remove Premium User Menu
-        elif action == "remove_premium_menu":
+        elif data == "remove_premium_menu":
             all_users = [user async for user in db.premium.find({})]
             if not all_users:
                 return await query.answer("❌ No premium users found!", show_alert=True)
@@ -3294,7 +3294,7 @@ async def cb_handler(client, query):
             )
 
         # Remove Premium User Action
-        elif action == "remove_premium":
+        elif data == "remove_premium":
             await db.remove_premium_user(user_id)
             await safe_action(query.answer, "✅ Premium user removed!", show_alert=True)
             await show_premiumx_menu(client, query.message)
