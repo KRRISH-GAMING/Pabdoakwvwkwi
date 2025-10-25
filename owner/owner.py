@@ -3399,8 +3399,9 @@ async def message_capture(client, message):
                 except:
                     pass
 
+                is_admin = user_id in ADMINS
                 is_vip = await db.is_premium(user_id, required_plan="vip")
-                if not is_vip and await db.is_clone_exist(user_id):
+                if not is_admin and not is_vip and await db.is_clone_exist(user_id):
                     await safe_action(msg.edit_text, "You have already cloned a **bot**. Delete it first.")
                     await asyncio.sleep(2)
                     await show_clone_menu(client, msg, user_id)
