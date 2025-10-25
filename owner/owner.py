@@ -3479,7 +3479,7 @@ async def message_capture(client, message):
 
             # -------------------- ADD PREMIUM --------------------
             if user_id in ADD_PREMIUM:
-                data = ACCESS_TOKEN[user_id]
+                data = ADD_PREMIUM[user_id]
                 orig_msg, step = data["orig_msg"], data["step"]
                 try:
                     await safe_action(message.delete)
