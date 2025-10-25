@@ -3352,7 +3352,7 @@ async def message_capture(client, message):
                     await safe_action(orig_msg.edit_text, "✏️ Adding **premium user**, please wait...")
                     try:
                         await db.add_premium_user(int(data["user_id"]), int(data["days"]), plan)
-                        expiry = (datetime.utcnow() + timedelta(days=data["days"])).strftime("%Y-%m-%d %H:%M")
+                        expiry = (datetime.utcnow() + timedelta(days=int(data["days"]))).strftime("%Y-%m-%d %H:%M")
                         await safe_action(orig_msg.edit_text,
                             f"✅ Added **{plan.title()} Premium**\n\n"
                             f"👤 User ID: `{data['user_id']}`\n"
