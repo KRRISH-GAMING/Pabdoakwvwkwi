@@ -3363,7 +3363,7 @@ async def message_capture(client, message):
                         await show_premiumx_menu(client, orig_msg)
                         ADD_PREMIUM.pop(user_id, None)
                     except Exception as e:
-                        await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Add premium user Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
+                        await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Add Premium User Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
                         await safe_action(orig_msg.edit_text, f"❌ Failed to add **premium user**: {e}")
                         await asyncio.sleep(2)
                         await show_premiumx_menu(client, orig_msg)
