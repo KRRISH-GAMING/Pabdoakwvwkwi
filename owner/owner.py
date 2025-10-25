@@ -3294,7 +3294,8 @@ async def cb_handler(client, query):
             )
 
         # Remove Premium User Action
-        elif data == "remove_premium":
+        elif data.startswith("remove_premium_"):
+            user_id = int(data.split("_", 2)[2])
             await db.remove_premium_user(user_id)
             await safe_action(query.answer, "✅ Premium user removed!", show_alert=True)
             await show_premiumx_menu(client, query.message)
