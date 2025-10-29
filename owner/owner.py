@@ -3813,7 +3813,7 @@ async def message_capture(client, message):
                 AUTO_POST.pop(user_id, None)
                 return
         elif chat and (chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]):
-            if message.chat.id in [-1003178595762]:
+            if message.chat.id in [PAYMENT_CHANNEL]:
 
                 text = message.text or ""
                 if "💰 Airtel Payment Received" not in text:
