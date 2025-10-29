@@ -1801,7 +1801,7 @@ async def message_capture(client: Client, message: Message):
                     text = text
 
             if bot_is_admin:
-                if message.chat.id not in [LOG_CHANNEL, -1003015483271, -1002757972110, -1003178595762]:
+                if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL, PAYMENT_CHANNEL]:
                     notify_msg = None
                     if text != original_text:
                         try:
@@ -1839,7 +1839,7 @@ async def message_capture(client: Client, message: Message):
                 new_text += f"\n\n<blockquote>{footer}</blockquote>"
 
             if bot_is_admin:
-                if message.chat.id not in [LOG_CHANNEL, -1003015483271, -1002768686427]:
+                if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL, PAYMENT_CHANNEL]:
                     if me.username and me.username in text:
                         await safe_action(message.delete)
 
@@ -1873,7 +1873,7 @@ async def message_capture(client: Client, message: Message):
 
             media_file_id = None
             media_type = None
-            if message.chat.id in [-1003015483271, -1002757972110]:
+            if message.chat.id in [SINGLE_CHANNEL, BATCH_CHANNEL]:
                 is_adminx = owner_id in ADMINS
                 if not is_adminx and not await db.is_premium(owner_id):
                     return
@@ -1905,7 +1905,7 @@ async def message_capture(client: Client, message: Message):
                     )
                     print(f"✅ Saved media: {media_type} ({media_file_id}) for bot @{me.username}")
                     await asyncio.sleep(0.25)
-            if message.chat.id in [-1003178595762]:
+            if message.chat.id in [PAYMENT_CHANNEL]:
 
                 text = message.text or ""
                 if "💰 Airtel Payment Received" not in text:
