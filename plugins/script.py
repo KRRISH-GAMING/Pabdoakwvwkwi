@@ -12,7 +12,7 @@ Id - <code>{}</code>
 
 Name - {}
 
-Username - @{}"""
+Username - {}"""
 
     START_TXT = """Hello {user} 👋 
 
