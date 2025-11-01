@@ -50,11 +50,13 @@ async def start(client, message):
         mention = message.from_user.mention
         username = message.from_user.username
 
+        username_text = f"@{username}" if username else "None"
+
         if not await db.is_user_exist(user_id):
             await db.add_user(user_id, first_name)
             await safe_action(client.send_message,
                 LOG_CHANNEL,
-                script.LOG_TEXT.format(user_id, mention, username)
+                script.LOG_TEXT.format(user_id, mention, username_text)
             )
 
         try:
@@ -228,7 +230,7 @@ async def broadcast(client, message):
 
 ⚡ Speed: {speed:.2f} users/sec
 """
-        await safe_action(sts.edit, final_text, reply_markup=keyboard)
+        await safe_action(sts.edit, final_text)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
