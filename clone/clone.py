@@ -1077,7 +1077,7 @@ async def broadcast(client, message):
 
 ⚡ Speed: {speed:.2f} users/sec
 """
-        await safe_action(sts.edit, final_text, reply_markup=keyboard)
+        await safe_action(sts.edit, final_text)
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
