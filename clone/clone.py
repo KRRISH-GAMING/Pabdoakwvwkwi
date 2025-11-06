@@ -13,6 +13,9 @@ from plugins.script import *
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+PAYMENT_CACHE = {}
+LAST_PAYMENT_CHECK = 0
+
 CPAYMENT_CACHE = {}
 CPENDING_TXN = {}
 SHORTEN_STATE = {}
