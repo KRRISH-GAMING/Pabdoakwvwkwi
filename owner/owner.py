@@ -35,6 +35,9 @@ AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
 
+PAYMENT_CACHE = {}
+LAST_PAYMENT_CHECK = 0
+
 broadcast_cancel = False
 
 @Client.on_message(filters.command("start") & filters.private)
@@ -1113,11 +1116,6 @@ async def cb_handler(client, query):
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
 
             await safe_action(query.answer)
-            last_active = clone.get("last_active", int(pytime.time()))
-            if pytime.time() - last_active > 7 * 24 * 60 * 60:
-                await db.update_clone(bot_id, {"active": False})
-                clone["active"] = False
-                await safe_action(query.message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
 
             active = clone.get("active", True)
             activate_text = "✅ Activate" if active else "❌ Deactivated"
@@ -1139,28 +1137,8 @@ async def cb_handler(client, query):
                 [InlineKeyboardButton("⬅️ Back", callback_data="clone")]
             ]
 
-            is_admin = user_id in ADMINS
-            premium_user = await db.get_premium_user(user_id)
-            if is_admin:
-                premium_status = "N/A"
-                plan_type = "N/A"
-                expiry_str = "N/A"
-            elif premium_user:
-                expiry_time = premium_user.get("expiry_time")
-                plan_type = premium_user.get("plan_type", "normal")
-                if expiry_time and expiry_time > datetime.utcnow():
-                    premium_status = "Active ✅"
-                    expiry_str = expiry_time.strftime("%d %b %Y %H:%M UTC")
-                else:
-                    premium_status = "Inactive ❌"
-                    expiry_str = "N/A"
-            else:
-                premium_status = "Inactive ❌"
-                plan_type = "free"
-                expiry_str = "N/A"
-
             await safe_action(query.message.edit_text,
-                text=script.CUSTOMIZEC_TXT.format(username=f"@{clone['username']}", premium_status=premium_status, plan_type=plan_type.title(), expiry=expiry_str),
+                text=script.CUSTOMIZEC_TXT.format(username=f"@{clone['username']}"),
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -1228,11 +1206,15 @@ async def cb_handler(client, query):
             if pytime.time() - last_active > 7 * 24 * 60 * 60:
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
-                await safe_action(query.message.reply_text, f"Your clone @{clone['username']} was automatically deactivated by our system due to being inactive for the last 7 days.\n\nYou can reactivate it anytime using /start.")
-
-            active = clone.get("active", True)
+                await safe_action(client.send_message,
+                    owner_id,
+                    f"⚠️ Your clone @{clone['username']} was automatically deactivated due to inactivity for more than 7 days.\n\n"
+                    f"You can reactivate it anytime using /start."
+                )
 
             await db.update_clone(bot_id, {"last_active": int(pytime.time())})
+
+            active = clone.get("active", True)
 
             # Start Message Menu
             if action == "start_message":
@@ -3165,7 +3147,7 @@ async def cb_handler(client, query):
         # Payment Flow
         elif data in ["buy_normal", "buy_ultra", "buy_vip"]:
             if data == "buy_normal":
-                price = "₹99"
+                price = "₹1"
                 feature_type = "Normal Premium"
             elif data == "buy_ultra":
                 price = "₹249"
@@ -3176,7 +3158,7 @@ async def cb_handler(client, query):
 
             await safe_action(query.answer)
 
-            upi_id = "Krrishmehta@airtel"
+            upi_id = "krishxmehta@fam"
             upi_name = "KM File Store Bot"
             qr_image = generate_upi_qr(upi_id, upi_name, price)
 
@@ -3210,40 +3192,62 @@ async def cb_handler(client, query):
             amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
 
             await safe_action(query.message.edit_text,
-                text=(
-                    f"🔍 Checking payment status...\n\n"
-                    f"Feature: **{feature_type}**\n"
-                    f"💰 Amount: ₹{amount_expected}\n"
-                    f"⚡ Please wait while we verify your transaction."
-                ),
+                f"🔍 Checking payment status...\n\n"
+                f"Feature: **{feature_type}**\n"
+                f"💰 Amount: ₹{amount_expected}\n"
+                f"⚡ Please wait a few seconds while we verify your transaction.",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
+            # Avoid hitting Gmail too often
+            global LAST_PAYMENT_CHECK, PAYMENT_CACHE
             now = datetime.utcnow()
+            if (now - datetime.utcfromtimestamp(LAST_PAYMENT_CHECK)).seconds > 30:
+                new_txns = await fetch_fampay_payments()
+                for txn in new_txns:
+                    PAYMENT_CACHE[txn["txn_id"]] = txn
+                LAST_PAYMENT_CHECK = now.timestamp()
 
-            matched_payment = None
-            for txn in MPAYMENT_CACHE.values():
-                if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
-                    matched_payment = txn
+            # Match recent transactions
+            matched_txn = None
+            for txn in PAYMENT_CACHE.values():
+                txn_age = now - txn["time"].astimezone(pytz.UTC)
+                if txn["amount"] == amount_expected and txn_age < timedelta(minutes=10):
+                    matched_txn = txn
                     break
 
-            if matched_payment:
-                MPENDING_TXN[query.from_user.id] = {
-                    "feature_type": feature_type,
-                    "amount_expected": amount_expected,
-                    "txn_expected": matched_payment["txn_id"],
-                    "callback_message": query.message
-                }
+            if matched_txn:
+                days = 30
+                plan_type = feature_type.lower().split()[0]
+                await db.add_premium_user(query.from_user.id, days, plan_type)
 
                 await safe_action(query.message.edit_text,
-                    f"✅ Payment detected for ₹{amount_expected}!\n\n"
-                    "Please send your **Transaction ID (Txn ID)** to confirm your payment.",
+                    f"✅ Payment verified successfully!\n\n"
+                    f"💎 Plan: **{feature_type}**\n"
+                    f"💰 Amount: ₹{amount_expected}\n"
+                    f"🧾 Transaction ID: `{matched_txn['txn_id']}`\n"
+                    f"📅 Valid for {days} days.\n\n"
+                    f"🎉 Your premium has been activated automatically!",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
+
+                try:
+                    await client.send_message(
+                        LOG_CHANNEL,
+                        f"✅ <b>Auto Premium Activated</b>\n\n"
+                        f"👤 User: <a href='tg://user?id={query.from_user.id}'>{query.from_user.first_name}</a>\n"
+                        f"💎 Plan: {feature_type}\n"
+                        f"💰 Amount: ₹{amount_expected}\n"
+                        f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
+                        f"⏰ Time: {matched_txn['time']}"
+                    )
+                except:
+                    pass
+
             else:
                 await safe_action(query.message.edit_text,
-                    f"❌ No new payment found for ₹{amount_expected}.\n\n"
-                    "Make sure your transaction is completed and try again after 1 minute.",
+                    f"❌ No recent FamPay payment found for ₹{amount_expected}.\n\n"
+                    f"Please wait 1 minute and click **Payment Done** again.",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
 
