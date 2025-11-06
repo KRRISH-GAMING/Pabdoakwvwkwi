@@ -37,7 +37,6 @@ try:
 
     # Channel Information
     LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1002937162790"))
-    PAYMENT_CHANNEL = int(os.environ.get("PAYMENT_CHANNEL", "-1003178595762"))
     SINGLE_CHANNEL = int(os.environ.get("SINGLE_CHANNEL", "-1003261674114"))
     BATCH_CHANNEL = int(os.environ.get("BATCH_CHANNEL", "-1003246924678"))
 
