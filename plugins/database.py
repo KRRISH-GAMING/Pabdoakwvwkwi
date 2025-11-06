@@ -147,8 +147,7 @@ class Database:
             ]
         })
         async for clone in cursor:
-            if clone.get("active", True):
-                clones.append(clone)
+            clones.append(clone)
         return clones
 
     async def get_all_clone(self):

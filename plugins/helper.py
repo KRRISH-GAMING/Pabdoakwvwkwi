@@ -199,37 +199,28 @@ async def fetch_fampay_payments():
 
         mail = imaplib.IMAP4_SSL(IMAP_HOST)
         mail.login(IMAP_USER, IMAP_PASS)
-
         mail.select("inbox")
 
         status, email_ids = mail.search(None, '(UNSEEN FROM "no-reply@famapp.in")')
-
         if status != "OK" or not email_ids or not email_ids[0]:
+            mail.logout()
             return []
 
-        email_list = email_ids[0].split()
-
-        latest_5_emails = email_list[-5:]
-
+        email_list = email_ids[0].split()[-10:]
         transactions = []
         kolkata_tz = pytz.timezone("Asia/Kolkata")
 
-        for email_id in latest_5_emails:
+        for email_id in email_list:
             status, msg_data = mail.fetch(email_id, "(RFC822)")
-
             if status != "OK" or not msg_data:
                 continue
 
-            raw_email = msg_data[0][1]
-            msg = email.message_from_bytes(raw_email)
-
+            msg = email.message_from_bytes(msg_data[0][1])
             email_date = msg["Date"]
-
             try:
                 email_datetime = datetime.strptime(email_date, "%a, %d %b %Y %H:%M:%S %z")
-            except ValueError as ve:
+            except Exception:
                 continue
-
             email_datetime = email_datetime.astimezone(kolkata_tz)
 
             body = ""
@@ -241,29 +232,22 @@ async def fetch_fampay_payments():
             else:
                 body = msg.get_payload(decode=True).decode(errors="ignore")
 
-            if not body:
-                continue
-
             amount_match = re.search(r"₹\s?([\d,.]+)", body)
-            if amount_match:
-                amount = float(amount_match.group(1).replace(",", ""))
-            else:
-                amount = None
-
             txn_match = re.search(r"transaction id\s*[:\-]?\s*(\w+)", body, re.I)
-            txn_id = txn_match.group(1) if txn_match else None
 
-            if not amount or not txn_id:
+            if not amount_match or not txn_match:
                 continue
 
-            txn = {
-                "date": email_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-                "amount": amount,
-                "txn_id": txn_id
-            }
-            transactions.append(txn)
+            amount = float(amount_match.group(1).replace(",", ""))
+            txn_id = txn_match.group(1).strip()
 
-            mail.store(email_id, '+FLAGS', '\\Seen')
+            transactions.append({
+                "amount": amount,
+                "txn_id": txn_id,
+                "time": email_datetime
+            })
+
+            mail.store(email_id, '+FLAGS', '\\Seen')  # mark as read
 
         mail.logout()
         return transactions
