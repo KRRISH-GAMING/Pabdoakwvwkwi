@@ -1115,6 +1115,18 @@ async def cb_handler(client, query):
 
             await safe_action(query.answer)
 
+            last_active = clone.get("last_active", int(pytime.time()))
+            if pytime.time() - last_active > 7 * 24 * 60 * 60:
+                await db.update_clone(bot_id, {"active": False})
+                clone["active"] = False
+                await safe_action(client.send_message,
+                    clone.get("user_id"),
+                    f"⚠️ Your clone @{clone['username']} was automatically deactivated due to inactivity for more than 7 days.\n\n"
+                    f"You can reactivate it anytime."
+                )
+
+            await db.update_clone(bot_id, {"last_active": int(pytime.time())})
+
             active = clone.get("active", True)
             activate_text = "✅ Activate" if active else "❌ Deactivated"
 
@@ -1199,18 +1211,6 @@ async def cb_handler(client, query):
             clone = await db.get_clone(bot_id)
             if not clone:
                 return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
-
-            last_active = clone.get("last_active", int(pytime.time()))
-            if pytime.time() - last_active > 7 * 24 * 60 * 60:
-                await db.update_clone(bot_id, {"active": False})
-                clone["active"] = False
-                await safe_action(client.send_message,
-                    clone.get("user_id"),
-                    f"⚠️ Your clone @{clone['username']} was automatically deactivated due to inactivity for more than 7 days.\n\n"
-                    f"You can reactivate it anytime using /start."
-                )
-
-            await db.update_clone(bot_id, {"last_active": int(pytime.time())})
 
             active = clone.get("active", True)
 
