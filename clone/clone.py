@@ -410,6 +410,9 @@ async def start(client, message):
                             sent_files.append(sent_msg)
                             await asyncio.sleep(1.5)
                         except Exception as e:
+                            if "INPUT_USER_DEACTIVATED" in str(e):
+                                print(f"⚠️ User account is deleted. Skipping...")
+                                return
                             await safe_action(client.send_message,
                                 LOG_CHANNEL,
                                 f"⚠️ Clone Batch File Handler Error sending message:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -525,6 +528,9 @@ async def start(client, message):
                 print(f"⚠️ Clone Auto Post Handler Error: {e}")
                 print(traceback.format_exc())
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Start Bot Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
