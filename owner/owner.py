@@ -12,9 +12,10 @@ from clone.clone import *
 
 logger = logging.getLogger(__name__)
 
+PAYMENT_CACHE = {}
+LAST_PAYMENT_CHECK = 0
+
 ADD_PREMIUM = {}
-MPAYMENT_CACHE = {}
-MPENDING_TXN = {}
 CLONE_TOKEN = {}
 START_TEXT = {}
 START_PHOTO = {}
@@ -34,9 +35,6 @@ ADD_PU = {}
 AD_TIME = {}
 AD_MESSAGE = {}
 ADD_MODERATOR = {}
-
-PAYMENT_CACHE = {}
-LAST_PAYMENT_CHECK = 0
 
 broadcast_cancel = False
 
@@ -3201,20 +3199,16 @@ async def cb_handler(client, query):
 
             global LAST_PAYMENT_CHECK, PAYMENT_CACHE
 
-            # Use timezone-aware datetime (UTC)
             now = datetime.now(pytz.UTC)
 
-            # Limit Gmail fetch frequency (every 30 seconds)
             if (now.timestamp() - LAST_PAYMENT_CHECK) > 30:
                 new_txns = await fetch_fampay_payments()
                 for txn in new_txns:
-                    # Ensure each txn["time"] is timezone-aware
                     if txn.get("time") and txn["time"].tzinfo is None:
                         txn["time"] = pytz.UTC.localize(txn["time"])
                     PAYMENT_CACHE[txn["txn_id"]] = txn
                 LAST_PAYMENT_CHECK = now.timestamp()
 
-            # Match most recent valid transaction
             matched_txn = None
             for txn in sorted(PAYMENT_CACHE.values(), key=lambda x: x["time"], reverse=True):
                 txn_time = txn["time"].astimezone(pytz.UTC)
@@ -3238,9 +3232,9 @@ async def cb_handler(client, query):
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
 
-                try:
+                for admin_id in ADMINS:
                     await client.send_message(
-                        LOG_CHANNEL,
+                        admin_id,
                         f"✅ <b>Auto Premium Activated</b>\n\n"
                         f"👤 User: <a href='tg://user?id={query.from_user.id}'>{query.from_user.first_name}</a>\n"
                         f"💎 Plan: {feature_type}\n"
@@ -3248,12 +3242,9 @@ async def cb_handler(client, query):
                         f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
                         f"⏰ Time: {matched_txn['time']}"
                     )
-                except Exception as e:
-                    print(f"LOG send error: {e}")
-
             else:
                 await safe_action(query.message.edit_text,
-                    f"❌ No recent FamPay payment found for ₹{amount_expected}.\n\n"
+                    f"❌ No recent payment found for ₹{amount_expected}.\n\n"
                     f"Please wait 1 minute and click **Payment Done** again.",
                     parse_mode=enums.ParseMode.MARKDOWN
                 )
@@ -3289,7 +3280,6 @@ async def message_capture(client, message):
 
             if not (
                 user_id in ADD_PREMIUM
-                or user_id in MPENDING_TXN
                 or user_id in CLONE_TOKEN
                 or user_id in START_TEXT
                 or user_id in START_PHOTO
@@ -3362,47 +3352,6 @@ async def message_capture(client, message):
                     finally:
                         ADD_PREMIUM.pop(user_id, None)
                     return
-
-            # -------------------- CONFIRM TXN ID --------------------
-            if user_id in MPENDING_TXN:
-                try:
-                    await safe_action(message.delete)
-                except:
-                    pass
-
-                new_text = message.text.strip() if message.text else ""
-
-                data = MPENDING_TXN[user_id]
-                expected_txn = data["txn_expected"]
-                feature_type = data["feature_type"]
-                amount_expected = data["amount_expected"]
-                callback_message = data["callback_message"]
-
-                if new_text == expected_txn:
-                    days = 30
-                    plan_type = feature_type.lower().split()[0]
-                    await db.add_premium_user(user_id, days, plan_type)
-
-                    await safe_action(callback_message.edit_text,
-                        f"✅ Payment confirmed!\n"
-                        f"Feature: **{feature_type}**\n"
-                        f"💰 Amount: ₹{amount_expected}\n"
-                        f"🧾 Txn ID: `{expected_txn}`\n"
-                        f"📅 Plan Validity: {days} days\n\n"
-                        f"🎉 Premium activated successfully!",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-                else:
-                    await safe_action(callback_message.edit_text,
-                        f"❌ Invalid Txn ID.\n"
-                        f"Expected: `{expected_txn}`\n"
-                        f"Entered: `{new_text}`\n\n"
-                        "Please try again or contact admin.",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-
-                del MPENDING_TXN[user_id]
-                return
 
             # -------------------- CREATE CLONE --------------------
             if user_id in CLONE_TOKEN:
@@ -3825,37 +3774,6 @@ async def message_capture(client, message):
 
                 AUTO_POST.pop(user_id, None)
                 return
-        elif chat and (chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]):
-            if message.chat.id in [PAYMENT_CHANNEL]:
-
-                text = message.text or ""
-                if "💰 Airtel Payment Received" not in text:
-                    return
-
-                amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
-                txn_match = re.search(r"Txn ID:\s*(\d+)", text)
-
-                if not (amount_match and txn_match):
-                    return
-
-                amount = float(amount_match.group(1))
-                txn_id = txn_match.group(1)
-                txn_time = datetime.utcnow()
-
-                MPAYMENT_CACHE[txn_id] = {
-                    "amount": amount,
-                    "txn_id": txn_id,
-                    "time": txn_time
-                }
-
-                expired_txns = [
-                    old_txn
-                    for old_txn, info in MPAYMENT_CACHE.items()
-                    if (txn_time - info["time"]).seconds > 300
-                ]
-
-                for old_txn in expired_txns:
-                    del MPAYMENT_CACHE[old_txn]
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
