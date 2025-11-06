@@ -30,6 +30,7 @@ async def start(client, message):
         if not clone:
             return
 
+        await db.update_clone(8396969699, {"pu_upi": "krishxmehta@fam"})
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("start_text", script.START_TXT) 
@@ -1451,32 +1452,71 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-            if clone.get("pu_upi", None) == "Krrishmehta@airtel":
-                now = datetime.utcnow()
+            if clone.get("pu_upi", None) == "krishxmehta@fam":
+                global LAST_PAYMENT_CHECK, PAYMENT_CACHE
 
-                matched_payment = None
-                for txn in CPAYMENT_CACHE.values():
-                    if txn["amount"] == amount_expected and (now - txn["time"]).seconds < 300:
-                        matched_payment = txn
+                now = datetime.now(pytz.UTC)
+
+                if (now.timestamp() - LAST_PAYMENT_CHECK) > 30:
+                    new_txns = await fetch_fampay_payments()
+                    for txn in new_txns:
+                        if txn.get("time") and txn["time"].tzinfo is None:
+                            txn["time"] = pytz.UTC.localize(txn["time"])
+                        PAYMENT_CACHE[txn["txn_id"]] = txn
+                    LAST_PAYMENT_CHECK = now.timestamp()
+
+                matched_txn = None
+                for txn in sorted(PAYMENT_CACHE.values(), key=lambda x: x["time"], reverse=True):
+                    txn_time = txn["time"].astimezone(pytz.UTC)
+                    txn_age = now - txn_time
+                    if txn["amount"] == amount_expected and txn_age < timedelta(minutes=10):
+                        matched_txn = txn
                         break
 
-                if matched_payment:
-                    CPENDING_TXN[query.from_user.id] = {
-                        "days": days,
-                        "price": price,
-                        "txn_expected": matched_payment["txn_id"],
-                        "callback_message": query.message
-                    }
+                if matched_txn:
+                    premium_users = clone.get("premium_user", [])
+                    normalized = []
+
+                    for pu in premium_users:
+                        if isinstance(pu, dict):
+                            uid = pu.get("user_id")
+                            expiry = pu.get("expiry", 0)
+                            if uid:
+                                normalized.append({"user_id": int(uid), "expiry": expiry})
+                        else:
+                            normalized.append({"user_id": int(pu), "expiry": 0})
+
+                    normalized = [u for u in normalized if u["user_id"] != user_id]
+
+                    expiry = datetime.utcnow() + timedelta(days=days)
+                    normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
+
+                    await db.update_clone(me.id, {"premium_user": normalized})
 
                     await safe_action(query.message.edit_text,
-                        f"✅ Payment detected for ₹{amount_expected}!\n\n"
-                        "Please send your **Transaction ID (Txn ID)** to confirm your payment.",
+                        f"✅ Payment verified successfully!\n"
+                        f"💎 Plan: **{days} days Premium**\n"
+                        f"💰 Amount: {price}\n"
+                        f"🧾 Transaction ID: `{matched_txn['txn_id']}`\n"
+                        f"🎉 Your premium has been activated automatically!",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
+
+                    for admin_id in ADMINS:
+                        await client.send_message(
+                            admin_id,
+                            f"✅ <b>Auto Premium Activated</b>\n\n"
+                            f"👤 User: <a href='tg://user?id={query.from_user.id}'>{query.from_user.first_name}</a>\n"
+                            f"💎 Plan: {days} days Premium\n"
+                            f"💰 Amount: ₹{price}\n"
+                            f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
+                            f"🙍‍♂️ Payer: {matched_txn.get('payer_name', 'Unknown')}\n"
+                            f"⏰ Time: {matched_txn['time']}"
+                        )
                 else:
                     await safe_action(query.message.edit_text,
-                        f"❌ No new payment found for ₹{amount_expected}.\n\n"
-                        "Make sure your transaction is completed and try again after 1 minute.",
+                        f"❌ No recent payment found for ₹{amount_expected}.\n\n"
+                        f"Please wait 1 minute and click **Payment Done** again.",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
             else:
