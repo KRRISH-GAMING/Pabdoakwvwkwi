@@ -251,7 +251,7 @@ async def fetch_fampay_payments():
                 continue
 
             txn = {
-                "date": email_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                "date": email_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "txn_id": txn_id,
                 "amount": amount,
                 "payer": payer_name,
