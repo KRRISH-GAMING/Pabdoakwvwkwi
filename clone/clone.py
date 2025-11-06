@@ -16,8 +16,6 @@ logger.setLevel(logging.INFO)
 PAYMENT_CACHE = {}
 LAST_PAYMENT_CHECK = 0
 
-CPAYMENT_CACHE = {}
-CPENDING_TXN = {}
 SHORTEN_STATE = {}
 
 broadcast_cancel = False
@@ -1754,69 +1752,6 @@ async def message_capture(client: Client, message: Message):
                     
                     SHORTEN_STATE.pop(user_id, None)
                     return
-
-            # -------------------- CONFIRM TXN ID --------------------
-            if user_id in CPENDING_TXN:
-                try:
-                    await safe_action(message.delete)
-                except:
-                    pass
-
-                new_text = message.text.strip() if message.text else ""
-
-                data = CPENDING_TXN[user_id]
-                expected_txn = data["txn_expected"]
-                days = data["days"]
-                price = data["price"]
-                callback_message = data["callback_message"]
-
-                if new_text == expected_txn:
-                    me = await get_me_safe(client)
-                    if not me:
-                        return
-
-                    clone = await db.get_clone(me.id)
-                    if not clone:
-                        return
-
-                    premium_users = clone.get("premium_user", [])
-                    normalized = []
-
-                    for pu in premium_users:
-                        if isinstance(pu, dict):
-                            uid = pu.get("user_id")
-                            expiry = pu.get("expiry", 0)
-                            if uid:
-                                normalized.append({"user_id": int(uid), "expiry": expiry})
-                        else:
-                            normalized.append({"user_id": int(pu), "expiry": 0})
-
-                    normalized = [u for u in normalized if u["user_id"] != user_id]
-
-                    expiry = datetime.utcnow() + timedelta(days=days)
-                    normalized.append({"user_id": user_id, "expiry": expiry.timestamp()})
-
-                    await db.update_clone(me.id, {"premium_user": normalized})
-
-                    await safe_action(callback_message.edit_text,
-                        f"✅ Payment confirmed!\n"
-                        f"Plan: **{days} days Premium**\n"
-                        f"💰 Amount: {price}\n"
-                        f"🧾 Txn ID: `{expected_txn}`\n"
-                        f"🎉 Premium activated successfully!",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-                else:
-                    await safe_action(callback_message.edit_text,
-                        f"❌ Invalid Txn ID.\n"
-                        f"Expected: `{expected_txn}`\n"
-                        f"Entered: `{new_text}`\n\n"
-                        "Please try again or contact admin.",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
-
-                del CPENDING_TXN[user_id]
-                return
         elif chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP, enums.ChatType.CHANNEL]:
             me = await get_me_safe(client)
             if not me:
@@ -1952,36 +1887,6 @@ async def message_capture(client: Client, message: Message):
                     )
                     print(f"✅ Saved media: {media_type} ({media_file_id}) for bot @{me.username}")
                     await asyncio.sleep(0.25)
-            if message.chat.id in [PAYMENT_CHANNEL]:
-
-                text = message.text or ""
-                if "💰 Airtel Payment Received" not in text:
-                    return
-
-                amount_match = re.search(r"Amount:\s*₹([\d.]+)", text)
-                txn_match = re.search(r"Txn ID:\s*(\d+)", text)
-
-                if not (amount_match and txn_match):
-                    return
-
-                amount = float(amount_match.group(1))
-                txn_id = txn_match.group(1)
-                txn_time = datetime.utcnow()
-
-                CPAYMENT_CACHE[txn_id] = {
-                    "amount": amount,
-                    "txn_id": txn_id,
-                    "time": txn_time
-                }
-
-                expired_txns = [
-                    old_txn
-                    for old_txn, info in CPAYMENT_CACHE.items()
-                    if (txn_time - info["time"]).seconds > 300
-                ]
-
-                for old_txn in expired_txns:
-                    del CPAYMENT_CACHE[old_txn]
     except Exception as e:
         await safe_action(client.send_message,
             LOG_CHANNEL,
