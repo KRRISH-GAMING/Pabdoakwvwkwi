@@ -3145,7 +3145,7 @@ async def cb_handler(client, query):
         # Payment Flow
         elif data in ["buy_normal", "buy_ultra", "buy_vip"]:
             if data == "buy_normal":
-                price = "₹1"
+                price = "₹99"
                 feature_type = "Normal Premium"
             elif data == "buy_ultra":
                 price = "₹249"
@@ -3187,7 +3187,7 @@ async def cb_handler(client, query):
         elif data.startswith("paid_"):
             await safe_action(query.answer)
             feature_type = data.replace("paid_", "").replace("_", " ")
-            amount_expected = 1 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
+            amount_expected = 99 if "Normal" in feature_type else 249 if "Ultra" in feature_type else 599
 
             await safe_action(query.message.edit_text,
                 f"🔍 Checking payment status...\n\n"
@@ -3240,6 +3240,7 @@ async def cb_handler(client, query):
                         f"💎 Plan: {feature_type}\n"
                         f"💰 Amount: ₹{amount_expected}\n"
                         f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
+                        f"🙍‍♂️ Payer: {matched_txn.get('payer_name', 'Unknown')}\n"
                         f"⏰ Time: {matched_txn['time']}"
                     )
             else:
