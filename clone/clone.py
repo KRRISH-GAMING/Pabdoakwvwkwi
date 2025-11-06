@@ -30,7 +30,6 @@ async def start(client, message):
         if not clone:
             return
 
-        await db.update_clone(8396969699, {"pu_upi": "krishxmehta@fam"})
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("start_text", script.START_TXT) 
@@ -1395,7 +1394,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await safe_action(query.answer)
             days = int(parts[1])
-            price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
+            price_list = {7: "₹1", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
 
             buttons = [
@@ -1435,7 +1434,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             await safe_action(query.answer)
             days = int(parts[-1])
-            price_list = {7: "₹49", 30: "₹149", 180: "₹749", 365: "₹1199"}
+            price_list = {7: "₹1", 30: "₹149", 180: "₹749", 365: "₹1199"}
             price = price_list.get(days, "N/A")
             amount_expected = int(str(price).replace("₹", "").strip())
 
@@ -1502,17 +1501,16 @@ async def cb_handler(client: Client, query: CallbackQuery):
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
 
-                    for admin_id in ADMINS:
-                        await client.send_message(
-                            admin_id,
-                            f"✅ <b>Auto Premium Activated</b>\n\n"
-                            f"👤 User: <a href='tg://user?id={query.from_user.id}'>{query.from_user.first_name}</a>\n"
-                            f"💎 Plan: {days} days Premium\n"
-                            f"💰 Amount: ₹{price}\n"
-                            f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
-                            f"🙍‍♂️ Payer: {matched_txn.get('payer_name', 'Unknown')}\n"
-                            f"⏰ Time: {matched_txn['time']}"
-                        )
+                    await client.send_message(
+                        owner_id,
+                        f"✅ <b>Auto Premium Activated</b>\n\n"
+                        f"👤 User: <a href='tg://user?id={query.from_user.id}'>{query.from_user.first_name}</a>\n"
+                        f"💎 Plan: {days} days Premium\n"
+                        f"💰 Amount: ₹{price}\n"
+                        f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
+                        f"🙍‍♂️ Payer: {matched_txn.get('payer_name', 'Unknown')}\n"
+                        f"⏰ Time: {matched_txn['time']}"
+                    )
                 else:
                     await safe_action(query.message.edit_text,
                         f"❌ No recent payment found for ₹{amount_expected}.\n\n"
