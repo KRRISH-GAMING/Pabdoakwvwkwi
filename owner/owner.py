@@ -3199,19 +3199,26 @@ async def cb_handler(client, query):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
 
-            # Avoid hitting Gmail too often
             global LAST_PAYMENT_CHECK, PAYMENT_CACHE
-            now = datetime.utcnow()
-            if (now - datetime.utcfromtimestamp(LAST_PAYMENT_CHECK)).seconds > 30:
+
+            # Use timezone-aware datetime (UTC)
+            now = datetime.now(pytz.UTC)
+
+            # Limit Gmail fetch frequency (every 30 seconds)
+            if (now.timestamp() - LAST_PAYMENT_CHECK) > 30:
                 new_txns = await fetch_fampay_payments()
                 for txn in new_txns:
+                    # Ensure each txn["time"] is timezone-aware
+                    if txn.get("time") and txn["time"].tzinfo is None:
+                        txn["time"] = pytz.UTC.localize(txn["time"])
                     PAYMENT_CACHE[txn["txn_id"]] = txn
                 LAST_PAYMENT_CHECK = now.timestamp()
 
-            # Match recent transactions
+            # Match most recent valid transaction
             matched_txn = None
-            for txn in PAYMENT_CACHE.values():
-                txn_age = now - txn["time"].astimezone(pytz.UTC)
+            for txn in sorted(PAYMENT_CACHE.values(), key=lambda x: x["time"], reverse=True):
+                txn_time = txn["time"].astimezone(pytz.UTC)
+                txn_age = now - txn_time
                 if txn["amount"] == amount_expected and txn_age < timedelta(minutes=10):
                     matched_txn = txn
                     break
@@ -3241,8 +3248,8 @@ async def cb_handler(client, query):
                         f"🧾 Txn ID: <code>{matched_txn['txn_id']}</code>\n"
                         f"⏰ Time: {matched_txn['time']}"
                     )
-                except:
-                    pass
+                except Exception as e:
+                    print(f"LOG send error: {e}")
 
             else:
                 await safe_action(query.message.edit_text,
