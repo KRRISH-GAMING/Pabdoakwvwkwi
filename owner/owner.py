@@ -1205,7 +1205,7 @@ async def cb_handler(client, query):
                 await db.update_clone(bot_id, {"active": False})
                 clone["active"] = False
                 await safe_action(client.send_message,
-                    owner_id,
+                    clone.get("user_id"),
                     f"⚠️ Your clone @{clone['username']} was automatically deactivated due to inactivity for more than 7 days.\n\n"
                     f"You can reactivate it anytime using /start."
                 )
