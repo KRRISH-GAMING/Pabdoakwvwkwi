@@ -1783,7 +1783,7 @@ async def message_capture(client: Client, message: Message):
                     text = text
 
             if bot_is_admin:
-                if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL, PAYMENT_CHANNEL]:
+                if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL]:
                     notify_msg = None
                     if text != original_text:
                         try:
@@ -1821,7 +1821,7 @@ async def message_capture(client: Client, message: Message):
                 new_text += f"\n\n<blockquote>{footer}</blockquote>"
 
             if bot_is_admin:
-                if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL, PAYMENT_CHANNEL]:
+                if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL]:
                     if me.username and me.username in text:
                         await safe_action(message.delete)
 
