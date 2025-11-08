@@ -1695,7 +1695,6 @@ async def message_capture(client: Client, message: Message):
         if chat.type == enums.ChatType.PRIVATE and user_id:
             if not (
                 user_id in SHORTEN_STATE
-                or user_id in CPENDING_TXN
             ):
                 return
 
