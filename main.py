@@ -226,6 +226,14 @@ async def restart_bots():
     await asyncio.gather(*tasks)
     print("✅ All clone bots processed for restart.")
 
+async def resume_pending_broadcasts():
+    async for bc in db.db.broadcast.find({"completed": False}):
+        bot_id = bc["bot_id"]
+        print(f"🔄 Resuming pending broadcast for bot {bot_id}...")
+        client = CLONES.get(bot_id)
+        if client:
+            asyncio.create_task(resume_broadcast(client, bot_id))
+
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
@@ -240,6 +248,8 @@ async def start():
     await initialize_clients()
     #await start_web_server()
     await restart_bots()
+
+    asyncio.create_task(resume_pending_broadcasts())
 
     try:
         today = date.today()
