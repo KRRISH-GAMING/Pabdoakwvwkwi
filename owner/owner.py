@@ -21,6 +21,7 @@ START_TEXT = {}
 START_PHOTO = {}
 CAPTION_TEXT = {}
 ADD_BUTTON = {}
+WORD_FILTER = {}
 HEADER_TEXT = {}
 FOOTER_TEXT = {}
 ADD_FSUB = {}
@@ -579,6 +580,29 @@ async def show_button_menu(client, message, bot_id):
             f"⚠️ Show Button Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Show Button Menu Error: {e}")
+        print(traceback.format_exc())
+
+async def show_word_menu(client, message, bot_id):
+    try:
+        current = clone.get("word_filter", False)
+        if current:
+            buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"wf_status_{bot_id}")]]
+            status = "🟢 Enabled"
+        else:
+            buttons = [[InlineKeyboardButton("✅ Enable", callback_data=f"wf_status_{bot_id}")]]
+            status = "🔴 Disabled"
+
+        buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")])
+        await safe_action(message.edit_text,
+            text=script.WORD_FILTER_TXT.format(status=f"{status}"),
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except Exception as e:
+        await safe_action(client.send_message,
+            LOG_CHANNEL,
+            f"⚠️ Show Word Filter Menu Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+        )
+        print(f"⚠️ Show Word Filter Menu Error: {e}")
         print(traceback.format_exc())
 
 async def show_header_menu(client, message, bot_id):
@@ -1533,19 +1557,7 @@ async def cb_handler(client, query):
                     return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
 
                 await safe_action(query.answer)
-                current = clone.get("word_filter", False)
-                if current:
-                    buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"wf_status_{bot_id}")]]
-                    status = "🟢 Enabled"
-                else:
-                    buttons = [[InlineKeyboardButton("✅ Enable", callback_data=f"wf_status_{bot_id}")]]
-                    status = "🔴 Disabled"
-
-                buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"link_message_{bot_id}")])
-                await safe_action(query.message.edit_text,
-                    text=script.WORD_FILTER_TXT.format(status=f"{status}"),
-                    reply_markup=InlineKeyboardMarkup(buttons)
-                )
+                await show_word_menu(client, query.message, bot_id)
 
             # Offensive Word Filter Status
             elif action == "wf_status":
@@ -1560,15 +1572,34 @@ async def cb_handler(client, query):
                 await db.update_clone(bot_id, {"word_filter": new_value})
 
                 if new_value:
-                    status_text = "🟢 **Offensive Word Filter** has been successfully ENABLED!"
+                    WORD_FILTER[user_id] = (query.message, bot_id)
+                    status_text = script.WF_STATUS
+                    text = "❌ Cancel"
+                    callback = f"cancel_word_filter_{bot_id}"
                 else:
-                    status_text = "🔴 **Offensive Word Filter** has been successfully DISABLED!"
+                    await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                    status_text = "🔴 Offensive Word Filter has been successfully DISABLED!"
+                    text = "⬅️ Back"
+                    callback = f"word_filter_{bot_id}"
 
-                buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"word_filter_{bot_id}")]]
+                buttons = [[InlineKeyboardButton(text, callback_data=callback)]]
                 await safe_action(query.message.edit_text,
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
+
+            # Cancel Offensive Word Filter
+            elif action == "cancel_word_filter":
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                await safe_action(query.answer)
+                WORD_FILTER.pop(user_id, None)
+                await db.update_clone(bot_id, {"word_filter": False})
+                await show_word_menu(client, query.message, bot_id)
 
             # Offensive Media Filter
             elif action == "media_filter":
@@ -3286,6 +3317,7 @@ async def message_capture(client, message):
                 or user_id in START_PHOTO
                 or user_id in CAPTION_TEXT
                 or user_id in ADD_BUTTON
+                or user_id in WORD_FILTER
                 or user_id in HEADER_TEXT
                 or user_id in FOOTER_TEXT
                 or user_id in ADD_FSUB
@@ -3566,6 +3598,67 @@ async def message_capture(client, message):
                     finally:
                         ADD_BUTTON.pop(user_id, None)
                     return
+
+            # -------------------- WORD FILTER --------------------
+            if user_id in WORD_FILTER:
+                orig_msg, bot_id = WORD_FILTER[user_id]
+                try:
+                    await safe_action(message.delete)
+                except:
+                    pass
+
+                new_text = message.text.strip() if message.text else ""
+
+                channel_id_int = None
+                if message.forward_from_chat:
+                    forward_chat = message.forward_from_chat
+                    channel_id_int = forward_chat.id
+                else:
+                    try:
+                        channel_id_int = int(new_text)
+                    except ValueError:
+                        channel_id_int = new_text
+
+                clone_client = get_client(bot_id)
+                if not clone_client:
+                    await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                    await safe_action(orig_msg.edit_text, "❌ Clone bot not running, please restart it.")
+                    await asyncio.sleep(2)
+                    await show_word_menu(client, orig_msg, bot_id)
+                    WORD_FILTER.pop(user_id, None)
+                    return
+
+                try:
+                    chat = await clone_client.get_chat(channel_id_int)
+                    ch_name = chat.title or "Unknown"
+                    ch_link = f"https://t.me/{chat.username}" if chat.username else None
+                except Exception as e:
+                    await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                    await safe_action(orig_msg.edit_text, f"❌ Failed to get channel info: {e}")
+                    await asyncio.sleep(2)
+                    await show_word_menu(client, orig_msg, bot_id)
+                    WORD_FILTER.pop(user_id, None)
+                    return
+
+                try:
+                    me = await clone_client.get_me()
+                    member = await clone_client.get_chat_member(chat.id, me.id)
+                    if member.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
+                        await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                        await safe_action(orig_msg.edit_text, "❌ The clone bot is NOT an admin in this channel. Add it as admin first.")
+                        await asyncio.sleep(2)
+                        await show_word_menu(client, orig_msg, bot_id)
+                        WORD_FILTER.pop(user_id, None)
+                        return
+                except Exception as e:
+                    await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                    await safe_action(orig_msg.edit_text, f"❌ Failed to check clone bot in channel: {e}")
+                    await asyncio.sleep(2)
+                    await show_word_menu(client, orig_msg, bot_id)
+                    WORD_FILTER.pop(user_id, None)
+                finally:
+                    WORD_FILTER.pop(user_id, None)
+                return
 
             # -------------------- FORCE SUBSCRIBE --------------------
             if user_id in ADD_FSUB:
