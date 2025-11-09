@@ -31,6 +31,8 @@ async def start(client, message):
         if not clone:
             return
 
+        await db.update_clone(me.id, {"pu_upi": None})
+
         owner_id = clone.get("user_id")
         moderators = [int(m) for m in clone.get("moderators", [])]
         start_text = clone.get("start_text", script.START_TXT) 
@@ -42,7 +44,6 @@ async def start(client, message):
         tutorial_url = clone.get("at_tutorial", None)
         premium = [int(p["user_id"]) if isinstance(p, dict) else int(p) for p in clone.get("premium_user", [])]
         premium_upi = clone.get("pu_upi", None)
-        premium_qr = clone.get("pu_qr", None)
         auto_delete = clone.get("auto_delete", False)
         auto_delete_time = str(clone.get("ad_time", "1h"))
         auto_delete_time2 = parse_time(clone.get("ad_time", "1h"))
@@ -1764,6 +1765,7 @@ async def message_capture(client: Client, message: Message):
             moderators = clone.get("moderators", [])
             moderators = [int(m) for m in moderators]
             word_filter = clone.get("word_filter", False)
+            wf_channel = clone.get("wf_channel", None)
             random_caption = clone.get("random_caption", False)
             header = clone.get("header", None)
             footer = clone.get("footer", None)
@@ -1775,8 +1777,7 @@ async def message_capture(client: Client, message: Message):
             text = message.text or message.caption or ""
             original_text = text
 
-            if text:
-                if word_filter:
+            if text and word_filter and wf_channel and message.chat.id == wf_channel:
                     text = clean_text(original_text)
                 else:
                     text = text
@@ -1787,7 +1788,11 @@ async def message_capture(client: Client, message: Message):
                     if text != original_text:
                         try:
                             await safe_action(message.edit, text)
-                            notify_msg = f"⚠️ Edited inappropriate content in clone @{me.username}.\nChat Title: {message.chat.title}\nChat ID: {message.chat.id}\nMessage ID: {message.id}"
+                            notify_msg = (
+                                f"⚠️ Edited inappropriate content in clone @{me.username}.\n"
+                                f"Chat Title: {message.chat.title}\n"
+                                f"Chat ID: {message.chat.id}\nMessage ID: {message.id}"
+                            )
                         except Exception as e:
                             if "CHAT_ADMIN_REQUIRED" in str(e) or "MESSAGE_EDIT_FORBIDDEN" in str(e):
                                 print(f"⚠️ Cannot edit message in {chat.id} (no permission). Skipping.")
@@ -1802,9 +1807,9 @@ async def message_capture(client: Client, message: Message):
                                 await safe_action(client.send_message, chat_id=owner_id, text=notify_msg)
             else:
                 for mod_id in moderators:
-                    await safe_action(client.send_message, chat_id=mod_id, text="⚠️ Bot is not admin.")
+                    await safe_action(client.send_message, chat_id=mod_id, text="⚠️ Make sure I'm admin in your channel.")
                 if owner_id:
-                    await safe_action(client.send_message, chat_id=owner_id, text="⚠️ Bot is not admin.")
+                    await safe_action(client.send_message, chat_id=owner_id, text="⚠️ Make sure I'm admin in your channel.")
 
             new_text = ""
 
@@ -1848,9 +1853,9 @@ async def message_capture(client: Client, message: Message):
                                 )
             else:
                 for mod_id in moderators:
-                    await safe_action(client.send_message, chat_id=mod_id, text="⚠️ Bot is not admin.")
+                    await safe_action(client.send_message, chat_id=mod_id, text="⚠️ Make sure I'm admin in your channel.")
                 if owner_id:
-                    await safe_action(client.send_message, chat_id=owner_id, text="⚠️ Bot is not admin.")
+                    await safe_action(client.send_message, chat_id=owner_id, text="⚠️ Make sure I'm admin in your channel.")
 
             media_file_id = None
             media_type = None
