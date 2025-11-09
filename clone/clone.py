@@ -1778,9 +1778,9 @@ async def message_capture(client: Client, message: Message):
             original_text = text
 
             if text and word_filter and wf_channel and message.chat.id == wf_channel:
-                    text = clean_text(original_text)
-                else:
-                    text = text
+                text = clean_text(original_text)
+            else:
+                text = text
 
             if bot_is_admin:
                 if message.chat.id not in [LOG_CHANNEL, SINGLE_CHANNEL, BATCH_CHANNEL]:
