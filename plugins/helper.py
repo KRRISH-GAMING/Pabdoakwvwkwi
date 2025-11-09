@@ -340,6 +340,61 @@ async def broadcast_messagesy(bot_id, user_id, message):
         await clonedb.delete_user(bot_id, user_id)
         return False, "Error"
 
+async def resume_broadcast(client, bot_id):
+    data = await db.get_broadcast_state(bot_id)
+    if not data:
+        return
+    me = await get_me_safe(client)
+    total_users = data.get("total_users", 0)
+    done = data.get("done", 0)
+    success = data.get("success", 0)
+    blocked = data.get("blocked", 0)
+    deleted = data.get("deleted", 0)
+    failed = data.get("failed", 0)
+    start_time = data.get("start_time", pytime.time())
+
+    b_msg_id = data.get("message")
+    owner = (await db.get_clone(bot_id)).get("user_id")
+    b_msg = await client.get_messages(owner, b_msg_id)
+
+    users = clonedb.get_all_users(bot_id)
+    current = 0
+    async for user in users:
+        current += 1
+        if current <= done:
+            continue  # skip already sent users
+        if broadcast_cancel:
+            await db.delete_broadcast_state(bot_id)
+            return
+
+        pti, sh = await broadcast_messagesy(bot_id, int(user['user_id']), b_msg)
+        if pti:
+            success += 1
+        else:
+            if sh == "Blocked":
+                blocked += 1
+            elif sh == "Deleted":
+                deleted += 1
+            else:
+                failed += 1
+        done += 1
+
+        if done % 10 == 0:
+            await db.save_broadcast_state(bot_id, {
+                "bot_id": bot_id,
+                "total_users": total_users,
+                "done": done,
+                "success": success,
+                "blocked": blocked,
+                "deleted": deleted,
+                "failed": failed,
+                "start_time": start_time,
+                "message": b_msg_id,
+                "completed": False
+            })
+    await db.delete_broadcast_state(bot_id)
+    print(f"✅ Broadcast for {bot_id} fully resumed and completed.")
+
 def parse_time(value: str) -> int:
     if not value:
         return 3600

@@ -14,7 +14,7 @@ class Database:
         self.bot = self.db.clone_bots
         self.media = self.db.media_files
         self.batches = self.db.batches
-        self.scheduled_deletes = self.db.scheduled_deletes
+        self.broadcast = self.db.broadcast
 
     # ---------------- USERS ----------------
     def new_user(self, id, name):
@@ -293,6 +293,20 @@ class Database:
             {"$set": {"is_auto_post": True}}
         )
         return result.modified_count
+
+    # ---------------- BROADCAST ----------------
+    async def save_broadcast_state(self, bot_id, data: dict):
+        await self.broadcasts.update_one(
+            {"bot_id": int(bot_id)},
+            {"$set": data},
+            upsert=True
+        )
+
+    async def get_broadcast_state(self, bot_id):
+        return await self.broadcasts.find_one({"bot_id": int(bot_id)})
+
+    async def delete_broadcast_state(self, bot_id):
+        await self.broadcasts.delete_one({"bot_id": int(bot_id)})
 
 db = Database(DB_URI, DB_NAME)
 
