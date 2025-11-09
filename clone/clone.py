@@ -970,136 +970,129 @@ async def shorten_handler(client: Client, message: Message):
 
 @Client.on_message(filters.command("broadcast") & filters.private)
 async def broadcast(client, message):
-    global broadcast_cancel
-    broadcast_cancel = False
-    try:
-        me = await get_me_safe(client)
-        if not me:
-            return
-        clone = await db.get_clone(me.id)
-        if not clone:
-            return
+global broadcast_cancel
+broadcast_cancel = False
+try:
+me = await get_me_safe(client)
+if not me:
+return
 
-        owner_id = clone.get("user_id")
-        moderators = [int(m) for m in clone.get("moderators", [])]
+clone = await db.get_clone(me.id)  
+    if not clone:  
+        return  
 
-        if message.from_user.id not in [owner_id, *moderators, *ADMINS]:
-            return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)
+    owner_id = clone.get("user_id")  
+    moderators = clone.get("moderators", [])  
+    moderators = [int(m) for m in moderators]  
 
-        prev_state = await db.get_broadcast_state(me.id)
-        if prev_state and not prev_state.get("completed", False):
-            await safe_action(message.reply_text, "⚠️ Resuming previous broadcast automatically...")
-            asyncio.create_task(resume_broadcast(client, me.id))
-            return
+    if message.from_user.id != owner_id and message.from_user.id not in moderators and message.from_user.id not in ADMINS:  
+        return await safe_action(message.reply_text, "❌ You are not authorized to use this bot.", quote=True)  
 
-        if message.reply_to_message:
-            b_msg = message.reply_to_message
-        else:
-            b_msg = await safe_action(
-                client.ask,
-                message.from_user.id,
-                "📩 Now send me your broadcast message\n\nType /cancel to stop.",
-                reply_to_message_id=message.id
-            )
-            if b_msg.text and b_msg.text.lower() == "/cancel":
-                return await safe_action(message.reply_text, "🚫 Broadcast cancelled.")
+    if message.reply_to_message:  
+        b_msg = message.reply_to_message  
+    else:  
+        b_msg = await safe_action(client.ask,  
+            message.from_user.id,  
+            "📩 Now send me your broadcast message\n\nType /cancel to stop.",  
+            reply_to_message_id=message.id  
+        )  
 
-        keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]
-        )
+        if b_msg.text and b_msg.text.lower() == "/cancel":  
+            return await safe_action(message.reply_text, "🚫 Broadcast cancelled.", reply_to_message_id=b_msg.id)  
 
-        users = await clonedb.get_all_users(me.id)
-        total_users = await clonedb.total_users_count(me.id)
-        sts = await safe_action(message.reply_text, "⏳ Broadcast starting...", reply_markup=keyboard)
+    keyboard = InlineKeyboardMarkup(  
+        [[InlineKeyboardButton("❌ Cancel Broadcast", callback_data="cancel_broadcast")]]  
+    )  
 
-        done = success = blocked = deleted = failed = 0
-        start_time = pytime.time()
+    users = await clonedb.get_all_users(me.id)  
+    total_users = await clonedb.total_users_count(me.id)  
+    sts = await safe_action(message.reply_text,  
+        "⏳ Broadcast starting...",  
+        reply_markup=keyboard,  
+        reply_to_message_id=b_msg.id  
+    )  
 
-        async for user in users:
-            if broadcast_cancel:
-                await safe_action(sts.edit_text, "🚫 Broadcast cancelled by admin.")
-                await db.delete_broadcast_state(me.id)
-                return
+    done = blocked = deleted = failed = success = 0  
+    start_time = pytime.time()  
 
-            if 'user_id' in user:
-                user_id = int(user['user_id'])
-                pti, sh = await broadcast_messagesy(me.id, user_id, b_msg)
-                if pti:
-                    success += 1
-                else:
-                    if sh == "Blocked":
-                        blocked += 1
-                    elif sh == "Deleted":
-                        deleted += 1
-                    else:
-                        failed += 1
-                done += 1
+    async for user in users:  
+        if broadcast_cancel:  
+            await safe_action(sts.edit_text, "🚫 Broadcast cancelled by admin.")  
+            print("🛑 Broadcast cancelled mid-way.")  
+            return  
 
-                if done % 10 == 0:
-                    await db.save_broadcast_state(me.id, {
-                        "bot_id": me.id,
-                        "total_users": total_users,
-                        "done": done,
-                        "success": success,
-                        "blocked": blocked,
-                        "deleted": deleted,
-                        "failed": failed,
-                        "start_time": start_time,
-                        "message": b_msg.id,
-                        "completed": False
-                    })
+        if 'user_id' in user:  
+            pti, sh = await broadcast_messagesy(me.id, int(user['user_id']), b_msg)  
+            if pti:  
+                success += 1  
+            else:  
+                if sh == "Blocked":  
+                    blocked += 1  
+                elif sh == "Deleted":  
+                    deleted += 1  
+                else:  
+                    failed += 1  
+            done += 1  
 
-                    progress = broadcast_progress_bar(done, total_users)
-                    percent = (done / total_users) * 100
-                    elapsed = pytime.time() - start_time
-                    speed = done / elapsed if elapsed > 0 else 0
-                    remaining = total_users - done
-                    eta = timedelta(seconds=int(remaining / speed)) if speed > 0 else "∞"
-                    try:
-                        await safe_action(sts.edit, f"""
+            if done % 10 == 0 or done == total_users:  
+                progress = broadcast_progress_bar(done, total_users)  
+                percent = (done / total_users) * 100  
+                elapsed = pytime.time() - start_time  
+                speed = done / elapsed if elapsed > 0 else 0  
+                remaining = total_users - done  
+                eta = timedelta(seconds=int(remaining / speed)) if speed > 0 else "∞"  
+
+                try:  
+                    await safe_action(sts.edit, f"""
+
 📢 <b>Broadcast in Progress...</b>
+
 {progress}
 
-👥 Total: {total_users}
+👥 Total Users: {total_users}
 ✅ Success: {success}
 🚫 Blocked: {blocked}
 ❌ Deleted: {deleted}
 ⚠️ Failed: {failed}
 
 ⏳ ETA: {eta}
-⚡ Speed: {speed:.2f}/sec
+⚡ Speed: {speed:.2f} users/sec
 """, reply_markup=keyboard)
-                    except:
-                        pass
+except:
+pass
+else:
+done += 1
+failed += 1
 
-        await db.save_broadcast_state(me.id, {"bot_id": me.id, "completed": True})
-        await db.delete_broadcast_state(me.id)
-        time_taken = timedelta(seconds=int(pytime.time() - start_time))
-        final_progress = broadcast_progress_bar(total_users, total_users)
-        await safe_action(sts.edit, f"""
-✅ <b>Broadcast Completed</b>
+time_taken = timedelta(seconds=int(pytime.time() - start_time))  
+    final_progress = broadcast_progress_bar(total_users, total_users)  
+    final_text = f"""
+
+✅ <b>Broadcast Completed</b> ✅
 
 ⏱ Duration: {time_taken}
-👥 Total: {total_users}
+👥 Total Users: {total_users}
 
 📊 Results:
-✅ Success: {success}
-🚫 Blocked: {blocked}
-❌ Deleted: {deleted}
-⚠️ Failed: {failed}
+✅ Success: {success} ({(success/total_users)*100:.1f}%)
+🚫 Blocked: {blocked} ({(blocked/total_users)*100:.1f}%)
+❌ Deleted: {deleted} ({(deleted/total_users)*100:.1f}%)
+⚠️ Failed: {failed} ({(failed/total_users)*100:.1f}%)
 
 ━━━━━━━━━━━━━━━━━━━━━━
 {final_progress} 100%
 ━━━━━━━━━━━━━━━━━━━━━━
-""")
 
-    except Exception as e:
-        await safe_action(client.send_message,
-            LOG_CHANNEL,
-            f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
-        )
-        print(f"⚠️ Clone Broadcast Error: {e}")
-        print(traceback.format_exc())
+⚡ Speed: {speed:.2f} users/sec
+"""
+await safe_action(sts.edit, final_text)
+except Exception as e:
+await safe_action(client.send_message,
+LOG_CHANNEL,
+f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
+)
+print(f"⚠️ Clone Broadcast Error: {e}")
+print(traceback.format_exc())
 
 @Client.on_message(filters.command("ban") & filters.private)
 async def ban(client, message):
