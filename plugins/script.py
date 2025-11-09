@@ -143,6 +143,22 @@ Block or filter offensive words in forwarded or posted messages.
 
 Current Status: {status}"""
 
+    WF_STATUS = """🔗 Please send me the channel for Offensive Word Filter.
+
+You can provide it in **any of these ways**:
+
+✅ **Channel ID** (private channels):  
+`-1001234567890`
+
+✅ **Username** (public channels):  
+`@YourChannel`
+
+✅ **Forward a message** from the channel directly to me.  
+
+This makes it easier to add channels without manually copying IDs or usernames.
+
+⚠️ Note: Make sure I am an **admin** in that channel with all permission."""
+
     BAD_WORDS = [
         "madarchod", "behenchod", "chutiya", "lund", "chut", "randi", "chod", "gand", "gandi",
         "sala", "suar", "gadha", "hijra", "bhen ki lund", "maa ki chut", "chodai", "luda",

@@ -91,6 +91,7 @@ class Database:
             "button": [],
             # Channel Message
             "word_filter": False,
+            "wf_channel": None,
             "media_filter": False,
             "random_caption": False,
             "header": None,
