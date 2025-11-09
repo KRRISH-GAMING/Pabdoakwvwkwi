@@ -1059,13 +1059,13 @@ async def broadcast(client, message):
 """, reply_markup=keyboard)
                     except:
                         pass
-                else:
-                    done += 1
-                    failed += 1
+            else:
+                done += 1
+                failed += 1
 
-            time_taken = timedelta(seconds=int(pytime.time() - start_time))  
-            final_progress = broadcast_progress_bar(total_users, total_users)  
-            final_text = f"""
+        time_taken = timedelta(seconds=int(pytime.time() - start_time))  
+        final_progress = broadcast_progress_bar(total_users, total_users)  
+        final_text = f"""
 
 ✅ <b>Broadcast Completed</b> ✅
 
