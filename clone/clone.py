@@ -998,7 +998,7 @@ async def broadcast(client, message):
             b_msg = await safe_action(
                 client.ask,
                 message.from_user.id,
-                "📩 Now send me your broadcast message\n\nType /cancel to stop..",
+                "📩 Now send me your broadcast message\n\nType /cancel to stop.",
                 reply_to_message_id=message.id
             )
             if b_msg.text and b_msg.text.lower() == "/cancel":
