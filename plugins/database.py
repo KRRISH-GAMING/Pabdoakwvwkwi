@@ -14,7 +14,7 @@ class Database:
         self.bot = self.db.clone_bots
         self.media = self.db.media_files
         self.batches = self.db.batches
-        self.broadcast = self.db.broadcast
+        self.broadcasts = self.db.broadcasts
 
     # ---------------- USERS ----------------
     def new_user(self, id, name):
