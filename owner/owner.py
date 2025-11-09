@@ -584,6 +584,7 @@ async def show_button_menu(client, message, bot_id):
 
 async def show_word_menu(client, message, bot_id):
     try:
+        clone = await db.get_clone(bot_id)
         current = clone.get("word_filter", False)
         if current:
             buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"wf_status_{bot_id}")]]
