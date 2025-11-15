@@ -2185,7 +2185,7 @@ async def cb_handler(client, query):
                         show_alert=True
                     )
 
-                plan_type = user_data.get("plan_type", "normal")
+                plan_type = (user_data or {}).get("plan_type", "normal")
 
                 if not is_admin and plan_type not in ["ultra", "vip"]:
                     return await safe_action(query.answer,
