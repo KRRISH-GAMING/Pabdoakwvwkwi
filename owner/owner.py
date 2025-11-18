@@ -3630,6 +3630,24 @@ async def message_capture(client, message):
                     return
 
                 try:
+                    me = await clone_client.get_me()
+                    member = await clone_client.get_chat_member(channel_id_int, me.id)
+                    if member.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
+                        await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                        await safe_action(orig_msg.edit_text, "❌ The clone bot is NOT an admin in this channel. Add it as admin first.")
+                        await asyncio.sleep(2)
+                        await show_word_menu(client, orig_msg, bot_id)
+                        WORD_FILTER.pop(user_id, None)
+                        return
+                except Exception as e:
+                    await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
+                    await safe_action(orig_msg.edit_text, f"❌ Failed to check clone bot in channel: {e}")
+                    await asyncio.sleep(2)
+                    await show_word_menu(client, orig_msg, bot_id)
+                    WORD_FILTER.pop(user_id, None)
+                    return
+
+                try:
                     chat = await clone_client.get_chat(channel_id_int)
                     ch_name = chat.title or "Unknown"
                     ch_link = f"https://t.me/{chat.username}" if chat.username else None
@@ -3641,19 +3659,16 @@ async def message_capture(client, message):
                     WORD_FILTER.pop(user_id, None)
                     return
 
+                await safe_action(orig_msg.edit_text, "✏️ Updating **offensive word filter**, please wait...")
                 try:
-                    me = await clone_client.get_me()
-                    member = await clone_client.get_chat_member(chat.id, me.id)
-                    if member.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
-                        await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
-                        await safe_action(orig_msg.edit_text, "❌ The clone bot is NOT an admin in this channel. Add it as admin first.")
-                        await asyncio.sleep(2)
-                        await show_word_menu(client, orig_msg, bot_id)
-                        WORD_FILTER.pop(user_id, None)
-                        return
+                    await db.update_clone(bot_id, {"word_filter": True, "wf_channel": chat.id})
+                    await safe_action(orig_msg.edit_text, "✅ Successfully updated **offensive word filter**!")
+                    await asyncio.sleep(2)
+                    await show_word_menu(client, orig_msg, bot_id)
+                    WORD_FILTER.pop(user_id, None)
                 except Exception as e:
-                    await db.update_clone(bot_id, {"word_filter": False, "wf_channel": None})
-                    await safe_action(orig_msg.edit_text, f"❌ Failed to check clone bot in channel: {e}")
+                    await safe_action(client.send_message, LOG_CHANNEL, f"⚠️ Update Offensive Word Filter Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>.")
+                    await safe_action(orig_msg.edit_text, f"❌ Failed to update **offensive word filter**: {e}")
                     await asyncio.sleep(2)
                     await show_word_menu(client, orig_msg, bot_id)
                     WORD_FILTER.pop(user_id, None)
@@ -3692,19 +3707,8 @@ async def message_capture(client, message):
                         return
 
                     try:
-                        chat = await clone_client.get_chat(channel_id_int)
-                        ch_name = chat.title or "Unknown"
-                        ch_link = f"https://t.me/{chat.username}" if chat.username else None
-                    except Exception as e:
-                        await safe_action(orig_msg.edit_text, f"❌ Failed to get channel info: {e}")
-                        await asyncio.sleep(2)
-                        await show_fsub_menu(client, orig_msg, bot_id)
-                        ADD_FSUB.pop(user_id, None)
-                        return
-
-                    try:
                         me = await clone_client.get_me()
-                        member = await clone_client.get_chat_member(chat.id, me.id)
+                        member = await clone_client.get_chat_member(channel_id_int, me.id)
                         if member.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
                             await safe_action(orig_msg.edit_text, "❌ The clone bot is NOT an admin in this channel. Add it as admin first.")
                             await asyncio.sleep(2)
@@ -3713,6 +3717,17 @@ async def message_capture(client, message):
                             return
                     except Exception as e:
                         await safe_action(orig_msg.edit_text, f"❌ Failed to check clone bot in channel: {e}")
+                        await asyncio.sleep(2)
+                        await show_fsub_menu(client, orig_msg, bot_id)
+                        ADD_FSUB.pop(user_id, None)
+                        return
+
+                    try:
+                        chat = await clone_client.get_chat(channel_id_int)
+                        ch_name = chat.title or "Unknown"
+                        ch_link = f"https://t.me/{chat.username}" if chat.username else None
+                    except Exception as e:
+                        await safe_action(orig_msg.edit_text, f"❌ Failed to get channel info: {e}")
                         await asyncio.sleep(2)
                         await show_fsub_menu(client, orig_msg, bot_id)
                         ADD_FSUB.pop(user_id, None)
@@ -3837,7 +3852,7 @@ async def message_capture(client, message):
 
                 try:
                     me = await clone_client.get_me()
-                    member = await clone_client.get_chat_member(chat.id, me.id)
+                    member = await clone_client.get_chat_member(channel_id_int, me.id)
                     if member.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
                         await db.update_clone(bot_id, {"auto_post": False, "ap_channel": None})
                         await safe_action(orig_msg.edit_text, "❌ The clone bot is NOT an admin in this channel. Add it as admin first.")
