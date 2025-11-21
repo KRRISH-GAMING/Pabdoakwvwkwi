@@ -53,7 +53,7 @@ Once set up, you can store your files using the commands below and access them v
 🤖 Name: {bot}  
 📝 Language: <a href=https://www.python.org>Python 3</a>  
 📚 Library: <a href=https://docs.pyrogram.org>Pyrogram</a>  
-🧑🏻‍💻 Developer: <a href=https://t.me/DeadxNone>Developer</a>  
+🧑🏻‍💻 Developer: <a href=https://t.me/KMManagerBot>Developer</a>  
 👥 Support Group: <a href=https://t.me/+8E9nKxs8Y-Y2OGRl>Support</a>  
 📢 Update Channel: <a href=https://t.me/+YczdaoCKP-AxMWFl>Updates</a>"""
 
