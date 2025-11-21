@@ -12,7 +12,9 @@ Id - <code>{}</code>
 
 Name - {}
 
-Username - {}"""
+Username - {}
+
+From - @KMCloneManagerBot"""
 
     START_TXT = """Hello {user} 👋 
 
