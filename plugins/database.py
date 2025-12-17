@@ -126,7 +126,9 @@ class Database:
             "banned_users": [],
             # Activate/Deactivate
             "active": True,
-            "last_active": int(pytime.time())
+            "last_active": int(pytime.time()),
+            # Hide Owner
+            "hide_owner": False
         }
         await self.bot.insert_one(add)
 

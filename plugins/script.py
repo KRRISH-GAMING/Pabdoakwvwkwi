@@ -57,12 +57,18 @@ Once set up, you can store your files using the commands below and access them v
 👥 Support Group: <a href=https://t.me/+8E9nKxs8Y-Y2OGRl>Support</a>  
 📢 Update Channel: <a href=https://t.me/+YczdaoCKP-AxMWFl>Updates</a>"""
 
-    CABOUT_TXT = """<b><u>✨ ABOUT ME</u></b>
+    CABOUT_TXT_SHOW = """<b><u>✨ ABOUT ME</u></b>
 
 🤖 Name: {bot}  
 📝 Language: <a href=https://www.python.org>Python 3</a>  
 📚 Library: <a href=https://docs.pyrogram.org>Pyrogram</a>  
 🧑🏻‍💻 Developer: <a href=tg://user?id={developer}>Developer</a>"""
+
+    CABOUT_TXT_HIDE = """<b><u>✨ ABOUT ME</u></b>
+
+🤖 Name: {bot}  
+📝 Language: <a href=https://www.python.org>Python 3</a>  
+📚 Library: <a href=https://docs.pyrogram.org>Pyrogram</a>"""
 
     MANAGEC_TXT = """<b><u>✨ MANAGE CLONE</u></b>
 
@@ -675,3 +681,9 @@ Current Status: {status}"""
     MODERATOR_TXT = """<b><u>✨ MODERATOR</u></b>
 
 Moderators can manage all clone features and have special access permissions."""
+
+    HIDEOWNER_TXT = """<b><u>✨ HIDE OWNER</u></b>
+
+Restrict users from forwarding messages received through clone shareable links.
+
+Current Status: {status}"""
