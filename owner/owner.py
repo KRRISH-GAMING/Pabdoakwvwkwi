@@ -3083,7 +3083,7 @@ async def cb_handler(client, query):
                 else:
                     status_text = "🔴 **Hide Owner** has been successfully DISABLED!"
 
-                buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"hide_owner_{bot_id}")]]
+                buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"hideowner_{bot_id}")]]
                 await safe_action(query.message.edit_text,
                     text=status_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
