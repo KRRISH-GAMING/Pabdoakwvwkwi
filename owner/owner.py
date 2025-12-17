@@ -1168,6 +1168,7 @@ async def cb_handler(client, query):
                  InlineKeyboardButton("📊 Status", callback_data=f"status_{bot_id}")],
                 [InlineKeyboardButton(activate_text, callback_data=f"activate_deactivate_{bot_id}"),
                  InlineKeyboardButton("🔄 Restart", callback_data=f"restart_{bot_id}")],
+                [InlineKeyboardButton("🕵️ Hide Owner", callback_data=f"hideowner_{bot_id}")],
                 [InlineKeyboardButton("🗑️ Delete", callback_data=f"delete_{bot_id}")],
                 [InlineKeyboardButton("⬅️ Back", callback_data="clone")]
             ]
@@ -1188,7 +1189,7 @@ async def cb_handler(client, query):
             "auto_delete_", "ad_status_", "ad_time_", "edit_adtime_", "cancel_editadtime_", "see_adtime_", "default_adtime_", "ad_message_", "edit_admessage_", "cancel_editadmessage_", "see_admessage_", "default_admessage_",
             "forward_protect_", "fp_status_",
             "moderator_", "add_moderator_", "cancel_addmoderator_", "remove_moderator_", "remove_mod_", "transfer_moderator_", "transfer_mod_",
-            "status_", "activate_deactivate_", "restart_", "delete_", "delete_clone_"
+            "status_", "activate_deactivate_", "restart_", "hideowner_", "ho_status_", "delete_", "delete_clone_"
         ]):
 
             action = None
@@ -3042,6 +3043,52 @@ async def cb_handler(client, query):
                 await asyncio.sleep(2)
                 await show_clone_menu(client, query.message, user_id)
 
+            # Hide Owner
+            elif action == "hideowner":
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                await safe_action(query.answer)
+                current = clone.get("hide_owner", False)
+                if current:
+                    buttons = [[InlineKeyboardButton("❌ Disable", callback_data=f"ho_status_{bot_id}")]]
+                    status = "🟢 Enabled"
+                else:
+                    buttons = [[InlineKeyboardButton("✅ Enable", callback_data=f"ho_status_{bot_id}")]]
+                    status = "🔴 Disabled"
+
+                buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"manage_{bot_id}")])
+                await safe_action(query.message.edit_text,
+                    text=script.HIDEOWNER_TXT.format(status=f"{status}"),
+                    reply_markup=InlineKeyboardMarkup(buttons)
+                )
+
+            # Hide Owner Status
+            elif action == "ho_status":
+                if not clone:
+                    return await safe_action(query.answer, "❌ Clone not found!", show_alert=True)
+
+                if not active:
+                    return await safe_action(query.answer, "⚠️ This bot is deactivate. Activate first!", show_alert=True)
+
+                await safe_action(query.answer)
+                new_value = not clone.get("hide_owner", False)
+                await db.update_clone(bot_id, {"hide_owner": new_value})
+
+                if new_value:
+                    status_text = "🟢 **Hide Owner** has been successfully ENABLED!"
+                else:
+                    status_text = "🔴 **Hide Owner** has been successfully DISABLED!"
+
+                buttons = [[InlineKeyboardButton("⬅️ Back", callback_data=f"hide_owner_{bot_id}")]]
+                await safe_action(query.message.edit_text,
+                    text=status_text,
+                    reply_markup=InlineKeyboardMarkup(buttons)
+                )
+
             # Delete Menu
             elif action == "delete":
                 if not clone:
@@ -3448,7 +3495,7 @@ async def message_capture(client, message):
                         f"Bot Id: {bot.id}\n"
                         f"User Id: {user_id}\n"
                         f"Username: @{message.from_user.username}\n"
-                        f"Bot Name: {bot.first_name} {bot.last_name}\n"
+                        f"Bot Name: {bot.first_name}\n"
                         f"Bot Username: @{bot.username}\n"
                         f"Bot Token: <code>{token}</code>"
                     )
