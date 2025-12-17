@@ -688,6 +688,9 @@ async def help(client, message):
 
         await safe_action(message.reply_text, script.HELP_TXT, quote=True)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Help Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -761,6 +764,9 @@ async def genlink(client, message):
             reply_to_message_id=g_msg.id
         )
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Generate Link Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -905,6 +911,9 @@ async def batch(client, message):
     except (UsernameInvalid, UsernameNotModified):
         await safe_action(message.reply_text, "⚠️ Invalid Link specified.", quote=True)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Batch Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -961,6 +970,9 @@ async def shorten_handler(client: Client, message: Message):
             SHORTEN_STATE.pop(user_id, None)
             return await safe_action(message.reply_text, "✅ Base site and API have been reset successfully.", quote=True)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Shorten Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1085,6 +1097,9 @@ async def broadcast(client, message):
 ⚡ Speed: {speed:.2f} users/sec"""
         await safe_action(sts.edit, final_text)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Broadcast Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1121,6 +1136,9 @@ async def ban(client, message):
         await db.ban_user(me.id, user_id)
         await message.reply_text(f"✅ User `{user_id}` banned successfully.", reply_to_message_id=ask_id.id)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Ban Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1157,6 +1175,9 @@ async def unban(client, message):
         await db.unban_user(me.id, user_id)
         await message.reply_text(f"✅ User `{user_id}` unbanned successfully.", reply_to_message_id=ask_id.id)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Unban Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1189,6 +1210,9 @@ async def list_ban(client, message):
         text = "🚫 **Banned Users:**\n" + "\n".join([f"`{u}`" for u in banned])
         await message.reply_text(text, quote=True)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone List Ban Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1227,6 +1251,9 @@ async def stats(client, message):
             quote=True
         )
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Stats Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1288,6 +1315,9 @@ async def contact(client, message):
 
         await safe_action(message.reply_text, "✅ Your message has been sent to the admin!", reply_to_message_id=c_msg.id)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Contact Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1330,6 +1360,9 @@ async def reply(client, message):
 
         await safe_action(message.reply_text, "✅ Reply delivered!", quote=True)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Reply Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
@@ -1654,9 +1687,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
         # About
         elif data == "about":
             await safe_action(query.answer)
+            hide_owner = clone.get("hide_owner", True)
+            if hide_owner:
+                about = CABOUT_TXT_HIDE.format(bot=me.mention)
+            else:
+                about = CABOUT_TXT_SHOW.format(bot=me.mention, developer=owner_id)
+
             buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
             await safe_action(query.message.edit_text,
-                text=script.CABOUT_TXT.format(bot=me.mention, developer=owner_id),
+                text=about,
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -1674,6 +1713,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             )
             await safe_action(query.answer, "⚠️ Unknown action.", show_alert=True)
     except Exception as e:
+        if "INPUT_USER_DEACTIVATED" in str(e):
+            print(f"⚠️ User account is deleted. Skipping...")
+            return
         await safe_action(client.send_message,
             LOG_CHANNEL,
             f"⚠️ Clone Callback Handler Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
