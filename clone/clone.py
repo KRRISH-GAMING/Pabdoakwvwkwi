@@ -1689,9 +1689,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await safe_action(query.answer)
             hide_owner = clone.get("hide_owner", True)
             if hide_owner:
-                about = CABOUT_TXT_HIDE.format(bot=me.mention)
+                about = script.CABOUT_TXT_HIDE.format(bot=me.mention)
             else:
-                about = CABOUT_TXT_SHOW.format(bot=me.mention, developer=owner_id)
+                about = script.CABOUT_TXT_SHOW.format(bot=me.mention, developer=owner_id)
 
             buttons = [[InlineKeyboardButton("⬅️ Back", callback_data="start")]]
             await safe_action(query.message.edit_text,
