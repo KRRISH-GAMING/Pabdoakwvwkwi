@@ -18,6 +18,8 @@ LAST_PAYMENT_CHECK = 0
 
 SHORTEN_STATE = {}
 
+AUTOPOST_SEMAPHORE = asyncio.Semaphore(5)
+
 broadcast_cancel = False
 
 @Client.on_message(filters.command("start") & filters.private)
@@ -562,12 +564,13 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 username = clone.get("username", bot_id)
 
                 mode = clone.get("ap_mode", "single")
+                sleep_time = max(parse_time(clone.get("ap_sleep", "1h")), 60)
 
                 item = None
                 items = []
 
                 if mode == "single":
-                    item = await db.pop_random_unposted_media(bot_id)
+                    items = await db.pop_many_unposted_media(bot_id, 1)
                     if not item:
                         print(f"⌛ No new media for @{username}, sleeping 60s...")
                         await asyncio.sleep(60)
@@ -588,10 +591,7 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
 
                 elif mode == "batch":
                     batch_size = random.randint(10, 100)
-                    for _ in range(batch_size):
-                        item = await db.pop_random_unposted_media(bot_id)
-                        if item:
-                            items.append(item)
+                    items = await db.pop_many_unposted_media(bot_id, batch_size)
 
                     if not items:
                         print(f"⌛ No new media for @{username}, sleeping 60s...")
@@ -633,18 +633,21 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 random.shuffle(shuffled_images)
                 image_to_send = shuffled_images[0]
 
-                try:
-                    await safe_action(clone_client.send_photo,
-                        chat_id=target_channel,
-                        photo=clone.get("ap_image", None) or image_to_send,
-                        caption=text,
-                        parse_mode=enums.ParseMode.HTML
-                    )
-                except Exception as e:
-                    await safe_action(clone_client.send_message,
-                        owner_id,
-                        "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
-                    )
+                async with AUTOPOST_SEMAPHORE:
+                    try:
+                        await safe_action(clone_client.send_photo,
+                            chat_id=target_channel,
+                            photo=clone.get("ap_image", None) or image_to_send,
+                            caption=text,
+                            parse_mode=enums.ParseMode.HTML
+                        )
+                    except Exception as e:
+                        await safe_action(clone_client.send_message,
+                            owner_id,
+                            "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
+                        )
+
+                await asyncio.sleep(sleep_time)
 
                 if mode == "single":
                     await db.mark_media_posted(bot_id, item["_id"])
