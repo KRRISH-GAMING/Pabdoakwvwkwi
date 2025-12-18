@@ -3478,12 +3478,13 @@ async def message_capture(client, message):
                         api_hash=API_HASH,
                         bot_token=token,
                         plugins={"root": "clone"},
-                        workers=20,
+                        workers=4,
                         in_memory=True
                     )
 
                     await xd.start()
-                    bot = await xd.get_me()
+                    xd.me = await xd.get_me()
+                    bot = xd.me
                     set_client(bot.id, xd)
                     await db.add_clone_bot(bot.id, user_id, bot.first_name, bot.username, token)
                     await promote(bot.username)
