@@ -166,11 +166,12 @@ async def restart_bots():
                     api_hash=API_HASH,
                     bot_token=bot_token,
                     plugins={"root": "clone"},
-                    workers=20,
+                    workers=4,
                     in_memory=True
                 )
                 await xd.start()
-                bot_me = await xd.get_me()
+                xd.me = await xd.get_me()
+                bot_me = xd.me
                 set_client(bot_me.id, xd)
                 await set_clone_menu(xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
@@ -193,11 +194,12 @@ async def restart_bots():
                     api_hash=API_HASH,
                     bot_token=bot_token,
                     plugins={"root": "clone"},
-                    workers=20,
+                    workers=4,
                     in_memory=True
                 )
                 await xd.start()
-                bot_me = await xd.get_me()
+                xd.me = await xd.get_me()
+                bot_me = xd.me
                 set_client(bot_me.id, xd)
                 await set_clone_menu(xd)
                 print(f"✅ Restarted clone bot @{bot_me.username} ({bot_me.id})")
@@ -234,6 +236,11 @@ async def resume_pending_broadcasts():
         if client:
             asyncio.create_task(resume_broadcast(client, bot_id))
 
+async def create_indexes():
+    await db.media.create_index([("bot_id", 1), ("posted", 1)])
+    await db.batches.create_index("bot_id")
+    await db.bot.create_index("bot_id")
+
 async def start():
     logger.info("Initializing Bot...")
     await StreamBot.start()
@@ -243,6 +250,12 @@ async def start():
 
     await assistant.start()
     logger.info(f"Assistant {(await assistant.get_me()).username} started")
+
+    try:
+        await create_indexes()
+        logger.info("MongoDB indexes ensured")
+    except Exception as e:
+        logger.warning(f"Index creation skipped: {e}")
 
     load_plugins()
     await initialize_clients()
