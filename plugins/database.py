@@ -217,6 +217,23 @@ class Database:
         )
         return item
 
+    async def pop_many_unposted_media(self, bot_id: int, limit: int):
+        items = await self.media.find(
+            {"bot_id": bot_id, "posted": False}
+        ).limit(limit).to_list(length=limit)
+
+        if not items:
+            return []
+
+        ids = [item["_id"] for item in items]
+
+        await self.media.update_many(
+            {"_id": {"$in": ids}},
+            {"$set": {"posted": True}}
+        )
+
+        return items
+
     async def mark_media_posted(self, bot_id: int, file_id: str):
         await self.media.update_one(
             {"bot_id": bot_id, "file_id": file_id},
