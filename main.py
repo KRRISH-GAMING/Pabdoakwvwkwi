@@ -251,12 +251,6 @@ async def start():
     await assistant.start()
     logger.info(f"Assistant {(await assistant.get_me()).username} started")
 
-    try:
-        await create_indexes()
-        logger.info("MongoDB indexes ensured")
-    except Exception as e:
-        logger.warning(f"Index creation skipped: {e}")
-
     load_plugins()
     await initialize_clients()
     #await start_web_server()
