@@ -36,7 +36,7 @@ try:
     ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get("ADMINS", "1512442581").split()]
 
     # Channel Information
-    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1002937162790"))
+    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1003551728019"))
     SINGLE_CHANNEL = int(os.environ.get("SINGLE_CHANNEL", "-1003122680068"))
     BATCH_CHANNEL = int(os.environ.get("BATCH_CHANNEL", "-1002745649036"))
 
