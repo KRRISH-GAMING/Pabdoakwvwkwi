@@ -96,6 +96,8 @@ def get_readable_time(start: datetime) -> str:
     minutes, seconds = divmod(remainder, 60)
     return f"{int(days)}d:{int(hours)}h:{int(minutes)}m:{int(seconds)}s"
 
+from typing import Tuple
+
 def get_least_loaded_bot() -> tuple[Client, int]:
     client_id, _ = min(work_loads.items(), key=lambda x: x[1])
     work_loads[client_id] += 1
@@ -250,6 +252,12 @@ async def start():
 
     await assistant.start()
     logger.info(f"Assistant {(await assistant.get_me()).username} started")
+
+    try:
+        await create_indexes()
+        logger.info("MongoDB indexes ensured")
+    except Exception as e:
+        logger.warning(f"Index creation skipped: {e}")
 
     load_plugins()
     await initialize_clients()
