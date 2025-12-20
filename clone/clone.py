@@ -564,24 +564,19 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                 username = clone.get("username", bot_id)
 
                 mode = clone.get("ap_mode", "single")
-                sleep_time = max(parse_time(clone.get("ap_sleep", "1h")), 60)
 
                 item = None
                 items = []
 
                 if mode == "single":
                     items = await db.pop_many_unposted_media(bot_id, 1)
-                    if not item:
+
+                    if not items:
                         print(f"⌛ No new media for @{username}, sleeping 60s...")
                         await asyncio.sleep(60)
                         continue
 
-                    file_id = item.get("file_id")
-                    if not file_id:
-                        await db.mark_media_posted(item["_id"], bot_id)
-                        continue
-
-                    await db.mark_media_posted(item["_id"], bot_id)
+                    item = items[0]
 
                     db_file_id = str(item["_id"])
                     string = f"file_{db_file_id}"
@@ -646,14 +641,6 @@ async def auto_post_clone(bot_id: int, db, target_channel: int):
                             owner_id,
                             "❌ Failed to auto post — please disable and re-enable auto-post.\n⚠️ Make sure I’m admin in your channel."
                         )
-
-                await asyncio.sleep(sleep_time)
-
-                if mode == "single":
-                    await db.mark_media_posted(bot_id, item["_id"])
-                elif mode == "batch":
-                    for it in items:
-                        await db.mark_media_posted(bot_id, it["file_id"])
 
                 sleep_time = parse_time(clone.get("ap_sleep", "1h"))
                 await asyncio.sleep(sleep_time)
