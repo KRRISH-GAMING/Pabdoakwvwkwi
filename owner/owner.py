@@ -61,7 +61,7 @@ async def start(client, message):
                 script.LOG_TEXT.format(user_id, mention, username_text)
             )
 
-        try:
+        """try:
             await client.get_chat_member(AUTH_CHANNEL, user_id)
         except:
             try:
@@ -80,7 +80,7 @@ async def start(client, message):
                 reply_markup=InlineKeyboardMarkup(btn),
                 parse_mode=enums.ParseMode.MARKDOWN,
                 quote=True
-            )
+            )"""
 
         buttons = [
             [
