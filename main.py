@@ -98,7 +98,7 @@ def get_readable_time(start: datetime) -> str:
 
 from typing import Tuple
 
-def get_least_loaded_bot() -> tuple[Client, int]:
+def get_least_loaded_bot() -> Tuple[Client, int]:
     client_id, _ = min(work_loads.items(), key=lambda x: x[1])
     work_loads[client_id] += 1
     return multi_clients[client_id], client_id
