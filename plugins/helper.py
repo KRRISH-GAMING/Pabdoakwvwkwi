@@ -17,7 +17,7 @@ VERIFIED = {}
 
 START_TIME = pytime.time()
 
-if SESSION_STRING and len(SESSION_STRING) > 30:
+"""if SESSION_STRING and len(SESSION_STRING) > 30:
     assistant = Client(
         "assistant",
         api_id=API_ID,
@@ -51,7 +51,7 @@ async def promote(bot_username: str):
         )
 
         await assistant.promote_chat_member(
-            -1003178595762,
+            -1003407592547,
             bot_username,
             privileges=types.ChatPrivileges(
                 can_post_messages=True,
@@ -75,7 +75,7 @@ async def promote(bot_username: str):
             f"⚠️ Promote Clone Bot @{bot_username} Error:\n\n<code>{e}</code>\n\nTraceback:\n<code>{traceback.format_exc()}</code>."
         )
         print(f"⚠️ Promote Clone Bot @{bot_username} Error: {e}")
-        print(traceback.format_exc())
+        print(traceback.format_exc())"""
 
 async def set_auto_menu(client):
     try:
