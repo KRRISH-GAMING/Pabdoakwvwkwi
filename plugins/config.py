@@ -18,11 +18,11 @@ try:
     PORT = os.environ.get("PORT", "8080")
 
     # Bot Information
-    API_ID = int(os.environ.get("API_ID", "15479023"))
-    API_HASH = os.environ.get("API_HASH", "f8f6cf547822449c29fc60dae3b31dd4")
+    API_ID = int(os.environ.get("API_ID", "35384565"))
+    API_HASH = os.environ.get("API_HASH", "dbba8a136120df358bd3b6e1fbc18792")
     SESSION_STRING = os.environ.get("SESSION_STRING", "BQDsMO8AYBThDSMHkoXplgI2_wYTP-7m6WX79Yn9ihzDp0Ika1b025mWfR9gYs0-BOukentqjnsb1izUT4Mg_5HHnbqOB_ZLPvgNaMAGRCCgM2HYPxB531pGoZvNh2gpIqE2m4OE7DGreCjyy_R_wCOrkSh559u7T1rSYAQrJ1N_TQ7hRNe55gPMweG0eEJgUFvrf2pkP_iWF8ifxncWHr1u8av868qPUaYyUxdGQPo7_ChsdKq8unSj_UU4xakuNx8X6GQTStF1Uc3iM4Yb1VDWfojj_ByVPmnT8XIE8qQJLVV-gy8uN96Uhryt-nMPm2HDF1Hnzq60SZiZd-FsHeh2epOhZQAAAABaJgrVAA")
-    BOT_TOKEN = os.environ.get("BOT_TOKEN", "8136275296:AAEjRpfg_ir7uGU4zyQoR5V55tvSZNPFH-4")
-    BOT_USERNAME = os.environ.get("BOT_USERNAME", "KMCloneManagerBot") # without @
+    BOT_TOKEN = os.environ.get("BOT_TOKEN", "8382815364:AAFWKZGynQi_cNt7mAkuCxDyzbo4StY6k8s")
+    BOT_USERNAME = os.environ.get("BOT_USERNAME", "KMFileStoreBot") # without @
 
     # Database Information
     DB_URI = os.environ.get("DB_URI", "mongodb+srv://KM-Main:KM-Main123@km-main.qpiat2x.mongodb.net/?retryWrites=true&w=majority&appName=KM-Main")
@@ -33,7 +33,7 @@ try:
     CDB_NAME = os.environ.get("CDB_NAME", "clone")
 
     # Moderator Information
-    ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get("ADMINS", "1512442581").split()]
+    ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in os.environ.get("ADMINS", "8477930865").split()]
 
     # Channel Information
     LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1003551728019"))
