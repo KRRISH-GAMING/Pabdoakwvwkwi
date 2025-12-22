@@ -250,8 +250,8 @@ async def start():
     StreamBot.username = bot_info.username
     await set_auto_menu(StreamBot)
 
-    await assistant.start()
-    logger.info(f"Assistant {(await assistant.get_me()).username} started")
+    #await assistant.start()
+    #logger.info(f"Assistant {(await assistant.get_me()).username} started")
 
     try:
         await create_indexes()
