@@ -3487,7 +3487,7 @@ async def message_capture(client, message):
                     bot = xd.me
                     set_client(bot.id, xd)
                     await db.add_clone_bot(bot.id, user_id, bot.first_name, bot.username, token)
-                    await promote(bot.username)
+                    #await promote(bot.username)
                     await set_clone_menu(xd)
 
                     await safe_action(client.send_message,
